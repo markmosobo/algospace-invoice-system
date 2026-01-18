@@ -42,3 +42,4 @@ Route::apiResource('diary-entries', DiaryEntryController::class);
 Route::apiResource('system-logs', SystemLogController::class);
 
 Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+Route::post('/restock-product', [SupplyController::class, 'restock']);

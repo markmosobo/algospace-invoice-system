@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Restock;
 use App\Models\Supply;
 use Illuminate\Http\Request;
 
@@ -102,4 +103,35 @@ class SupplyController extends Controller
         Supply::destroy($id);
         return response()->json(['message' => 'Deleted']);        
     }
-}
+
+    public function restock(Request $request)
+{
+    $request->validate([
+        'supply_id' => 'required|integer|exists:supplies,id',
+        'quantity' => 'required|integer|min:1',
+        'buying_price' => 'required|numeric',
+        'supplier_id' => 'required|integer|exists:suppliers,id',
+    ]);
+
+    $product = Supply::find($request->supply_id);
+
+    // 1️⃣ Update product quantity
+    $product->quantity += $request->quantity;
+    $product->save();
+
+    // 2️⃣ Save restock history
+    Restock::create([
+        'supply_id' => $request->supply_id,
+        'quantity' => $request->quantity,
+        'buying_price' => $request->buying_price,
+        'supplier_id' => $request->supplier_id,
+        'user_id' => auth('api')->id(),
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Product restocked successfully'
+    ]);
+    }
+
+    }

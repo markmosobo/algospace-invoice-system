@@ -1,6 +1,5 @@
 <template>
-    <Master>
-
+<Master>
         <section class="section dashboard">
         <div class="row">
             <!-- Checked in visitors -->
@@ -9,7 +8,7 @@
 
                 <div class="card-body pb-0">
 
-                <h5 class="card-title">Supplies <span>| Supplies in the business premise</span></h5>
+                <h5 class="card-title">Supplies <span>| Products in the business premise</span></h5>
                 <p class="card-text">
                 
                 <!-- <a href="visitors.php" class="btn btn-primary" >Add Visitor</a> -->
@@ -34,15 +33,15 @@
                     </a>
                 </router-link>
                 </p>
-                <table id="allProductsTable" class="table table-borderless datatable">
+                <table id="SuppliesTable" class="table table-borderless datatable">
                 <thead>
                     <tr>
                     <!-- <th scope="col">Preview</th> -->
                     <th scope="col">Name</th>
                     <th scope="col">Unit Price</th>                
-                    <th scope="col">Quantity</th>
+                    <th scope="col">Quantity</th>                
                     <th scope="col">Total</th>                
-                    <th scope="col">Pay Date</th>
+                    <th scope="col">Paid For On</th>
                     <th scope="col">Action</th>
                     </tr>
                 </thead>
@@ -53,7 +52,7 @@
                         <img :src="getPhoto() + product.image" />
                     </a></th> -->
                     <td scope="col">{{product.item}}</td>
-                    <td scope="col">{{product.unit_price}}</td>
+                    <td scope="col">{{formatPrice(product.unit_price)}}</td>
                     <td scope="col">{{product.quantity}}</td>
                     <td scope="col">{{formatPrice(product.total)}}</td>
                     <td scope="col">{{format_date(product.payment_date)}}</td>
@@ -80,93 +79,96 @@
             <!--End Products visitors -->
         </div>
         </section> 
+</Master>
+ 
 
-        <section class="section dashboard">
-        <div class="row">
-
-            <!-- Checked out visitors -->
-            <div class="col-12">
-            <div class="card top-selling overflow-auto">
-
-            <div class="card-body pb-0">
-
-            <h5 class="card-title">Restocked <span>| Products restocked today</span></h5>
-            <p class="card-text">
-            
-            <!-- <a href="visitors.php" class="btn btn-primary" >Add Visitor</a> -->
-
-            </p>
-                <table id="restockedTable" class="table table-borderless datatable">
-                <thead>
-                    <tr>
-                    <!-- <th scope="col">No</th> -->
-                    <!-- <th scope="col">Preview</th> -->
-                    <th scope="col">Name</th>
-                    <th scope="col">Pieces</th>
-                    <th scope="col">Price(KES)</th> 
-                    <th scope="col">Supplier</th>               
-                    <th v-show="user.role == 'admin'" scope="col">Restocked By</th>
-                    <th scope="col">Time In</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr  v-for="product in restocked" :key="product.id" >
-                    <!-- <th scope="col">{{visit.id}}</th> -->
-   <!--                  <th scope="row"><a href="#">
-                        <img :src="getPhoto() + product.product['image']" />
-                    </a></th> -->
-                    <td scope="col">{{product.product['name']}}</td>
-                    <td scope="col">{{product.pieces}}</td>
-                    <td scope="col">{{formatPrice(product.buying_price)}}</td>
-                    <td scope="col">{{product.supplier['name']}}</td>
-                    <td v-show="user.role == 'admin'" scope="col">{{product.user['first_name']}} {{product.user['last_name']}}</td>                
-                    <td scope="col">{{formatDateTime(product.created_at)}}</td>
-                    </tr>
-                </tbody>
-                </table>
-            </div>
-            </div>
-            </div>
-            <!--End Checked out visitors -->
-        </div>
-        </section> 
-    </Master>
 </template>
 
 <script>
 import Master from '@/components/Master.vue';
+import axios from 'axios';
+import Swal from 'sweetalert2';
 import "jquery/dist/jquery.min.js";
 import "datatables.net-dt/js/dataTables.dataTables";
 import "datatables.net-dt/css/jquery.dataTables.min.css";
 import $ from "jquery";
-import moment from 'moment';
-  
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import * as XLSX from 'xlsx';
 import numeral from 'numeral';
+import moment from 'moment';
 
 const toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000
 });
 
-window.toast = toast;
+export default {
+  name: 'Home',
+  components: {
+    Master,
+  },
+  data() {
+    return {
+      currentYear: '',
+      user: {},
+      currentUser: {},
+      userRole: null,
+      supplies: {},
+      properties: [],
+      openproperties: [],
+      closedproperties: [],
+      users: [],
+      badgeClasses: [
+        'text-success',
+        'text-danger',
+        'text-primary',
+        'text-info',
+        'text-warning',
+        'text-muted',
+      ],
+    };
+  },
+  computed: {
+    dashboardCards() {
+      const cards = {
+        office: [
+          { title: 'Services Offered', value: this.stats.services, icon: 'bi-people', color: 'primary' },
+          { title: 'Suppliers', value: this.stats.suppliers, icon: 'bi-person-lines-fill', color: 'info' },
+          { title: 'Customers', value: this.stats.customers, icon: 'bi-people', color: 'secondary' },
+          { title: 'Supplies', value: this.stats.supplies, icon: 'bi-building', color: 'success' },
+          { title: 'Payments', value: this.stats.payments, icon: 'bi-circle', color: 'warning' },
+          { title: 'Invoices', value: this.stats.invoices, icon: 'bi-hourglass-split', color: 'info' },
+        ],
 
-export default({
-    data(){
-        return {
-            supplies: [],
-            restocked: [],
-            user: []
-        }
+        personal: [
+          { title: 'My Accounts', value: this.stats.personalAccounts, icon: 'bi-building', color: 'success' },
+          { title: 'Categories', value: this.stats.personalCategories, icon: 'bi-house-door', color: 'warning' },
+          { title: 'Transactions', value: this.stats.personalTransactions, icon: 'bi-box-arrow-right', color: 'danger' },
+        ],
+
+      };
+
+      // Remove cards with null, 0, or 'N/A' values for cleaner UI
+      return (cards[this.userRole] || []).filter(card => {
+        return card.value !== null && card.value !== 0 && card.value !== 'N/A';
+      });
+    }
+  },
+  methods: {
+    loadLists() {
+      axios
+        .get('/api/supplies')
+        .then(response => {
+          this.supplies = response.data;
+          console.log("new", response)
+            setTimeout(() => {
+                $("#SuppliesTable").DataTable();
+            }, 10);
+        })
+        .catch(error => {
+          console.error('Dashboard supplies error:', error);
+        });
     },
-    components: {
-        Master
-    },
-    methods: {
         navigateTo(location){
             this.$router.push(location)
         },
@@ -181,12 +183,8 @@ export default({
         formatPrice(value) {
           return numeral(value).format('0,0.00');
         },
-        getPhoto()
-        {
-            return "/storage/products/";
-        },
         exportToExcel() {
-          const productsData = this.products.map(product => ({
+          const productsData = this.supplies.map(product => ({
             "Item Name": product.name,
             "Item type": "",
             "Purchase Price (KES)": product.buying_price,
@@ -205,22 +203,7 @@ export default({
           XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
 
           XLSX.writeFile(workbook, "products.xlsx");
-        },
-        loadLists(){
-            axios.get('/api/supplies').then((response) => {
-                this.supplies = response.data.supplies
-                this.restocked = response.data.restocked;
-                console.log("data" ,this.products)
-                setTimeout(() => {
-                 $("#allProductsTable").DataTable();
-                }, 10);
-                setTimeout(() => {
-                 $("#restockedTable").DataTable();
-                }, 10);
-            }).catch((error) => {
-                console.log(error)
-            });
-        },
+        }, 
         restockProduct(id){
             this.$router.push('/restockproduct/'+id)
         },
@@ -237,7 +220,7 @@ export default({
                 confirmButtonText: 'Yes, delete!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                axios.delete('/api/products/' + id).then(() => {
+                axios.delete('/api/supplies/' + id).then(() => {
                     this.loadLists();
                 })
                 //api goes here
@@ -248,15 +231,20 @@ export default({
                 )
                 setTimeout(() => {
                     this.loadLists();
-                    $("#allProductsTable").DataTable();
+                    $("#SuppliesTable").DataTable();
                 }, 2000)
                 }
             })
-        }
-    },
-    mounted(){
-        this.loadLists();
-        this.user = JSON.parse(localStorage.getItem('user'));
-    }
-})
+        }               
+  },
+  mounted() {
+    const storedUser = JSON.parse(localStorage.getItem('user')) || {};
+    this.user = storedUser;
+    this.currentUser = storedUser;
+    this.userRole = this.user.role;
+    this.current_user_id = storedUser.id;
+    this.current_user = `${storedUser.first_name || ''} ${storedUser.last_name || ''}`.trim();
+    this.loadLists();
+  }
+};
 </script>

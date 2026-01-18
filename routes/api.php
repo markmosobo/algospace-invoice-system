@@ -1,15 +1,27 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PersonalAccountController;
+use App\Http\Controllers\PersonalCategoryController;
+use App\Http\Controllers\PersonalTransactionController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Public routes
+Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -23,3 +35,10 @@ Route::apiResource('services', ServiceController::class);
 Route::apiResource('users', UserController::class);
 Route::apiResource('suppliers', SupplierController::class);
 Route::apiResource('supplies', SupplyController::class);
+Route::apiResource('personal-categories', PersonalCategoryController::class);
+Route::apiResource('personal-accounts', PersonalAccountController::class);
+Route::apiResource('personal-transactions', PersonalTransactionController::class);
+Route::apiResource('diary-entries', DiaryEntryController::class);
+Route::apiResource('system-logs', SystemLogController::class);
+
+Route::get('/dashboard/stats', [DashboardController::class, 'stats']);

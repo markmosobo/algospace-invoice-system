@@ -1,5 +1,4 @@
 <template>
-  <!-- ======= Sidebar ======= -->
   <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
 
@@ -15,163 +14,130 @@
 
       <!-- Personal Transactions -->
       <li v-show="userRole === 'personal'" class="nav-item">
-        <router-link to="/personal-transactions" custom v-slot="{ href, navigate, isActive }">
+        <router-link to="/personal-transactions" custom v-slot="{ href, navigate }">
           <a :href="href" class="nav-link" @click="navigate">
-            <i class="bi bi-person-circle"></i>
-            <span>Transactions</span>
+            <i class="bi bi-wallet2"></i>
+            <span>My Transactions</span>
           </a>
         </router-link>
       </li>
 
       <!-- Payments -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <router-link to="/personal-transactions" custom v-slot="{ href, navigate, isActive }">
+        <router-link to="/personal-transactions" custom v-slot="{ href, navigate }">
           <a :href="href" class="nav-link" @click="navigate">
-            <i class="bi bi-person-circle"></i>
+            <i class="bi bi-cash-coin"></i>
             <span>Payments</span>
           </a>
         </router-link>
-      </li> 
-      
+      </li>
+
       <!-- Supplies -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <router-link to="/supplies" custom v-slot="{ href, navigate, isActive }">
+        <router-link to="/supplies" custom v-slot="{ href, navigate }">
           <a :href="href" class="nav-link" @click="navigate">
-            <i class="bi bi-person-circle"></i>
+            <i class="bi bi-box-seam"></i>
             <span>Supplies</span>
           </a>
         </router-link>
-      </li>       
+      </li>
 
-      <!-- System Config -->
-      <li v-show="['personal'].includes(userRole)" class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#listing-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-building"></i>
+      <!-- Configurations -->
+      <li v-show="userRole === 'personal'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#listing-nav">
+          <i class="bi bi-gear"></i>
           <span>Configurations</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="listing-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <ul id="listing-nav" class="nav-content collapse">
           <li>
             <router-link to="/personal-accounts" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i>
-                <span>Accounts</span>
+                <i class="bi bi-circle"></i> Accounts
               </a>
             </router-link>
-          </li> 
+          </li>
           <li>
             <router-link to="/personal-categories" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i>
-                <span>Categories</span>
+                <i class="bi bi-circle"></i> Categories
               </a>
             </router-link>
-          </li>                    
+          </li>
         </ul>
       </li>
 
-      <!-- Manage Resources (Office Only) -->
+      <!-- Inventory -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#users-nav" data-bs-toggle="collapse" href="#">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">
+          <i class="bi bi-boxes"></i>
+          <span>Inventory</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="supplies-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/supplies" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Supplies
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/restocks" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Restocks
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>
+
+      <!-- Resources -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav">
           <i class="bi bi-people"></i>
-          <span>Manage Resources</span>
+          <span>Resources</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="users-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <router-link to="/customers" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i><span>Customers</span>
-              </a>
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/suppliers" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i><span>Suppliers</span>
-              </a>
-            </router-link>
-          </li>          
+        <ul id="users-nav" class="nav-content collapse">
+          <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
+          <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
         </ul>
       </li>
 
-      <!-- Manage Services -->
-      <li v-show="['office'].includes(userRole)" class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#build-nav" data-bs-toggle="collapse">
-          <i class="bi bi-building"></i>
-          <span>Manage Services</span>
-          <i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-
-        <ul id="build-nav" class="nav-content collapse">
-          <li v-show="userRole === 'office'">
-            <router-link to="/services" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i>
-                <span>Services Offered</span>
-              </a>
-            </router-link>
-          </li>
-        </ul>
-      </li>
-
-
-      <!-- Manage Invoices -->
-      <li v-show="['office'].includes(userRole)" class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#invoice-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-receipt"></i>
-          <span>Manage Invoices</span>
-          <i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="invoice-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li v-show="userRole === 'office'">
-            <router-link to="/awaitinginvoicing" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i><span>Unpaid Invoices</span>
-              </a>
-            </router-link>
-          </li>
-          <li v-show="userRole === 'office'">
-            <router-link to="/paid-invoices" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i><span>Paid Invoices</span>
-              </a>
-            </router-link>           
-          </li>         
-        </ul>
-      </li>
-
-      <!-- System Logs -->
+      <!-- Invoices -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#logs-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-activity"></i>
-          <span>System Logs</span>
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#invoice-nav">
+          <i class="bi bi-receipt"></i>
+          <span>Invoices</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="logs-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <router-link to="/system-logs" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i><span>System Logs</span>
-              </a>
-            </router-link>
-          </li>
+        <ul id="invoice-nav" class="nav-content collapse">
+          <li><RouterLink to="/awaitinginvoicing" class="nav-link"><i class="bi bi-circle"></i> Unpaid</RouterLink></li>
+          <li><RouterLink to="/paid-invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
         </ul>
-      </li>      
+      </li>
+
+      <!-- Logs -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <RouterLink to="/system-logs" class="nav-link">
+          <i class="bi bi-shield-check"></i>
+          <span>System Logs</span>
+        </RouterLink>
+      </li>
 
       <!-- Profile -->
-      <li class="nav-item">
-        <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" class="nav-link" @click="navigate">
-            <i class="bi bi-person-circle"></i>
-            <span>My Profile</span>
-          </a>
-        </router-link>
+      <li class="nav-item mt-3">
+        <RouterLink to="/profile" class="nav-link">
+          <i class="bi bi-person-circle"></i>
+          <span>My Profile</span>
+        </RouterLink>
       </li>
 
     </ul>
   </aside>
 </template>
+
 
 <script>
 export default {
@@ -189,23 +155,33 @@ export default {
 </script>
 
 <style scoped>
-.sidebar .nav-link i {
-  font-size: 1.2rem;
-  margin-right: 8px;
-}
 .sidebar .nav-link {
   display: flex;
   align-items: center;
-  padding: 10px 15px;
-  border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
+
+.sidebar .nav-link i {
+  font-size: 1.1rem;
+}
+
 .sidebar .nav-link:hover {
-  background-color: #f1f1f1;
-  color: #007bff;
+  background: #f4f6f9;
+  color: #0d6efd;
 }
+
 .sidebar .nav-link.active {
-  background-color: #007bff;
+  background: #0d6efd;
   color: #fff;
 }
+
+.nav-content .nav-link {
+  padding-left: 42px;
+  font-size: 0.95rem;
+}
+
 </style>

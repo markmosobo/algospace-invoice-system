@@ -11,17 +11,14 @@
                 <h5 class="card-title">Supplies <span>| Products in the business premise</span></h5>
                 <p class="card-text">
                 
-                <!-- <a href="visitors.php" class="btn btn-primary" >Add Visitor</a> -->
-                <router-link to="/add-product" custom v-slot="{ href, navigate, isActive }">
                     <a
                     :href="href"
                     :class="{ active: isActive }"
                     class="btn btn-primary me-2"
-                    @click="navigate"
+                    @click="addProduct"
                     >
                     Add Product
                     </a>
-                </router-link>
                 <router-link to="#" custom v-slot="{ href, navigate, isActive }">
                     <a
                     :href="href"
@@ -77,6 +74,100 @@
                 </div>
             </div>
             <!--End Products visitors -->
+            
+            <!-- Add Supply Modal -->
+            <div class="modal fade" id="AddSupplyModal" tabindex="-1" aria-labelledby="AddSupplyModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="AddTicketModalLabel">Add Supply</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                    <form class="row g-3 needs-validation" novalidate>
+
+                        <!-- Status -->
+                        <div class="col-md-6">
+                        <label class="form-label">Status*</label>
+                        <select name="role" v-model="form.status" class="form-select" id="status">
+                            <option value="" selected disabled>Select status</option>
+                            <option value="replenisheble">Replenisheble</option>
+                            <option value="onetime">Onetime</option>
+                            <option value="other">Other</option>
+                        </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+                        <label class="form-label">Payment methods</label>
+                        <select class="form-select" v-model="form.payment_method" id="category">
+                            <option value="" disabled selected>Select payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">MPESA</option>
+                            <option value="card">Card</option>
+                            <option value="other">Other</option>
+                        </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="item" v-model="form.item">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Unit Price</label>
+                            <input type="text" class="form-control" id="unit_price" v-model="form.unit_price">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" min="1" class="form-control" id="quantity" v-model="form.quantity">
+                        </div> 
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier</label>
+                            <select name="supplier" v-model="form.supplier_id" class="form-select" id="supplier_id">
+                                <option value="0" selected disabled>Select Supplier</option>
+                                <option v-for="supplier in suppliers" :value="supplier.id"
+                                :selected="supplier.id == form.supplier_id" :key="supplier.id">{{ supplier.name}} </option>
+    
+                            </select>
+                        </div>                         
+
+                    <!-- Media Upload -->
+                    <div class="col-md-6">
+                        <label class="form-label">Upload Images</label>
+                        <input type="file" name="images[]" multiple @change="handleImages">
+                    </div>                          
+
+                    <!-- Image Previews in a NEW full-width row -->
+                    <div class="col-12 mt-3" v-if="images.length > 0">
+                        <label class="form-label fw-bold">Preview Images</label>
+
+                        <div class="image-preview-container">
+                            <div class="preview-box" v-for="(img, index) in images" :key="index">
+                                <img :src="img.preview" class="preview-img">
+                                <button class="remove-btn" @click="removeImage(index)">×</button>
+                            </div>
+                        </div>
+                    </div>                          
+
+                    </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
+                        Save
+                    </button>
+                    </div>
+
+                </div>
+                </div>
+            </div>
         </div>
         </section> 
 </Master>
@@ -114,11 +205,23 @@ export default {
       currentUser: {},
       userRole: null,
       supplies: {},
-      properties: [],
-      openproperties: [],
-      closedproperties: [],
-      users: [],
-      badgeClasses: [
+      errors: {},
+      suppliers: [],
+        form: {
+            supplier_id: "",
+            unit_price: "",
+            quantity: "",
+            item: "",
+            total: "",
+            payment_date: "",
+            payment_method: "",
+            status: "",
+
+        },      
+        images: [],
+        existingImages: [],
+        newImages: [],
+        badgeClasses: [
         'text-success',
         'text-danger',
         'text-primary',
@@ -155,6 +258,46 @@ export default {
     }
   },
   methods: {
+    addProduct()
+    {
+        // Show the modal after fetching data
+        const modal = new bootstrap.Modal(document.getElementById('AddSupplyModal'));
+        modal.show();
+    },    
+    handleImages(e) {
+        const files = e.target.files;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            this.images.push({
+                file: file,                                   // ← real file!
+                preview: URL.createObjectURL(file)           // ← preview
+            });
+        }
+    },
+    removeImage(index) {
+        this.images.splice(index, 1);
+    },
+    handleNewImages(event) {
+        const files = event.target.files;
+        for (let i = 0; i < files.length; i++) {
+        this.newImages.push({
+            file: files[i],
+            preview: URL.createObjectURL(files[i])
+        });
+        }
+    },
+    async removeExistingImage(ticketId, imageId, index) {
+        try {
+            await axios.delete(`/api/support-tickets/${ticketId}/images/${imageId}`);
+            this.form.images.splice(index, 1); // remove from array
+            toast.fire('Success!', 'Image removed!', 'success');
+        } catch (error) {
+            console.error(error);
+            toast.fire('Error!', 'Could not remove image.', 'error');
+        }
+    },     
     loadLists() {
       axios
         .get('/api/supplies')

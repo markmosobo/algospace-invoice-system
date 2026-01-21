@@ -59,11 +59,11 @@
                             Action
                             </button>
                             <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                <a @click="navigateTo('/viewproduct/'+product.id )" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a>
-                                <a @click="viewProductHistory(product.id)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View History</a>   
-                                <a @click="navigateTo('/editproduct/'+product.id )" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                <!-- <a @click="navigateTo('/viewproduct/'+product.id )" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> -->
+                                <a @click="viewProduct(product)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a>   
+                                <a @click="editProduct(product)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
                                 <a @click="restockProduct(product.id)" class="dropdown-item" href="#"><i class="ri-add-fill mr-2"></i>Restock</a>   
-                                <!-- <a @click="deleteProduct(product.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-6-fill mr-2"></i>Delete</a>    -->
+                                <a @click="deleteProduct(product.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-6-fill mr-2"></i>Delete</a>   
                             </div>
                         </div>
                     </td>
@@ -74,7 +74,74 @@
                 </div>
             </div>
             <!--End Products visitors -->
-            
+
+              <!-- View Supply Modal -->
+              <div class="modal fade" id="viewSupplyModal" tabindex="-1" aria-labelledby="viewSupplyModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+
+                    <div class="modal-header">
+                      <h5 class="modal-title">View Supply Details</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body" v-if="selectedSupply">
+
+                        <!-- Image Gallery -->
+                        <div v-if="selectedSupply.images?.length" class="mt-3">
+                          <strong>Gallery Images:</strong>
+                          <div class="d-flex flex-wrap mt-2">
+                            <div v-for="(img, i) in selectedSupply.images" :key="i" class="me-2 mb-2">
+                              <img 
+                                :src="'/storage/supplies/' + img.name"
+                                style="width:120px; height:100px; object-fit:cover; border-radius:4px;"
+                              >
+                            </div>
+                          </div>
+                        </div>
+
+
+                      <div class="row g-3">
+
+                        <!-- BASIC INFO -->
+                        <div class="col-md-6" v-if="selectedSupply.item">
+                          <strong>Product Name:</strong> <br> {{ selectedSupply.item }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedSupply.unit_price">
+                          <strong>Unit Price:</strong> <br> {{ selectedSupply.unit_price }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedSupply.quantity">
+                          <strong>Quantity:</strong> <br> {{ selectedSupply.quantity }}
+                        </div>
+
+                        <!-- Supplier -->
+                        <div class="col-md-6" v-if="selectedSupply.supplier_id">
+                          <strong>Supplier:</strong> <br> {{ selectedSupply.supplier.name }}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-6" v-if="selectedSupply.status">
+                          <strong>Status:</strong> <br> {{ selectedSupply.status }}
+                        </div>
+                        
+                        <!-- Payment Method -->
+                        <div class="col-md-6" v-if="selectedSupply.payment_method">
+                          <strong>Payment Method:</strong> <br> {{ selectedSupply.payment_method }}
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
             <!-- Add Supply Modal -->
             <div class="modal fade" id="AddSupplyModal" tabindex="-1" aria-labelledby="AddSupplyModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
@@ -102,7 +169,7 @@
 
                         <div class="col-md-6">
                         <label class="form-label">Payment methods</label>
-                        <select class="form-select" v-model="form.payment_method" id="category">
+                        <select class="form-select" v-model="form.payment_method" id="payment_method">
                             <option value="" disabled selected>Select payment method</option>
                             <option value="cash">Cash</option>
                             <option value="mpesa">MPESA</option>
@@ -118,7 +185,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Unit Price</label>
-                            <input type="text" class="form-control" id="unit_price" v-model="form.unit_price">
+                            <input type="number" class="form-control" id="unit_price" v-model="form.unit_price" placeholder="KES">
                         </div>
                         
                         <div class="col-md-6">
@@ -200,7 +267,7 @@ export default {
   },
   data() {
     return {
-      currentYear: '',
+      selectedSupply: [],
       user: {},
       currentUser: {},
       userRole: null,
@@ -214,8 +281,8 @@ export default {
             item: "",
             total: "",
             payment_date: "",
-            payment_method: "",
-            status: "",
+            payment_method: "cash",
+            status: "replenisheble",
 
         },      
         images: [],
@@ -258,12 +325,121 @@ export default {
     }
   },
   methods: {
+    viewProduct(product)
+    {
+        console.log(product)
+        this.selectedSupply = product;
+        // Show the modal after fetching data
+        const modal = new bootstrap.Modal(document.getElementById('viewSupplyModal'));
+        modal.show();
+    },
     addProduct()
     {
         // Show the modal after fetching data
         const modal = new bootstrap.Modal(document.getElementById('AddSupplyModal'));
         modal.show();
-    },    
+    }, 
+    async submit() {
+        if (this.validateForm()) {
+
+            // Start submitting process
+            this.submitting = true;
+            
+            try {
+                // Simulate asynchronous submission process (you would replace this with your actual submission logic)
+                await this.submitForm();
+
+                // Submission successful
+                this.submitted = true;
+            } catch (error) {
+                // Handle submission error
+                console.error("Submission error:", error);
+            } finally {
+                // End submitting process
+                this.submitting = false;
+            }
+        }
+    },
+    validateForm() {
+        let isValid = true;
+
+        const fields = [
+        { id: 'item', value: this.form.item },
+        { id: 'unit_price',  value: this.form.unit_price },
+        { id: 'quantity',      value: this.form.quantity },
+        { id: 'supplier_id',      value: this.form.supplier_id },
+        ];
+
+        fields.forEach(field => {
+        const el = document.getElementById(field.id);
+
+        if (!field.value || field.value === "") {
+            el.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            el.classList.remove('is-invalid');
+        }
+        });
+
+        return isValid;
+    },
+    
+    async submitForm() {
+        try {
+        // Prepare FormData for file upload + other fields
+        const formData = new FormData();
+
+        // Append all fields
+        for (const key in this.form) {
+            if (key === 'profile_photo_file' && this.form.profile_photo_file) {
+            // append the actual file
+            formData.append('profile_photo', this.form.profile_photo_file);
+            } else if (key !== 'profile_photo_file') {
+            formData.append(key, this.form[key]);
+            }
+        }
+
+        // Send POST request as multipart/form-data
+        const response = await axios.post("/api/supplies", formData, {
+            headers: {
+            'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        console.log(response);
+
+        toast.fire(
+            'Success!',
+            'Product added!',
+            'success'
+        );
+
+        // Close the modal after submit
+        const modal = bootstrap.Modal.getInstance(document.getElementById('AddSupplyModal'));
+        modal.hide();
+
+        // Reset form properly (avoid assigning '')
+        this.form = {
+            name: "",
+            unit_price: "",
+            quantity: "",
+            supplier_id: "",
+            profile_photo_file: null,
+            profile_photo_preview: null,
+            profile_photo_url: ''
+        };
+
+        this.loadLists();
+
+        } catch (error) {
+        console.log(error);
+        toast.fire(
+            'Error!',
+            error.response?.data?.message || 'An error occurred while adding the product.',
+            'error'
+        );
+        }
+    },       
     handleImages(e) {
         const files = e.target.files;
 
@@ -302,7 +478,8 @@ export default {
       axios
         .get('/api/supplies')
         .then(response => {
-          this.supplies = response.data;
+          this.supplies = response.data.supplies;
+          this.suppliers = response.data.suppliers;
           console.log("new", response)
             setTimeout(() => {
                 $("#SuppliesTable").DataTable();

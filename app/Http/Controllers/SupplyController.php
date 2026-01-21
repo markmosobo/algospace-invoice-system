@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Restock;
+use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Http\Request;
 
@@ -13,8 +14,13 @@ class SupplyController extends Controller
      */
     public function index()
     {
-        $supplies = Supply::get();
-        return response()->json($supplies);         
+        $supplies = Supply::with('supplier')->get();
+        $suppliers = Supplier::get();
+        // Return as JSON
+        return response()->json([
+            'supplies' => $supplies,
+            'suppliers' => $suppliers,
+        ]);         
     }
 
     /**

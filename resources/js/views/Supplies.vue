@@ -206,7 +206,13 @@
                     <!-- Media Upload -->
                     <div class="col-md-6">
                         <label class="form-label">Upload Images</label>
-                        <input type="file" name="images[]" multiple @change="handleImages">
+                        <input
+                        type="file"
+                        class="form-control"
+                        multiple
+                        accept="image/*"
+                        @change="handleImages"
+                        />
                     </div>                          
 
                     <!-- Image Previews in a NEW full-width row -->
@@ -340,106 +346,93 @@ export default {
         modal.show();
     }, 
     async submit() {
-        if (this.validateForm()) {
+    if (!this.validateForm()) return;
 
-            // Start submitting process
-            this.submitting = true;
-            
-            try {
-                // Simulate asynchronous submission process (you would replace this with your actual submission logic)
-                await this.submitForm();
+    this.submitting = true;
 
-                // Submission successful
-                this.submitted = true;
-            } catch (error) {
-                // Handle submission error
-                console.error("Submission error:", error);
-            } finally {
-                // End submitting process
-                this.submitting = false;
-            }
-        }
+    try {
+        await this.submitForm();
+        this.submitted = true;
+    } catch (error) {
+        console.error('Submission error:', error);
+    } finally {
+        this.submitting = false;
+    }
     },
     validateForm() {
-        let isValid = true;
+    let isValid = true;
 
-        const fields = [
+    const fields = [
         { id: 'item', value: this.form.item },
-        { id: 'unit_price',  value: this.form.unit_price },
-        { id: 'quantity',      value: this.form.quantity },
-        { id: 'supplier_id',      value: this.form.supplier_id },
-        ];
+        { id: 'unit_price', value: this.form.unit_price },
+        { id: 'quantity', value: this.form.quantity },
+        { id: 'supplier_id', value: this.form.supplier_id }
+    ];
 
-        fields.forEach(field => {
-        const el = document.getElementById(field.id);
+    fields.forEach(({ id, value }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
 
-        if (!field.value || field.value === "") {
-            el.classList.add('is-invalid');
-            isValid = false;
+        if (!value) {
+        el.classList.add('is-invalid');
+        isValid = false;
         } else {
-            el.classList.remove('is-invalid');
+        el.classList.remove('is-invalid');
         }
-        });
+    });
 
-        return isValid;
+    return isValid;
     },
-    
     async submitForm() {
-        try {
-        // Prepare FormData for file upload + other fields
+    try {
         const formData = new FormData();
 
-        // Append all fields
-        for (const key in this.form) {
-            if (key === 'profile_photo_file' && this.form.profile_photo_file) {
-            // append the actual file
-            formData.append('profile_photo', this.form.profile_photo_file);
-            } else if (key !== 'profile_photo_file') {
-            formData.append(key, this.form[key]);
-            }
-        }
-
-        // Send POST request as multipart/form-data
-        const response = await axios.post("/api/supplies", formData, {
-            headers: {
-            'Content-Type': 'multipart/form-data'
-            }
+        // append normal fields
+        Object.keys(this.form).forEach(key => {
+        formData.append(key, this.form[key]);
         });
 
-        console.log(response);
+        // append images[]
+        this.images.forEach(img => {
+        formData.append('images[]', img.file);
+        });
 
-        toast.fire(
-            'Success!',
-            'Product added!',
-            'success'
+        const response = await axios.post('/api/supplies', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        toast.fire('Success!', 'Supply added successfully!', 'success');
+
+        // close modal
+        const modal = bootstrap.Modal.getInstance(
+        document.getElementById('AddSupplyModal')
         );
-
-        // Close the modal after submit
-        const modal = bootstrap.Modal.getInstance(document.getElementById('AddSupplyModal'));
         modal.hide();
 
-        // Reset form properly (avoid assigning '')
+        // reset form
         this.form = {
-            name: "",
-            unit_price: "",
-            quantity: "",
-            supplier_id: "",
-            profile_photo_file: null,
-            profile_photo_preview: null,
-            profile_photo_url: ''
+        status: "",
+        payment_method: "",
+        item: "",
+        unit_price: "",
+        quantity: 1,
+        supplier_id: 0
         };
+
+        this.images = [];
 
         this.loadLists();
 
-        } catch (error) {
-        console.log(error);
+    } catch (error) {
+        console.error(error);
         toast.fire(
-            'Error!',
-            error.response?.data?.message || 'An error occurred while adding the product.',
-            'error'
+        'Error!',
+        error.response?.data?.message || 'Failed to add supply',
+        'error'
         );
-        }
-    },       
+    }
+    },
+        
     handleImages(e) {
         const files = e.target.files;
 

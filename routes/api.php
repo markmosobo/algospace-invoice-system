@@ -43,3 +43,5 @@ Route::apiResource('system-logs', SystemLogController::class);
 
 Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 Route::post('/restock-product', [SupplyController::class, 'restock']);
+
+Route::put('/customers/{customer}', [CustomerController::class, 'update']);

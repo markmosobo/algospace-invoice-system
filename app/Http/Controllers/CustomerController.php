@@ -41,15 +41,19 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Customer $customer)
     {
-        $customer = Customer::find($id);
-        $customer->name = $request->name;
-        $customer->phone = $request->phone;
-        $customer->email = $request->email;
-        $customer->save();
-        return response()->json($customer);
+        $request->validate([
+            'name' => 'required|string',
+        ]);
+
+        $customer->update($request->only([
+            'name','email','phone','gender'
+        ]));
+
+        return response()->json(['message' => 'Updated']);
     }
+
 
     /**
      * Remove the specified resource from storage.

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 
@@ -12,8 +13,15 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $invoices = Invoice::get();
-        return response()->json($invoices);
+        $draftinvoices = Invoice::with('customer')->where('status', 'pending')->get();
+        $invoices = Invoice::with('customer')->where('status', 'paid')->get();
+        $customers = Customer::get();
+        // Return as JSON
+        return response()->json([
+            'draftinvoices' => $draftinvoices,
+            'invoices' => $invoices,
+            'customers' => $customers,
+        ]);
     }
 
     /**
@@ -24,7 +32,6 @@ class InvoiceController extends Controller
         // Validate the incoming request
         $request->validate([
             'customer_id'    => 'required|exists:customers,id',
-            'invoice_number' => 'required|unique:invoices,invoice_number',
             'invoice_date'   => 'required|date',
             'due_date'       => 'nullable|date',
             'status'         => 'nullable|in:pending,paid,overdue',
@@ -34,7 +41,7 @@ class InvoiceController extends Controller
         // Create new invoice
         $invoice = Invoice::create([
             'customer_id'    => $request->customer_id,
-            'invoice_number' => $request->invoice_number,
+            'invoice_number' => Invoice::generateInvoiceNumber(),
             'invoice_date'   => $request->invoice_date,
             'due_date'       => $request->due_date,
             'status'         => $request->status ?? 'pending',

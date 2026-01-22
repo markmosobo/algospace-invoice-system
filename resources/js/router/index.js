@@ -5,6 +5,8 @@ import Register from '../views/Register.vue';
 import Profile from '../views/Profile.vue';
 import Home from '../views/Home.vue';
 import Supplies from '../views/Supplies.vue';
+import Invoices from '../views/Invoices.vue';
+import DraftInvoices from '../views/DraftInvoices.vue';
 import Customers from '../views/Customers.vue';
 import SystemLogs from '../views/SystemLogs.vue';
 
@@ -17,6 +19,8 @@ const routes = [
   // Protected routes
   { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true } },
   { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true } },
+  { path: '/draft-invoices', name: 'draft-invoices', component: DraftInvoices, meta: { requiresAuth: true } },
+  { path: '/invoices', name: 'invoices', component: Invoices, meta: { requiresAuth: true } },
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
   { path: '/system-logs', name: 'system-logs', component: SystemLogs, meta: { requiresAuth: true } },
 

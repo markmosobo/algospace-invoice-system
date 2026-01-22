@@ -44,5 +44,17 @@ class Invoice extends Model
     public function balance()
     {
         return $this->total_amount - $this->totalPaid();
-    }    
+    }
+    
+    public static function generateInvoiceNumber()
+    {
+        $lastId = self::max('id') ?? 0;
+
+        return 'INV-' . date('Y') . '-' . str_pad(
+            $lastId + 1,
+            6,
+            '0',
+            STR_PAD_LEFT
+        );
+    }     
 }

@@ -113,8 +113,8 @@
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="invoice-nav" class="nav-content collapse">
-          <li><RouterLink to="/awaitinginvoicing" class="nav-link"><i class="bi bi-circle"></i> Unpaid</RouterLink></li>
-          <li><RouterLink to="/paid-invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
+          <li><RouterLink to="/draft-invoices" class="nav-link"><i class="bi bi-circle"></i> Draft</RouterLink></li>
+          <li><RouterLink to="/invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
         </ul>
       </li>
 

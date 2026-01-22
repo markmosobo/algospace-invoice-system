@@ -10,7 +10,7 @@
             >
               <div class="d-flex justify-content-center py-4">
                 <router-link to="/" class="logo d-flex align-items-center w-auto">
-                  <span class="d-none d-lg-block" style="color: purple;">ALGOSPACE CYBER</span>
+                  <span class="d-none d-lg-block" style="color: white;">ALGOSPACE CYBER</span>
                 </router-link>
               </div>
               <!-- End Logo -->

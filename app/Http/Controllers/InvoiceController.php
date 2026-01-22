@@ -13,7 +13,13 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $draftinvoices = Invoice::with('customer')->where('status', 'pending')->get();
+        $draftinvoices = Invoice::with('customer')
+            ->where('status', 'pending')
+            ->get()
+            ->map(function($invoice) {
+                $invoice->is_overdue = $invoice->due_date < now();
+                return $invoice;
+            });
         $invoices = Invoice::with('customer')->where('status', 'paid')->get();
         $customers = Customer::get();
         // Return as JSON

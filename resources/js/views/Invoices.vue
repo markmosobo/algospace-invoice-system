@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Invoices <span>| Paid invoices of AlgoSpace Cyber customers</span></h5>
+                      <h5 class="card-title">Paid Invoices <span>| Paid invoices of AlgoSpace Cyber customers</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">

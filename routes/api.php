@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
+use App\Http\Controllers\ListController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
 use App\Http\Controllers\PersonalCategoryController;
@@ -42,6 +43,7 @@ Route::apiResource('diary-entries', DiaryEntryController::class);
 Route::apiResource('system-logs', SystemLogController::class);
 
 Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+Route::get('/quick-sales', [ListController::class, 'quickSales']);
 Route::post('/restock-product', [SupplyController::class, 'restock']);
 
 Route::put('/customers/{customer}', [CustomerController::class, 'update']);

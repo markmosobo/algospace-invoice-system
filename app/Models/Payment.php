@@ -12,6 +12,7 @@ class Payment extends Model
         'amount',
         'payment_date',
         'method',
+        'mpesa_code'
     ];
 
     // Relationships

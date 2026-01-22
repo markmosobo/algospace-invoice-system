@@ -22,9 +22,19 @@
         </router-link>
       </li>
 
+    <li v-show="userRole === 'office'" class="nav-item">
+      <router-link to="/quick-sale" custom v-slot="{ href, navigate, isActive }">
+        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+          <i class="bi bi-lightning-charge"></i>
+          <span>Quick Sale</span>
+        </a>
+      </router-link>
+    </li>
+
+
       <!-- Payments -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <router-link to="/personal-transactions" custom v-slot="{ href, navigate }">
+        <router-link to="/payments" custom v-slot="{ href, navigate }">
           <a :href="href" class="nav-link" @click="navigate">
             <i class="bi bi-cash-coin"></i>
             <span>Payments</span>

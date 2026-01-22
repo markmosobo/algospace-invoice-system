@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 
@@ -12,8 +13,13 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        $payments = Payment::get();
-        return response()->json($payments);
+        $payments = Payment::with('invoice')->get();
+        $invoices = Invoice::with('customer')->where('status', 'pending')->get();
+        // Return as JSON
+        return response()->json([
+            'payments' => $payments,
+            'invoices' => $invoices,
+        ]);
     }
 
     /**
@@ -21,20 +27,20 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate incoming request
         $request->validate([
-            'invoice_id' => 'required|exists:invoices,id',
-            'amount'     => 'required|numeric|min:0.01',
-            'payment_date' => 'nullable|date',
-            'method'     => 'nullable|in:cash,mpesa,card,other',
+            'invoice_id'   => 'required|exists:invoices,id',
+            'amount'       => 'required|numeric|min:1',
+            'payment_date' => 'required|date',
+            'method'       => 'required|in:cash,mpesa,bank',
+            'mpesa_code'   => 'required_if:method,mpesa|string|max:20',
         ]);
 
-        // Create payment
         $payment = Payment::create([
             'invoice_id'   => $request->invoice_id,
             'amount'       => $request->amount,
-            'payment_date' => $request->payment_date ?? now(),
-            'method'       => $request->method ?? 'cash',
+            'payment_date' => $request->payment_date,
+            'method'       => $request->method,
+            'mpesa_code'   => $request->mpesa_code ?? null,
         ]);
 
         return response()->json([
@@ -42,6 +48,7 @@ class PaymentController extends Controller
             'payment' => $payment
         ]);
     }
+
 
 
     /**
@@ -58,23 +65,22 @@ class PaymentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Find the payment or fail with 404
         $payment = Payment::findOrFail($id);
 
-        // Validate incoming request
         $request->validate([
             'invoice_id'   => 'required|exists:invoices,id',
             'amount'       => 'required|numeric|min:0.01',
             'payment_date' => 'nullable|date',
-            'method'       => 'nullable|in:cash,mpesa,card,other',
+            'method'       => 'required|in:cash,mpesa,bank',
+            'mpesa_code'   => 'required_if:method,mpesa|string|max:20',
         ]);
 
-        // Update the payment
         $payment->update([
             'invoice_id'   => $request->invoice_id,
             'amount'       => $request->amount,
             'payment_date' => $request->payment_date ?? $payment->payment_date,
             'method'       => $request->method ?? $payment->method,
+            'mpesa_code'   => $request->mpesa_code ?? $payment->mpesa_code,
         ]);
 
         return response()->json([

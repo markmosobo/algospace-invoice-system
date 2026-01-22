@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Draft Invoices <span>| Unpaid invoices of AlgoSpace Cyber customers</span></h5>
+                      <h5 class="card-title">Pending Invoices <span>| Pending invoices of AlgoSpace Cyber customers</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">

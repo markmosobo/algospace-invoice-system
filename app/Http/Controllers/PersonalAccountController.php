@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use App\Models\PersonalAccount;
 
@@ -13,6 +14,13 @@ class PersonalAccountController extends Controller
     public function index()
     {
         $personalAccounts = PersonalAccount::all();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved personal accounts'
+        ]);
+
         return response()->json($personalAccounts);        
     }
 
@@ -34,6 +42,12 @@ class PersonalAccountController extends Controller
             'balance' => $request->balance,
             'currency' => $request->currency,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created personal account id '.$personalAccount->id
+        ]);        
 
         return response()->json([
             'message' => 'Personal account created successfully',
@@ -90,6 +104,12 @@ class PersonalAccountController extends Controller
 
         $personalAccount->save();
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated personal account id '.$personalAccount->id
+        ]);        
+
         return response()->json([
             'message' => 'Personal account updated successfully',
             'personalAccount' => $personalAccount
@@ -110,6 +130,12 @@ class PersonalAccountController extends Controller
         }
 
         $personalAccount->delete();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted personal account id '.$id
+        ]);        
 
         return response()->json([
             'message' => 'Personal account deleted successfully'

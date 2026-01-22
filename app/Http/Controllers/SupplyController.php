@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Restock;
 use App\Models\Supplier;
 use App\Models\Supply;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class SupplyController extends Controller
@@ -16,6 +17,13 @@ class SupplyController extends Controller
     {
         $supplies = Supply::with('supplier')->get();
         $suppliers = Supplier::get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved products'
+        ]);
+
         // Return as JSON
         return response()->json([
             'supplies' => $supplies,
@@ -49,6 +57,12 @@ class SupplyController extends Controller
             'method'      => $request->payment_method,
             'status'      => $request->status,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created product id '.$supply->id
+        ]);        
 
         return response()->json([
             'message' => 'Supply created successfully',
@@ -95,6 +109,12 @@ class SupplyController extends Controller
             'status'      => $request->status,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated product id '.$supply->id
+        ]);          
+
         return response()->json([
             'message' => 'Supply item updated successfully',
             'supply' => $supply
@@ -107,6 +127,13 @@ class SupplyController extends Controller
     public function destroy(string $id)
     {
         Supply::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted product id '.$id
+        ]);  
+
         return response()->json(['message' => 'Deleted']);        
     }
 
@@ -133,6 +160,12 @@ class SupplyController extends Controller
         'supplier_id' => $request->supplier_id,
         'user_id' => auth('api')->id(),
     ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' restocked product id '.$product->id
+        ]);      
 
     return response()->json([
         'status' => 'success',

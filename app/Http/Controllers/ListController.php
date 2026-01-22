@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class ListController extends Controller
@@ -16,7 +17,7 @@ class ListController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'invoice_no' => $payment->invoice->invoice_no,
+                    'invoice_no' => $payment->invoice->invoice_number,
                     'customer_name' => $payment->invoice->customer->name,
                     'amount' => $payment->amount,
                     'method' => $payment->method,
@@ -27,6 +28,12 @@ class ListController extends Controller
 
         // Load customers for wizard dropdown
         $customers = Customer::select('id', 'name','phone')->get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved quick sales'
+        ]);        
 
         return response()->json([
             'quickSales' => $sales,

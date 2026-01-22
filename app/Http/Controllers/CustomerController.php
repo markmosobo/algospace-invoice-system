@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -13,7 +14,14 @@ class CustomerController extends Controller
     public function index()
     {
         $customers = Customer::get();
-        return response()->json($customers);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved customers'
+        ]); 
+                 
+        return response()->json($customers);      
     }
 
     /**
@@ -26,6 +34,13 @@ class CustomerController extends Controller
         $customer->phone = $request->phone;
         $customer->email = $request->email;
         $customer->save();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created customer id '.$customer->id
+        ]);          
+                
         return response()->json($customer);
     }
 
@@ -51,6 +66,12 @@ class CustomerController extends Controller
             'name','email','phone','gender'
         ]));
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated details for customer id '.$customer->id
+        ]);         
+
         return response()->json(['message' => 'Updated']);
     }
 
@@ -61,6 +82,12 @@ class CustomerController extends Controller
     public function destroy(string $id)
     {
         Customer::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted customer id '.$id
+        ]);         
         return response()->json(['message' => 'Deleted']);
     }
 }

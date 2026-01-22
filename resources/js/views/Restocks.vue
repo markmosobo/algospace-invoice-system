@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Pending Invoices <span>| Pending invoices of AlgoSpace Cyber customers</span></h5>
+                      <h5 class="card-title">Restocks <span>| Product restocks at AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addInvoice()"
+                                  @click="addRestock()"
                                 >
-                                  Add Invoice
+                                  Add Restock
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,13 +53,14 @@
             
                       </p>
     
-                      <table id="InvoicesTable" class="table table-borderless">
+                      <table id="RestocksTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Customer</th>
-                            <th scope="col">Invoice Date</th>
-                            <th scope="col">Due Date</th>
-                            <th scope="col">Amount</th>
+                            <th scope="col">Product</th>
+                            <th scope="col">Supplier</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Status</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -74,12 +75,15 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="item in invoices" :key="item.id">
-                            <td>{{item.customer.name}}</td>
-                            <td>{{item.invoice_date ?? "N/A"}}</td>
-                            <td>{{item.due_date ?? "N/A"}}</td>
-
-                            <td>{{item.total_amount ?? "N/A"}}</td>
+                          <tr v-for="item in restocks" :key="item.id">
+                            <td>{{item.supply.item}}</td>
+                            <td>{{item.supplier.name ?? "N/A"}}</td>
+                            <td>{{item.quantity ?? "N/A"}}</td>
+                            <td>{{item.buying_price ?? "N/A"}}</td>
+                            <td>
+                                <span class="badge bg-success" v-if="item.status === 'completed'">Completed</span>
+                                <span class="badge bg-warning" v-else>Pending</span>
+                            </td>
                            
                             <td>
                               <div class="btn-group" role="group">
@@ -87,9 +91,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewInvoice(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editInvoice(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteInvoice(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewRestock(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editRestock(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteRestock(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -102,40 +106,36 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Invoice Modal -->
-              <div class="modal fade" id="viewInvoiceModal" tabindex="-1" aria-labelledby="viewInvoiceModalLabel" aria-hidden="true">
+              <!-- View Restock Modal -->
+              <div class="modal fade" id="viewRestockModal" tabindex="-1" aria-labelledby="viewRestockModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Invoice Details</h5>
+                      <h5 class="modal-title">View Restock Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedInvoice">
+                    <div class="modal-body" v-if="selectedRestock">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedInvoice.customer_id">
-                          <strong>Customer:</strong> <br> {{ selectedInvoice.customer.name }}
+                        <div class="col-md-6" v-if="selectedRestock.supply_id">
+                          <strong>Product:</strong> <br> {{ selectedRestock.supply.item }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedInvoice.invoice_number">
-                          <strong>Invoice Number:</strong> <br> {{ selectedInvoice.invoice_number }}
+                        <div class="col-md-6" v-if="selectedRestock.supplier_id">
+                          <strong>Supplier:</strong> <br> {{ selectedRestock.supplier.name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedInvoice.invoice_date">
-                          <strong>Invoice Date:</strong> <br> {{ selectedInvoice.invoice_date }}
+                        <div class="col-md-6" v-if="selectedRestock.quantity">
+                          <strong>Quantity:</strong> <br> {{ selectedRestock.quantity }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedInvoice.due_date">
-                          <strong>Due Date:</strong> <br> {{ selectedInvoice.due_date }}
+                        <div class="col-md-6" v-if="selectedRestock.buying_price">
+                          <strong>Buying Price:</strong> <br> KES {{ selectedRestock.buying_price }}
                         </div>
-
-                        <div class="col-md-6" v-if="selectedInvoice.total_amount">
-                          <strong>Amount:</strong> <br> {{ selectedInvoice.total_amount }}
-                        </div>                        
 
                       </div>
                     </div>
@@ -149,47 +149,52 @@
               </div>
 
 
-                <!-- Add Invoice Modal -->
-                <div class="modal fade" id="AddInvoiceModal" tabindex="-1" aria-labelledby="AddInvoiceModalLabel" aria-hidden="true">
+                <!-- Add Restock Modal -->
+                <div class="modal fade" id="addRestockModal" tabindex="-1" aria-labelledby="addRestockModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddInvoiceModalLabel">Add Invoice</h5>
+                        <h5 class="modal-title" id="addRestockModalLabel">Add Restock</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- Customer Name -->
+                          <!-- Product Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Customer*</label>
-                            <select name="customer" v-model="data.customer_id" class="form-select" id="customer">
-                                <option value="0" selected disabled>Select Customer</option>
-                                <option v-for="customer in customers" :value="customer.id"
-                                :selected="customer.id == data.customer_id" :key="customer.id">{{ customer.name}} </option>
+                            <label class="form-label">Product*</label>
+                            <select name="supply" v-model="data.supply_id" class="form-select" id="supply">
+                                <option value="0" selected disabled>Select Product</option>
+                                <option v-for="item in supplies" :value="item.id"
+                                :selected="item.id == data.supply_id" :key="item.id">{{ item.item}} </option>
     
                             </select>
                           </div>
 
-                          <!-- Invoice Date -->
+                          <!-- Email -->
                           <div class="col-md-6">
-                            <label class="form-label">Invoice Date</label>
-                            <input type="date" id="invoice_date" class="form-control" v-model="data.invoice_date" required>
+                            <label class="form-label">Supplier</label>
+                            <select name="supplier" v-model="data.supplier_id" class="form-select" id="supplier">
+                                <option value="0" selected disabled>Select Supplier</option>
+                                <option v-for="supplier in suppliers" :value="supplier.id"
+                                :selected="supplier.id == data.supplier_id" :key="supplier.id">{{ supplier.name}} </option>
+    
+                            </select>
+                        </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity" class="form-control" v-model="data.quantity">
                           </div>
 
-                          <!-- Due Date -->
+                          <!-- Buying Price -->
                           <div class="col-md-6">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" id="due_date" class="form-control" v-model="data.due_date">
-                          </div>
-
-                          <!-- Amount -->
-                          <div class="col-md-6">
-                            <label class="form-label">Amount</label>
-                            <input type="number" id="total_amount" class="form-control" v-model="data.total_amount">
-                          </div>
+                            <label class="form-label">Buying Price</label>
+                            <input type="number" id="buying_price" class="form-control" v-model="data.buying_price">
+                          </div>                          
 
                         </form>
                       </div>
@@ -207,46 +212,53 @@
                 </div>
 
 
-                <!-- EDIT Invoice MODAL -->
-                <div class="modal fade" id="EditInvoiceModal" tabindex="-1" aria-labelledby="EditInvoiceModalLabel" aria-hidden="true">
+                <!-- Edit Restock Modal -->
+                <div class="modal fade" id="EditRestockModal" tabindex="-1" aria-labelledby="EditRestockModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Invoice</h5>
+                        <h5 class="modal-title">Edit Restock</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3">
 
+                          <!-- Product Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Customer</label>
-                            <select name="customer" v-model="form.customer_id" class="form-select" id="customer_edit">
-                                <option value="0" selected disabled>Select Customer</option>
-                                <option v-for="customer in customers" :value="customer.id"
-                                :selected="customer.id == form.customer_id" :key="customer.id">{{ customer.name}} </option>
+                            <label class="form-label">Product*</label>
+                            <select name="supply" v-model="form.supply_id" class="form-select" id="supply_edit">
+                                <option value="0" selected disabled>Select Product</option>
+                                <option v-for="item in supplies" :value="item.id"
+                                :selected="item.id == form.supply_id" :key="item.id">{{ item.item}} </option>
     
                             </select>
                           </div>
 
-                          <!-- Invoice Date -->
+                          <!-- Email -->
                           <div class="col-md-6">
-                            <label class="form-label">Invoice Date</label>
-                            <input type="date" id="invoice_date_edit" class="form-control" v-model="form.invoice_date" required>
+                            <label class="form-label">Supplier</label>
+                            <select name="supplier" v-model="form.supplier_id" class="form-select" id="supplier_edit">
+                                <option value="0" selected disabled>Select Supplier</option>
+                                <option v-for="supplier in suppliers" :value="supplier.id"
+                                :selected="supplier.id == form.supplier_id" :key="supplier.id">{{ supplier.name}} </option>
+    
+                            </select>
+                        </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity_edit" class="form-control" v-model="form.quantity">
                           </div>
 
-                          <!-- Due Date -->
+                          <!-- Buying Price -->
                           <div class="col-md-6">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" id="due_date_edit" class="form-control" v-model="form.due_date">
-                          </div>
+                            <label class="form-label">Buying Price</label>
+                            <input type="number" id="buying_price_edit" class="form-control" v-model="form.buying_price">
+                          </div>                           
 
-                          <!-- Amount -->
-                          <div class="col-md-6">
-                            <label class="form-label">Amount</label>
-                            <input type="number" id="total_amount_edit" class="form-control" v-model="form.total_amount">
-                          </div>                          
 
                         </form>
                       </div>
@@ -291,52 +303,49 @@
     export default {
       data() {
         return {
-            customers: [],
-            invoices: [],
-            selectedInvoice: {},
+            supplies: [],
+            suppliers: [],
+            restocks: [],
+            selectedRestock: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD invoice
-              customer_id: "",
-              invoice_number: "",
-              invoice_date: "",
-              due_date: "",
-              total_amount: "",
-              status: "pending"
+            data: {        // Add restock
+                supply_id: "",
+                supplier_id: "",
+                quantity: "",
+                buying_price: "",
             },
 
-            form: {        // EDIT invoice
-              customer_id: "",
-              invoice_number: "",
-              invoice_date: "",
-              due_date: "",
-              total_amount: "",
-              status: "pending"
+            form: {        // Edit restock
+                id: "",
+                supply_id: "",
+                supplier_id: "",
+                quantity: "",
+                buying_price: "",
             }
         }
       },      
       methods: {                
-        viewInvoice(invoice)
+        viewRestock(restock)
         {
-          console.log(this.selectedInvoice)
-          this.selectedInvoice = invoice;
+          console.log(this.selectedRestock)
+          this.selectedRestock = restock;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewInvoiceModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewRestockModal'));
           modal.show();
         },
-        editInvoice(invoice) {
+        editRestock(restock) {
         this.form = {
-            id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            invoice_date: invoice.invoice_date,
-            due_date: invoice.due_date,
-            total_amount: invoice.total_amount
+            supply_id: restock.supply_id,
+            supplier_id: restock.supplier_id,
+            quantity: restock.quantity,
+            buying_price: restock.buying_price,
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditInvoiceModal')
+            document.getElementById('EditRestockModal')
         );
         modal.show();
         },
@@ -344,12 +353,19 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('customer_edit').classList.add('is-invalid');
+        if (!this.form.supply_id) {
+            document.getElementById('supply_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('customer_edit').classList.remove('is-invalid');
+            document.getElementById('supply_edit').classList.remove('is-invalid');
         }
+
+        if (!this.form.supplier_id) {
+            document.getElementById('supplier_edit').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('supplier_edit').classList.remove('is-invalid');
+        }        
 
         return isValid;
         },
@@ -359,12 +375,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/invoices/${this.form.id}`, this.form);
+            await axios.put(`/api/restocks/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Invoice updated successfully', 'success');
+            toast.fire('Success!', 'Restock updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditInvoiceModal')
+            document.getElementById('editRestockModal')
             );
             modal.hide();
 
@@ -374,7 +390,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update restock',
             'error'
             );
         } finally {
@@ -382,10 +398,10 @@
         }
         },
 
-        addInvoice()
+        addRestock()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddInvoiceModal'));
+          const modal = new bootstrap.Modal(document.getElementById('addRestockModal'));
           modal.show();
         },
         async submit() {
@@ -412,12 +428,19 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.customer_id) {
-            document.getElementById('customer').classList.add('is-invalid');
+        if (!this.data.supply_id) {
+            document.getElementById('supply').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('customer').classList.remove('is-invalid');
+            document.getElementById('supply').classList.remove('is-invalid');
         }
+
+        if (!this.data.supplier_id) {
+            document.getElementById('supplier').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('supplier').classList.remove('is-invalid');
+        }        
 
         return isValid;
         },
@@ -427,22 +450,22 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/invoices', this.data);
+            await axios.post('/api/restocks', this.data);
 
-            toast.fire('Success!', 'Invoice added successfully', 'success');
+            toast.fire('Success!', 'Restock added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddInvoiceModal')
+            document.getElementById('addRestockModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            customer_id: "",
-            invoice_number: "",
-            invoice_date: "",
-            due_date: "",
-            total_amount: ""
+                supply_id: "",
+                supplier_id: "",
+                status: "pending",
+                quantity: "",
+                buying_price: ""
             };
 
             this.loadLists();
@@ -461,7 +484,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteInvoice(id){
+        deleteRestock(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -473,10 +496,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/invoices/'+id).then(() => {
+                  axios.delete('/api/restocks/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Invoice has been deleted.',
+                    'Restock has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -495,14 +518,15 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/invoices')
+          axios.get('/api/restocks')
             .then((response) => {
-              this.invoices = response.data.draftinvoices;
-              this.customers = response.data.customers;
+              this.restocks = response.data.restocks;
+              this.supplies = response.data.supplies;
+              this.suppliers = response.data.suppliers;
               console.log(response)
 
               setTimeout(() => {
-                $("#InvoicesTable").DataTable();
+                $("#RestocksTable").DataTable();
               }, 10);
             })
             .catch((error) => {

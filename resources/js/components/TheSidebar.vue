@@ -15,7 +15,7 @@
       <!-- Personal Transactions -->
       <li v-show="userRole === 'personal'" class="nav-item">
         <router-link to="/personal-transactions" custom v-slot="{ href, navigate }">
-          <a :href="href" class="nav-link" @click="navigate">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
             <i class="bi bi-wallet2"></i>
             <span>My Transactions</span>
           </a>
@@ -33,25 +33,15 @@
 
 
       <!-- Payments -->
-      <li v-show="userRole === 'office'" class="nav-item">
+      <!-- <li v-show="userRole === 'office'" class="nav-item">
         <router-link to="/payments" custom v-slot="{ href, navigate }">
-          <a :href="href" class="nav-link" @click="navigate">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
             <i class="bi bi-cash-coin"></i>
             <span>Payments</span>
           </a>
         </router-link>
-      </li>
-
-      <!-- Supplies -->
-      <li v-show="userRole === 'office'" class="nav-item">
-        <router-link to="/supplies" custom v-slot="{ href, navigate }">
-          <a :href="href" class="nav-link" @click="navigate">
-            <i class="bi bi-box-seam"></i>
-            <span>Supplies</span>
-          </a>
-        </router-link>
-      </li>
-
+      </li> -->
+      
       <!-- Configurations -->
       <li v-show="userRole === 'personal'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#listing-nav">
@@ -123,7 +113,7 @@
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="invoice-nav" class="nav-content collapse">
-          <li><RouterLink to="/draft-invoices" class="nav-link"><i class="bi bi-circle"></i> Draft</RouterLink></li>
+          <li><RouterLink to="/pending-invoices" class="nav-link"><i class="bi bi-circle"></i> Pending</RouterLink></li>
           <li><RouterLink to="/invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
         </ul>
       </li>
@@ -138,7 +128,7 @@
 
       <!-- Profile -->
       <li class="nav-item mt-3">
-        <RouterLink to="/profile" class="nav-link">
+        <RouterLink to="/profile" :class="{ active: isActive }" class="nav-link">
           <i class="bi bi-person-circle"></i>
           <span>My Profile</span>
         </RouterLink>

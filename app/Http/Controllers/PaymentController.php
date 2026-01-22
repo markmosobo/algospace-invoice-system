@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -15,6 +16,13 @@ class PaymentController extends Controller
     {
         $payments = Payment::with('invoice')->get();
         $invoices = Invoice::with('customer')->where('status', 'pending')->get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved payments'
+        ]);
+
         // Return as JSON
         return response()->json([
             'payments' => $payments,
@@ -35,6 +43,15 @@ class PaymentController extends Controller
             'mpesa_code'   => 'required_if:method,mpesa|string|max:20',
         ]);
 
+        $invoice = Invoice::find($request->invoice_id);
+        if($invoice->amount == $request->amount)
+            {
+                $invoice->update([
+                    'status'  => 'paid',
+                ]);
+            }
+            
+
         $payment = Payment::create([
             'invoice_id'   => $request->invoice_id,
             'amount'       => $request->amount,
@@ -42,6 +59,12 @@ class PaymentController extends Controller
             'method'       => $request->method,
             'mpesa_code'   => $request->mpesa_code ?? null,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created payment id '.$payment->id
+        ]);        
 
         return response()->json([
             'message' => 'Payment recorded successfully',
@@ -83,6 +106,12 @@ class PaymentController extends Controller
             'mpesa_code'   => $request->mpesa_code ?? $payment->mpesa_code,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated payment id '.$payment->id
+        ]);         
+
         return response()->json([
             'message' => 'Payment updated successfully',
             'payment' => $payment
@@ -96,6 +125,13 @@ class PaymentController extends Controller
     public function destroy(string $id)
     {
         Payment::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted payment id '.$id
+        ]); 
+
         return response()->json(['message' => 'Deleted']);
     }
 }

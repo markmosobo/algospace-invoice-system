@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use App\Models\Supplier;
 
@@ -13,6 +14,13 @@ class SupplierController extends Controller
     public function index()
     {
         $suppliers = Supplier::get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved suppliers'
+        ]); 
+
         return response()->json($suppliers);        
     }
 
@@ -34,6 +42,12 @@ class SupplierController extends Controller
             'email' => $request->email,
             'address' => $request->address,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created supplier id '.$supplier->id
+        ]);         
 
         return response()->json([
             'message' => 'Supplier created successfully',
@@ -72,6 +86,12 @@ class SupplierController extends Controller
             'address' => $request->address,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated supplier id '.$supplier->id
+        ]);        
+
         return response()->json([
             'message' => 'Supplier updated successfully',
             'supplier' => $supplier
@@ -84,6 +104,13 @@ class SupplierController extends Controller
     public function destroy(string $id)
     {
         Supplier::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted supplier id '.$id
+        ]);
+
         return response()->json(['message' => 'Deleted']);        
     }
 }

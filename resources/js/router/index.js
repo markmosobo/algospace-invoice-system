@@ -8,9 +8,10 @@ import Supplies from '../views/Supplies.vue';
 import QuickSale from '../views/QuickSale.vue';
 import Invoices from '../views/Invoices.vue';
 import Payments from '../views/Payments.vue';
-import DraftInvoices from '../views/DraftInvoices.vue';
+import PendingInvoices from '../views/PendingInvoices.vue';
 import Customers from '../views/Customers.vue';
 import SystemLogs from '../views/SystemLogs.vue';
+import Restocks from '../views/Restocks.vue';
 
 const routes = [
   // Public routes
@@ -21,8 +22,9 @@ const routes = [
   // Protected routes
   { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true } },
   { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true } },
+  { path: '/restocks', name: 'restocks', component: Restocks, meta: { requiresAuth: true } },
   { path: '/quick-sale', name: 'quick-sale', component: QuickSale, meta: { requiresAuth: true } },
-  { path: '/draft-invoices', name: 'draft-invoices', component: DraftInvoices, meta: { requiresAuth: true } },
+  { path: '/pending-invoices', name: 'pending-invoices', component: PendingInvoices, meta: { requiresAuth: true } },
   { path: '/invoices', name: 'invoices', component: Invoices, meta: { requiresAuth: true } },
   { path: '/payments', name: 'payments', component: Payments, meta: { requiresAuth: true } },
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },

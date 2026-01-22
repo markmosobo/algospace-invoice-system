@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -13,6 +14,13 @@ class ServiceController extends Controller
     public function index()
     {
         $services = Service::get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved services'
+        ]); 
+
         return response()->json($services);
     }
 
@@ -34,6 +42,12 @@ class ServiceController extends Controller
             'rate' => $request->rate,
             'unit' => $request->unit,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created service id '.$service->id
+        ]);         
 
         return response()->json([
             'message' => 'Service created successfully',
@@ -73,6 +87,12 @@ class ServiceController extends Controller
             'unit' => $request->unit,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated service id '.$service->id
+        ]);         
+
         return response()->json([
             'message' => 'Service updated successfully',
             'service' => $service
@@ -86,6 +106,13 @@ class ServiceController extends Controller
     public function destroy(string $id)
     {
         Service::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted service id '.$id
+        ]); 
+
         return response()->json(['message' => 'Deleted']);
     }
 }

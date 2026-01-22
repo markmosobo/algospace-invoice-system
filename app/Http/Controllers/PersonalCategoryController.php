@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use App\Models\PersonalCategory;
 
@@ -13,6 +14,13 @@ class PersonalCategoryController extends Controller
     public function index()
     {
         $personalCategories = PersonalCategory::all();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved personal categories'
+        ]);
+
         return response()->json($personalCategories);         
     }
 
@@ -30,6 +38,12 @@ class PersonalCategoryController extends Controller
         $personalCategory = PersonalCategory::create([
             'name' => $request->name
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created personal category id '.$personalCategory->id
+        ]);        
 
         return response()->json([
             'message' => 'Personal category created successfully',
@@ -75,6 +89,12 @@ class PersonalCategoryController extends Controller
         $personalCategory->name = $request->name;
         $personalCategory->save();
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created personal category id '.$personalCategory->id
+        ]);        
+
         return response()->json([
             'message' => 'Personal category updated successfully',
             'personalCategory' => $personalCategory
@@ -95,6 +115,12 @@ class PersonalCategoryController extends Controller
         }
 
         $personalCategory->delete();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted personal category id '.$id
+        ]);        
 
         return response()->json([
             'message' => 'Personal category deleted successfully'

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceItem;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
 class InvoiceItemController extends Controller
@@ -13,6 +14,13 @@ class InvoiceItemController extends Controller
     public function index()
     {
         $invoiceitems = InvoiceItem::get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved invoice items'
+        ]);
+
         return response()->json($invoiceitems);
     }
 
@@ -40,6 +48,12 @@ class InvoiceItemController extends Controller
             'unit_price' => $request->unit_price,
             'total'      => $total,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created invoice item id '.$invoiceItem->id
+        ]);        
 
         return response()->json([
             'message' => 'Invoice item created successfully',
@@ -85,6 +99,12 @@ class InvoiceItemController extends Controller
             'total'      => $total,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated invoice item id '.$invoiceItem->id
+        ]);        
+
         return response()->json([
             'message' => 'Invoice item updated successfully',
             'invoice_item' => $invoiceItem
@@ -98,6 +118,13 @@ class InvoiceItemController extends Controller
     public function destroy(string $id)
     {
         InvoiceItem::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted invoice item id '.$id
+        ]);
+
         return response()->json(['message' => 'Deleted']);
     }
 }

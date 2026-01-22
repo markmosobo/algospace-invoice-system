@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,13 @@ class UserController extends Controller
     public function index()
     {
         $users = User::get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved users'
+        ]);  
+
         return response()->json($users);
     }
 
@@ -35,6 +43,12 @@ class UserController extends Controller
             'email'    => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created user id '.$user->id
+        ]);         
 
         return response()->json([
             'message' => 'User created successfully',
@@ -80,6 +94,12 @@ class UserController extends Controller
         // Update the user
         $user->update($data);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated details for user id '.$user->id
+        ]);         
+
         return response()->json([
             'message' => 'User updated successfully',
             'user'    => $user
@@ -92,6 +112,13 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         User::destroy($id);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted user id '.$id
+        ]); 
+
         return response()->json(['message' => 'Deleted']);
     }
 }

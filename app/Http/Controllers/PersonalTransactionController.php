@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PersonalTransaction;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -14,6 +15,13 @@ class PersonalTransactionController extends Controller
     public function index()
     {
         $personalTransactions = PersonalTransaction::all();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved personal transactions'
+        ]);
+
         return response()->json($personalTransactions);         
     }
 
@@ -46,6 +54,12 @@ class PersonalTransactionController extends Controller
             'description' => $request->description,
             'transaction_date' => $transactionDate,
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created personal transaction id '.$personalTransaction->id
+        ]);        
 
         return response()->json([
             'message' => 'Personal transaction created successfully',
@@ -104,6 +118,12 @@ class PersonalTransactionController extends Controller
 
         $transaction->save();
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated personal transaction id '.$transaction->id
+        ]);         
+
         return response()->json([
             'message' => 'Transaction updated successfully',
             'transaction' => $transaction
@@ -124,6 +144,12 @@ class PersonalTransactionController extends Controller
         }
 
         $transaction->delete();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted personal transaction id '.$id
+        ]);         
 
         return response()->json([
             'message' => 'Transaction deleted successfully'

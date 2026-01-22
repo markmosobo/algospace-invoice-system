@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use App\Models\DiaryEntry;
 use Carbon\Carbon;
@@ -14,6 +15,13 @@ class DiaryEntryController extends Controller
     public function index()
     {
         $diaryEntries = DiaryEntry::orderBy('entry_date', 'desc')->get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved diary entries'
+        ]);
+
         return response()->json($diaryEntries);        
     }
 
@@ -51,6 +59,12 @@ class DiaryEntryController extends Controller
             'entry_date' => $entryDate,
             'status' => $request->status ?? 'pending',
         ]);
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' created diary entry id '.$diaryEntry->id
+        ]);          
 
         return response()->json([
             'message' => 'Diary entry created successfully',
@@ -113,6 +127,12 @@ class DiaryEntryController extends Controller
 
         $diaryEntry->save();
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated diary entry id '.$id
+        ]);           
+
         return response()->json([
             'message' => 'Diary entry updated successfully',
             'diaryEntry' => $diaryEntry
@@ -133,6 +153,12 @@ class DiaryEntryController extends Controller
         }
 
         $diaryEntry->delete();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' deleted entry id '.$diaryEntry->id
+        ]);           
 
         return response()->json([
             'message' => 'Diary entry deleted successfully'

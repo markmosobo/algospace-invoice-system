@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Quick sales <span>| Sales at AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Quick Sales <span>| Sales at AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -138,66 +138,64 @@
                         <span class="badge bg-success" v-if="step === 3">Step 3: Payment</span>
                         </div>
 
-<!-- STEP 1: CUSTOMER -->
-<div v-if="step === 1">
+                        <!-- STEP 1: CUSTOMER -->
+                        <div v-if="step === 1">
 
-  <!-- RADIO: Choose Existing or New -->
-  <div class="mb-3">
-    <label class="form-label">Customer Type</label>
-    <div class="btn-group w-100" role="group">
-      <button
-        type="button"
-        class="btn"
-        :class="customerForm.type === 'existing' ? 'btn-success' : 'btn-outline-secondary'"
-        @click="customerForm.type = 'existing'"
-      >
-        Existing
-      </button>
-      <button
-        type="button"
-        class="btn"
-        :class="customerForm.type === 'new' ? 'btn-success' : 'btn-outline-secondary'"
-        @click="customerForm.type = 'new'"
-      >
-        New
-      </button>
-    </div>
-  </div>
+                        <!-- RADIO: Choose Existing or New -->
+                        <div class="mb-3">
+                            <label class="form-label">Customer Type</label>
+                            <div class="btn-group w-100" role="group">
+                            <button
+                                type="button"
+                                class="btn"
+                                :class="customerForm.type === 'existing' ? 'btn-success' : 'btn-outline-secondary'"
+                                @click="customerForm.type = 'existing'"
+                            >
+                                Existing
+                            </button>
+                            <button
+                                type="button"
+                                class="btn"
+                                :class="customerForm.type === 'new' ? 'btn-success' : 'btn-outline-secondary'"
+                                @click="customerForm.type = 'new'"
+                            >
+                                New
+                            </button>
+                            </div>
+                        </div>
 
-  <!-- EXISTING CUSTOMER SELECT -->
-  <div v-if="customerForm.type === 'existing'" class="col-md-12">
-    <label class="form-label">Select Customer</label>
-    <select class="form-select" v-model="customerForm.customer_id">
-      <option value="">-- Search & Select --</option>
-      <option v-for="c in customers" :key="c.id" :value="c.id">
-        {{ c.name }} ({{ c.phone || 'No Phone' }})
-      </option>
-    </select>
-  </div>
+                        <!-- EXISTING CUSTOMER SELECT -->
+                        <div v-if="customerForm.type === 'existing'" class="col-md-12">
+                            <label class="form-label">Select Customer</label>
+                            <select class="form-select" v-model="customerForm.customer_id">
+                            <option value="">-- Search & Select --</option>
+                            <option v-for="c in customers" :key="c.id" :value="c.id">
+                                {{ c.name }} ({{ c.phone || 'No Phone' }})
+                            </option>
+                            </select>
+                        </div>
 
-  <!-- NEW CUSTOMER FORM -->
-  <div v-if="customerForm.type === 'new'" class="row g-3">
+                        <!-- NEW CUSTOMER FORM -->
+                        <div v-if="customerForm.type === 'new'" class="row g-3">
 
-    <div class="col-md-4">
-      <label class="form-label">Name*</label>
-      <input type="text" class="form-control" v-model="customerForm.name" required>
-    </div>
+                            <div class="col-md-4">
+                            <label class="form-label">Name*</label>
+                            <input type="text" class="form-control" v-model="customerForm.name" required>
+                            </div>
 
-    <div class="col-md-4">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-control" v-model="customerForm.email">
-    </div>
+                            <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" v-model="customerForm.email">
+                            </div>
 
-    <div class="col-md-4">
-      <label class="form-label">Phone</label>
-      <input type="text" class="form-control" v-model="customerForm.phone">
-    </div>
+                            <div class="col-md-4">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" v-model="customerForm.phone">
+                            </div>
 
-  </div>
+                        </div>
 
-</div>
-
-
+                        </div>
 
                         <!-- STEP 2: INVOICE -->
                         <div v-if="step === 2">
@@ -320,6 +318,7 @@ export default {
         this.paymentForm = {
         amount: '',
         payment_date: new Date().toISOString().slice(0, 10),
+        due_date: new Date().toISOString().slice(0, 10),
         method: 'cash'
         };        
         // Show the modal after fetching data
@@ -350,23 +349,27 @@ export default {
         due_date: this.invoiceForm.due_date,
         total_amount: this.invoiceForm.total_amount
         });
+        console.log("grace", invoice)
 
         // Create payment
         await axios.post('/api/payments', {
-        invoice_id: invoice.data.id,
+        invoice_id: invoice.data.invoice.id,
         amount: this.paymentForm.amount,
         payment_date: this.paymentForm.payment_date,
         method: this.paymentForm.method,
         mpesa_code: this.paymentForm.mpesa_code
         });
 
+        // Close modal
+        const modal = new bootstrap.Modal(document.getElementById('quickSaleWizardModal'));
+        modal.hide(); 
+
         toast.fire({
         icon: 'success',
         title: 'Quick sale created successfully'
         });
 
-        // Close modal
-        $('#quickSaleWizardModal').modal('hide');
+       
         this.loadLists();
 
     } catch (err) {
@@ -396,7 +399,7 @@ export default {
         this.initializing = true; // Start spinner
         axios.get('/api/quick-sales')
         .then((response) => {
-            this.sales = response.data.quickSales;
+            this.quickSales = response.data.quickSales;
             this.customers = response.data.customers;
             console.log(response)
 

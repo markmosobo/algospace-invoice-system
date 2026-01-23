@@ -8,9 +8,14 @@ use App\Models\InvoiceItem;
 class Service extends Model
 {
     protected $fillable = [
+        'id',
         'name',
-        'rate',
-        'unit',
+        'category',
+        'price',
+        'unit',        // page, document, hour, service, bundle
+        'is_bundle',   // boolean
+        'created_at',
+        'updated_at',
     ];
 
     // Relationships

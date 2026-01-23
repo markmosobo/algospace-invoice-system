@@ -24,28 +24,32 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
+Route::middleware(['auth:api'])->group(function () {
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+    Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('invoices', InvoiceController::class);
+    Route::apiResource('invoice-items', InvoiceItemController::class);
+    Route::apiResource('payments', PaymentController::class);
+    Route::apiResource('services', ServiceController::class);
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('suppliers', SupplierController::class);
+    Route::apiResource('restocks', RestockController::class);
+    Route::apiResource('supplies', SupplyController::class);
+    Route::apiResource('personal-categories', PersonalCategoryController::class);
+    Route::apiResource('personal-accounts', PersonalAccountController::class);
+    Route::apiResource('personal-transactions', PersonalTransactionController::class);
+    Route::apiResource('diary-entries', DiaryEntryController::class);
+    Route::apiResource('system-logs', SystemLogController::class);
 
-Route::apiResource('customers', CustomerController::class);
-Route::apiResource('invoices', InvoiceController::class);
-Route::apiResource('invoice-items', InvoiceItemController::class);
-Route::apiResource('payments', PaymentController::class);
-Route::apiResource('services', ServiceController::class);
-Route::apiResource('users', UserController::class);
-Route::apiResource('suppliers', SupplierController::class);
-Route::apiResource('restocks', RestockController::class);
-Route::apiResource('supplies', SupplyController::class);
-Route::apiResource('personal-categories', PersonalCategoryController::class);
-Route::apiResource('personal-accounts', PersonalAccountController::class);
-Route::apiResource('personal-transactions', PersonalTransactionController::class);
-Route::apiResource('diary-entries', DiaryEntryController::class);
-Route::apiResource('system-logs', SystemLogController::class);
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/quick-sales', [ListController::class, 'quickSales']);
+    Route::post('/restock-product', [SupplyController::class, 'restock']);
 
-Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
-Route::get('/quick-sales', [ListController::class, 'quickSales']);
-Route::post('/restock-product', [SupplyController::class, 'restock']);
+    Route::put('/customers/{customer}', [CustomerController::class, 'update']);
 
-Route::put('/customers/{customer}', [CustomerController::class, 'update']);
+    Route::delete('/sales/{id}', [PaymentController::class, 'destroySale']);
+    Route::put('/sales/{id}', [PaymentController::class, 'updateSale']);
+    Route::get('/sales/{id}', [PaymentController::class, 'showSale']);
+    Route::post('/payments/{id}/complete', [PaymentController::class, 'complete']);
+
+});

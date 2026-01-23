@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\Service;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
@@ -28,6 +29,7 @@ class ListController extends Controller
 
         // Load customers for wizard dropdown
         $customers = Customer::select('id', 'name','phone')->get();
+        $services = Service::get();
 
         //record system log
         SystemLog::create([
@@ -37,7 +39,8 @@ class ListController extends Controller
 
         return response()->json([
             'quickSales' => $sales,
-            'customers' => $customers
+            'customers' => $customers,
+            'services' => $services
         ]);
     }
     

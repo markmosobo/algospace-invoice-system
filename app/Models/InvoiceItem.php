@@ -11,9 +11,10 @@ class InvoiceItem extends Model
     protected $fillable = [
         'invoice_id',
         'service_id',
+        'service_name',
         'quantity',
         'unit_price',
-        'total',
+        'line_total'
     ];
 
     // Relationships

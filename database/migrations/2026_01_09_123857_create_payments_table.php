@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('payment_date')->useCurrent(); // Payment date
             $table->enum('method', ['cash', 'mpesa', 'card', 'other'])->default('cash'); // Payment method
             $table->string('mpesa_code')->nullable(); // optional file path
+            $table->text('comment')->nullable();
             $table->timestamps();
 
             // Foreign key constraint

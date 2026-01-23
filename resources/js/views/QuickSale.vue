@@ -99,6 +99,9 @@
                                 <a @click="viewSale(sale)" class="dropdown-item" href="#">
                                 <i class="ri-eye-fill mr-2"></i>View
                                 </a>
+                                <a v-if="sale.status === 'pending'" @click="completePayment(sale)" class="dropdown-item" href="#">
+                                    <i class="ri-check-fill mr-2"></i>Complete Payment
+                                </a>
                                 <a @click="editSale(sale)" class="dropdown-item" href="#">
                                 <i class="ri-pencil-fill mr-2"></i>Edit
                                 </a>
@@ -199,7 +202,57 @@
 
                         <!-- STEP 2: INVOICE -->
                         <div v-if="step === 2">
+
+                        <!-- Services Dropdown -->
                         <div class="row g-3">
+                            <div class="col-md-6">
+                            <label class="form-label">Select Service</label>
+                            <select class="form-control" v-model="selectedService">
+                                <option v-for="s in services" :value="s.id">
+                                {{ s.name }} - KES {{ s.price }} / {{ s.unit }}
+                                </option>
+                            </select>
+                            </div>
+
+                            <div class="col-md-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" v-model="quantity" min="1">
+                            </div>
+
+                            <div class="col-md-3">
+                            <label class="form-label">Add</label>
+                            <button class="btn btn-primary w-100" @click="addItem">Add</button>
+                            </div>
+                        </div>
+
+                        <!-- Selected Items Table -->
+                        <div class="mt-3">
+                            <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                <th>Service</th>
+                                <th>Unit Price</th>
+                                <th>Qty</th>
+                                <th>Line Total</th>
+                                <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in invoiceForm.items" :key="item.service_id">
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.price }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.line_total }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" @click="removeItem(item.service_id)">Remove</button>
+                                </td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Due date + Total -->
+                        <div class="row g-3 mt-2">
                             <div class="col-md-6">
                             <label class="form-label">Due Date</label>
                             <input type="date" class="form-control" v-model="invoiceForm.due_date">
@@ -207,9 +260,10 @@
 
                             <div class="col-md-6">
                             <label class="form-label">Total Amount</label>
-                            <input type="number" class="form-control" v-model="invoiceForm.total_amount">
+                            <input type="number" class="form-control" :value="invoiceForm.total_amount" readonly>
                             </div>
                         </div>
+
                         </div>
 
                         <!-- STEP 3: PAYMENT -->
@@ -238,6 +292,11 @@
                             <label class="form-label">Mpesa Code</label>
                             <input type="text" class="form-control" v-model="paymentForm.mpesa_code">
                             </div>
+
+                            <div class="col-md-12">
+                            <label class="form-label">Comment</label>
+                            <textarea class="form-control" v-model="paymentForm.comment" rows="2"></textarea>
+                            </div>
                         </div>
                         </div>
 
@@ -252,6 +311,125 @@
                     </div>
                 </div>
                 </div>
+
+                <!-- Edit Modal -->
+                <div class="modal fade" id="editSaleModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Sale</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2">
+                        <label>Amount</label>
+                        <input v-model="editForm.amount" class="form-control" type="number">
+                        </div>
+                        <div class="mb-2">
+                        <label>Method</label>
+                        <select v-model="editForm.method" class="form-control">
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">Mpesa</option>
+                            <option value="bank">Bank</option>
+                        </select>
+                        </div>
+                        <div class="mb-2">
+                        <label>Payment Date</label>
+                        <input v-model="editForm.payment_date" class="form-control" type="date">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" @click="updateSale()">Save</button>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- VIEW SALE MODAL -->
+                <div class="modal fade" id="viewSaleModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                        Invoice {{ viewSaleData.invoice_no }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <!-- CUSTOMER INFO -->
+                        <div class="mb-3">
+                        <h6 class="fw-bold">Customer</h6>
+                        <p class="mb-1"><strong>Name:</strong> {{ viewSaleData.customer_name }}</p>
+                        </div>
+
+                        <hr>
+
+                        <!-- INVOICE ITEMS -->
+                        <h6 class="fw-bold">Items</h6>
+                        <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                            <th>Service</th>
+                            <th>Unit Price</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in viewSaleData.items" :key="item.id">
+                            <td>{{ item.service_name }}</td>
+                            <td>KES {{ item.unit_price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>KES {{ item.line_total }}</td>
+                            </tr>
+                        </tbody>
+                        </table>
+
+                        <hr>
+
+                        <!-- TOTALS -->
+                        <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Invoice Total:</strong> KES {{ viewSaleData.invoice_total }}</p>
+                            <p><strong>Total Paid:</strong> KES {{ viewSaleData.total_paid }}</p>
+                            <p>
+                            <strong>Status:</strong>
+                            <span
+                                class="badge"
+                                :class="viewSaleData.status === 'paid' ? 'bg-success' : 'bg-warning'"
+                            >
+                                {{ viewSaleData.status }}
+                            </span>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p><strong>Payment Method:</strong> {{ viewSaleData.method }}</p>
+                            <p><strong>Payment Date:</strong> {{ viewSaleData.payment_date }}</p>
+                            <p v-if="viewSaleData.mpesa_code">
+                            <strong>M-Pesa Code:</strong> {{ viewSaleData.mpesa_code }}
+                            </p>
+                            <p v-if="viewSaleData.comment">
+                            <strong>Comment:</strong> {{ viewSaleData.comment }}
+                            </p>
+                        </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                        </button>
+                    </div>
+
+                    </div>
+                </div>
+                </div>
+
 
                     
 
@@ -282,17 +460,40 @@ export default {
   data() {
     return {
       customers: [],
+      services: [],
       quickSales: [],
       initializing: true,
+      selectedService: null,
+      quantity: 1, 
+      viewSaleData: {
+        invoice_no: '',
+        customer_name: '',
+        items: [],
+        invoice_total: 0,
+        total_paid: 0,
+        status: '',
+        method: '',
+        payment_date: '',
+        mpesa_code: '',
+        comment: ''
+     },
+   
 
       step: 1,
       customerForm: { customer_id: null, type: 'existing', name: '', email: '', phone: '' },
-      invoiceForm: { due_date: '', total_amount: '' },
+      invoiceForm: { due_date: new Date().toISOString().substr(0, 10), total_amount: 0, items: [] },
       paymentForm: { 
         amount: '', 
         payment_date: new Date().toISOString().slice(0, 10), 
         method: 'cash',
-        mpesa_code: ''
+        mpesa_code: '',
+        comment: ''
+      },
+      editForm: {
+        id: null,
+        amount: '',
+        method: '',
+        payment_date: ''
       }
     }
   },
@@ -308,32 +509,63 @@ export default {
    },
 
   methods: {
-    addQuickSale()
-    {
+    async viewSale(sale) {
+        try {
+            const res = await axios.get(`/api/sales/${sale.id}`);
+
+            this.viewSaleData = res.data;
+
+            const modal = new bootstrap.Modal(
+            document.getElementById('viewSaleModal')
+            );
+            modal.show();
+
+        } catch (err) {
+            toast.fire({
+            icon: 'error',
+            title: 'Failed to load sale details'
+            });
+        }
+    },
+
+    addQuickSale() {
         // Reset wizard state
         this.step = 1;
 
         this.customerForm = { name: '', email: '', phone: '' };
-        this.invoiceForm = { due_date: '', total_amount: '' };
+        this.invoiceForm = { 
+            due_date: new Date().toISOString().substr(0, 10), 
+            total_amount: 0, 
+            items: [] // <--- important
+        };
         this.paymentForm = {
-        amount: '',
-        payment_date: new Date().toISOString().slice(0, 10),
-        due_date: new Date().toISOString().slice(0, 10),
-        method: 'cash'
+            amount: '',
+            payment_date: new Date().toISOString().slice(0, 10),
+            due_date: new Date().toISOString().slice(0, 10),
+            method: 'cash',
+            mpesa_code: ''
         };        
+
         // Show the modal after fetching data
         const modal = new bootstrap.Modal(document.getElementById('quickSaleWizardModal'));
         modal.show();
     },
+
     // Wizard Controls
-    nextStep() { this.step++; },
+    nextStep() {
+    // If going from step 2 -> step 3, auto-fill amount
+    if (this.step === 2) {
+        this.paymentForm.amount = this.invoiceForm.total_amount;
+    }
+
+    this.step++;
+    },
     prevStep() { this.step--; },
 
     async submitWizard() {
     try {
         let customerId = this.customerForm.customer_id;
 
-        // If no customer selected, create new customer
         if (!customerId) {
         const res = await axios.post('/api/customers', {
             name: this.customerForm.name,
@@ -343,33 +575,36 @@ export default {
         customerId = res.data.id;
         }
 
-        // Create invoice
         const invoice = await axios.post('/api/invoices', {
         customer_id: customerId,
         due_date: this.invoiceForm.due_date,
-        total_amount: this.invoiceForm.total_amount
+        total_amount: this.invoiceForm.total_amount,
+        items: this.invoiceForm.items
         });
-        console.log("grace", invoice)
 
-        // Create payment
+        this.paymentForm.mpesa_code =
+        this.paymentForm.method === 'mpesa'
+            ? String(this.paymentForm.mpesa_code || "")
+            : "";
+
         await axios.post('/api/payments', {
         invoice_id: invoice.data.invoice.id,
         amount: this.paymentForm.amount,
         payment_date: this.paymentForm.payment_date,
         method: this.paymentForm.method,
-        mpesa_code: this.paymentForm.mpesa_code
+        mpesa_code: this.paymentForm.mpesa_code,
+        comment: this.paymentForm.comment
         });
 
-        // Close modal
-        const modal = new bootstrap.Modal(document.getElementById('quickSaleWizardModal'));
-        modal.hide(); 
+        // 🔥 CLOSE THE EXISTING MODAL
+        const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
+        modal.hide();
 
         toast.fire({
         icon: 'success',
         title: 'Quick sale created successfully'
         });
 
-       
         this.loadLists();
 
     } catch (err) {
@@ -381,19 +616,152 @@ export default {
     }
     },
 
-
     resetWizard() {
-      this.step = 1;
-      this.customerForm = { name: '', email: '', phone: '' };
-      this.invoiceForm = { due_date: '', total_amount: '' };
-      this.paymentForm = {
-        amount: '',
-        payment_date: new Date().toISOString().slice(0, 10),
-        method: 'cash',
-        mpesa_code: ''
-      };
+        this.step = 1;
+        this.customerForm = { name: '', email: '', phone: '' };
+        this.invoiceForm = { 
+            due_date: new Date().toISOString().substr(0, 10), 
+            total_amount: 0, 
+            items: [] // <--- important
+        };
+        this.paymentForm = {
+            amount: '',
+            payment_date: new Date().toISOString().slice(0, 10),
+            method: 'cash',
+            mpesa_code: ''
+        };
     },
 
+    addItem() {
+        if (!this.invoiceForm.items) this.invoiceForm.items = [];
+        if (!this.selectedService || this.quantity < 1) return;
+
+        const service = this.services.find(s => s.id === this.selectedService);
+        if (!service) return;
+
+        const item = {
+            service_id: service.id,
+            name: service.name,
+            price: service.price,
+            quantity: this.quantity,
+            line_total: service.price * this.quantity
+        };
+
+        this.invoiceForm.items.push(item);
+        this.calculateTotal();
+    },
+
+
+    removeItem(id) {
+        this.invoiceForm.items = this.invoiceForm.items.filter(i => i.service_id !== id);
+        this.calculateTotal();
+    },
+
+    calculateTotal() {
+        this.invoiceForm.total_amount = this.invoiceForm.items.reduce((acc, item) => {
+        return acc + item.line_total;
+        }, 0);
+    },
+    editSale(sale) {
+        this.editForm.id = sale.id;
+        this.editForm.amount = sale.amount;
+        this.editForm.method = sale.method;
+        this.editForm.payment_date = sale.payment_date;
+
+        // open modal
+        const modal = new bootstrap.Modal(document.getElementById('editSaleModal'));
+        modal.show();
+    },
+
+async updateSale() {
+    if (!this.editForm.id) return;
+
+    this.submitting = true;
+
+    try {
+        const res = await axios.put(
+            `/api/sales/${this.editForm.id}`,
+            this.editForm
+        );
+
+        toast.fire(
+            'Success!',
+            res.data.message || 'Sale updated successfully',
+            'success'
+        );
+
+        // close modal
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById('editSaleModal')
+        );
+        modal.hide();
+
+        // reload data
+        this.loadLists();
+
+    } catch (error) {
+        console.error(error);
+
+        toast.fire(
+            'Error!',
+            error.response?.data?.message || 'Failed to update sale',
+            'error'
+        );
+    } finally {
+        this.submitting = false;
+    }
+},
+ 
+    async completePayment(sale) {
+    try {
+        await axios.post(`/api/payments/${sale.id}/complete`);
+
+        toast.fire({
+        icon: 'success',
+        title: 'Payment marked as paid'
+        });
+
+        this.loadLists();
+    } catch (err) {
+        toast.fire({
+        icon: 'error',
+        title: 'Failed to update payment'
+        });
+    }
+    },
+
+    deleteSale(id){
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#006400',
+            cancelButtonColor: '#FFA500',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) { 
+            //send request to the server
+            axios.delete('/api/sales/'+id).then(() => {
+            toast.fire(
+            'Deleted!',
+            'Sale has been deleted.',
+            'success'
+            )
+            this.loadLists();
+            }).catch(() => {
+            Swal.fire(
+            'Failed!',
+            'There was something wrong.',
+            'warning'
+            )
+            }); 
+            }else if(result.isDenied) {
+            console.log('cancelled')
+            }
+                            
+        })
+    },
     // Load quick sales list
     loadLists() {
         this.initializing = true; // Start spinner
@@ -401,6 +769,7 @@ export default {
         .then((response) => {
             this.quickSales = response.data.quickSales;
             this.customers = response.data.customers;
+            this.services = response.data.services;
             console.log(response)
 
             setTimeout(() => {

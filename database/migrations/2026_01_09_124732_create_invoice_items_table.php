@@ -13,17 +13,18 @@ return new class extends Migration
     {
         Schema::create('invoice_items', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('invoice_id'); // Link to invoices
-            $table->unsignedBigInteger('service_id'); // Link to services
-            $table->integer('quantity')->default(1); // Quantity of service
-            $table->decimal('unit_price', 10, 2); // Price per unit at time of invoice
-            $table->decimal('total', 10, 2); // quantity * unit_price
+            $table->unsignedBigInteger('invoice_id');
+            $table->unsignedBigInteger('service_id');
+            $table->string('service_name');
+            $table->decimal('unit_price', 10, 2);
+            $table->integer('quantity');
+            $table->decimal('line_total', 10, 2);
             $table->timestamps();
 
-            // Foreign key constraints
             $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
         });
+
     }
 
     /**

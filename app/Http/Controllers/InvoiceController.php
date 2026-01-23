@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
@@ -61,6 +62,18 @@ class InvoiceController extends Controller
             'status'         => $request->status ?? 'pending',
             'total_amount'   => $request->total_amount,
         ]);
+
+        // Save items
+        foreach ($request->items as $item) {
+            InvoiceItem::create([
+                'invoice_id'   => $invoice->id,
+                'service_id'   => $item['service_id'],
+                'service_name' => $item['name'],
+                'unit_price'   => $item['price'],
+                'quantity'     => $item['quantity'],
+                'line_total'   => $item['line_total'],
+            ]);
+        }        
 
         //record system log
         SystemLog::create([

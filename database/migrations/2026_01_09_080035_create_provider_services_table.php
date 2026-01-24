@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('provider_services', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');                // Service name
-            $table->string('category');            // Printing & Copying, Bundles, etc
+            $table->string('category');            // Painting, Electrical fix, etc
 
             $table->decimal('price', 10, 2);       // Service price (KES)            
             $table->timestamps();

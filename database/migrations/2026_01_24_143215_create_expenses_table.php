@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('expenses', function (Blueprint $table) {
             $table->bigIncrements(column: 'id');
-            $table->enum('type', ['expense', 'provider_service', 'inventory']);
-            $table->unsignedBigInteger('provider_id')->nullable();
+            $table->enum('type', ['expense', 'provider_service', 'inventory','other']);
+            $table->unsignedBigInteger('service_provider_id')->nullable();
             $table->unsignedBigInteger('provider_service_id')->nullable();
             $table->string('description');
             $table->decimal('amount', 10, 2);
-            $table->date('expense_date');
+            $table->date('expense_date')->default(now());
             $table->unsignedBigInteger('invoice_id')->nullable();
             $table->timestamps();
         });

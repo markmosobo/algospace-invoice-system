@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Expenses <span>| Money paid out by AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addExpense()"
                                 >
-                                  Add Customer
+                                  Add Expense
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,12 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="ExpensesTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Description</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,10 +73,10 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
+                          <tr v-for="item in expenses" :key="item.id">
+                            <td>{{item.type}}</td>
+                            <td>{{item.amount ?? "N/A"}}</td>
+                            <td>{{item.description ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +85,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewExpense(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editExpense(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteExpense(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,35 +100,35 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+              <!-- View Expense Modal -->
+              <div class="modal fade" id="viewExpenseModal" tabindex="-1" aria-labelledby="viewExpenseModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
+                      <h5 class="modal-title">View Expense Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedExpense">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
+                        <div class="col-md-6" v-if="selectedExpense.type">
+                          <strong>Type:</strong> <br> {{ selectedExpense.type }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
+                        <div class="col-md-6" v-if="selectedExpense.service_provider_id">
+                          <strong>Provider:</strong> <br> {{ selectedExpense.serviceProvider.name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
+                        <div class="col-md-6" v-if="selectedExpense.provider_service_id">
+                          <strong>Service:</strong> <br> {{ selectedExpense.providerService.name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
+                        <div class="col-md-6" v-if="selectedExpense.amount">
+                          <strong>Amount:</strong> <br> {{ selectedExpense.amount }}
                         </div>
 
                       </div>
@@ -143,48 +143,62 @@
               </div>
 
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- Add Expense Modal -->
+                <div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title" id="addExpenseModalLabel">Add Expense</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- Hidden ID -->
-                          <input type="hidden" v-model="data.id" />
-
-                          <!-- First & Last Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="type" v-model="data.type">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
+                              <option value="expense">Expense</option>
+                              <option value="provider_service">Service(s) rendered</option>
+                              <option value="inventory">Inventory</option>
                               <option value="other">Other</option>
                             </select>
+                          </div>
+
+                          <!-- Service Provider -->
+                        <div v-if="data.type == 'provider_service'" class="col-md-6">
+                            <label class="form-label">Service Provider</label>
+                            <select name="service_provider" v-model="data.service_provider_id" class="form-select" id="service_provider">
+                                <option value="0" selected disabled>Select Provider</option>
+                                <option v-for="provider in serviceProviders" :value="provider.id"
+                                :selected="provider.id == data.service_provider_id" :key="provider.id">{{ provider.name}} </option>
+    
+                            </select>
+                        </div>
+
+                        <!-- Service(s) rendered -->
+                        <div v-if="data.type == 'provider_service'" class="col-md-6">
+                            <label class="form-label">Service(s) Rendered</label>
+                            <select name="service_provider" v-model="data.provider_service_id" class="form-select" id="service_provider">
+                                <option value="0" selected disabled>Select Service</option>
+                                <option v-for="service in providerServices" :value="service.id"
+                                :selected="service.id == data.provider_service_id" :key="service.id">{{ service.name}} </option>
+    
+                            </select>
+                        </div>                        
+
+                          <!-- Amount -->
+                          <div class="col-md-6">
+                            <label class="form-label">Amount</label>
+                            <input type="number" id="amount" class="form-control" v-model="data.amount">
+                          </div>
+
+                          <div class="col-md-6">
+                            <label class="form-label">Description</label>
+                            <textarea type="text" id="description" class="form-control" v-model="data.description"/>
+
                           </div>
 
 
@@ -204,46 +218,64 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT Expense MODAL -->
+                <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Expense</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3">
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
-
-                          <!-- Email -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="type_edit" v-model="form.type">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
+                              <option value="expense">Expense</option>
+                              <option value="provider_service">Service(s) rendered</option>
+                              <option value="inventory">Inventory</option>
                               <option value="other">Other</option>
                             </select>
                           </div>
+
+                          <!-- Service Provider -->
+                        <div v-if="form.type == 'provider_service'" class="col-md-6">
+                            <label class="form-label">Service Provider</label>
+                            <select name="service_provider" v-model="form.service_provider_id" class="form-select" id="service_provider">
+                                <option value="0" selected disabled>Select Provider</option>
+                                <option v-for="provider in serviceProviders" :value="provider.id"
+                                :selected="provider.id == form.service_provider_id" :key="provider.id">{{ provider.name}} </option>
+    
+                            </select>
+                        </div>
+
+                        <!-- Service(s) rendered -->
+                        <div v-if="form.type == 'provider_service'" class="col-md-6">
+                            <label class="form-label">Service(s) Rendered</label>
+                            <select name="service_provider" v-model="form.provider_service_id" class="form-select" id="service_provider">
+                                <option value="0" selected disabled>Select Service</option>
+                                <option v-for="service in providerServices" :value="service.id"
+                                :selected="service.id == form.provider_service_id" :key="service.id">{{ service.name}} </option>
+    
+                            </select>
+                        </div>                        
+
+                          <!-- Amount -->
+                          <div class="col-md-6">
+                            <label class="form-label">Amount</label>
+                            <input type="number" id="amount" class="form-control" v-model="form.amount">
+                          </div>
+
+                          <div class="col-md-6">
+                            <label class="form-label">Description</label>
+                            <textarea type="text" id="description" class="form-control" v-model="form.description"/>
+
+                          </div>
+
 
 
                         </form>
@@ -289,49 +321,58 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            expenses: [],
+            serviceProviders: [],
+            providerServices: [],
+            selectedExpense: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {        // ADD expense
+              id: "",
+              type: "",
+              service_provider_id: "",
+              provider_service_id: "",
+              description: "",
+              amount: "",
+              invoice_id: ""
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {        // EDIT expense
+              id: "",
+              type: "",
+              service_provider_id: "",
+              provider_service_id: "",
+              description: "",
+              amount: "",
+              invoice_id: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewExpense(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedExpense)
+          this.selectedExpense = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewExpenseModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editExpense(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            type: item.type,
+            service_provider_id: item.service_provider_id,
+            provider_service_id: item.provider_service_id,
+            description: item.description,
+            amount: item.amount,
+            expense_date: item.expense_date,
+            invoice_id: item.expense_date
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editExpenseModal')
         );
         modal.show();
         },
@@ -339,11 +380,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.type) {
+            document.getElementById('type_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('type_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +395,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/expenses/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Expense updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editExpenseModal')
             );
             modal.hide();
 
@@ -369,7 +410,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update expense',
             'error'
             );
         } finally {
@@ -377,10 +418,10 @@
         }
         },
 
-        addCustomer()
+        addExpense()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +448,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.type) {
+            document.getElementById('type').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('type').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +463,24 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/expenses', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Expenses added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('addExpenseModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              type: "",
+              service_provider_id: "",
+              provider_service_id: "",
+              description: "",
+              amount: "",
+              invoice_id: ""
             };
 
             this.loadLists();
@@ -456,7 +499,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteExpense(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +511,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/expenses/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Expense has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +533,20 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/expenses')
             .then((response) => {
-              this.customers = response.data;
+              this.expenses = response.data.expenses;
+              this.invoices = response.data.invoices;
+              this.serviceProviders = response.data.serviceProviders;
+              this.providerServices = response.data.providerServices;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#ExpensesTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching expenses list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InvoiceItem;
-use App\Models\Provider;
+use App\Models\ServiceProvider;
 use App\Models\ProviderService;
 use App\Models\Invoice;
 
@@ -12,7 +12,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'type',
-        'provider_id',
+        'service_provider_id',
         'provider_service_id',
         'description',
         'amount',
@@ -23,9 +23,9 @@ class Expense extends Model
     /**
      * Relationships
      */
-    public function provider()
+    public function serviceProvider()
     {
-        return $this->belongsTo(Provider::class);
+        return $this->belongsTo(ServiceProvider::class);
     }
 
     public function providerService()

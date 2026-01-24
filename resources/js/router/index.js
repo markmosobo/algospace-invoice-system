@@ -14,6 +14,8 @@ import Customers from '../views/Customers.vue';
 import SystemLogs from '../views/SystemLogs.vue';
 import Restocks from '../views/Restocks.vue';
 import Expenses from '../views/Expenses.vue';
+import Services from '../views/Services.vue';
+import ProviderServices from '../views/ProviderServices.vue';
 
 const routes = [
   // Public routes
@@ -33,6 +35,8 @@ const routes = [
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
   { path: '/service-providers', name: 'service-providers', component: ServiceProviders, meta: { requiresAuth: true } },
   { path: '/system-logs', name: 'system-logs', component: SystemLogs, meta: { requiresAuth: true } },
+  { path: '/services', name: 'services', component: Services, meta: { requiresAuth: true } },
+  { path: '/provider-services', name: 'provider-services', component: ProviderServices, meta: { requiresAuth: true } },
 
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
 ];

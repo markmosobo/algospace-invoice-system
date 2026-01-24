@@ -11,12 +11,15 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
 use App\Http\Controllers\PersonalCategoryController;
 use App\Http\Controllers\PersonalTransactionController;
+use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\RestockController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\UserController;
+use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +43,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('personal-transactions', PersonalTransactionController::class);
     Route::apiResource('diary-entries', DiaryEntryController::class);
     Route::apiResource('system-logs', SystemLogController::class);
+    Route::apiResource('provider-services', ProviderServiceController::class);
+    Route::apiResource('service-providers', ServiceProviderController::class);
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/quick-sales', [ListController::class, 'quickSales']);

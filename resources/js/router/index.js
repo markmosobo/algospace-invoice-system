@@ -9,9 +9,11 @@ import QuickSale from '../views/QuickSale.vue';
 import Invoices from '../views/Invoices.vue';
 import Payments from '../views/Payments.vue';
 import PendingInvoices from '../views/PendingInvoices.vue';
+import ServiceProviders from '../views/ServiceProviders.vue';
 import Customers from '../views/Customers.vue';
 import SystemLogs from '../views/SystemLogs.vue';
 import Restocks from '../views/Restocks.vue';
+import Expenses from '../views/Expenses.vue';
 
 const routes = [
   // Public routes
@@ -27,7 +29,9 @@ const routes = [
   { path: '/pending-invoices', name: 'pending-invoices', component: PendingInvoices, meta: { requiresAuth: true } },
   { path: '/invoices', name: 'invoices', component: Invoices, meta: { requiresAuth: true } },
   { path: '/payments', name: 'payments', component: Payments, meta: { requiresAuth: true } },
+  { path: '/expenses', name: 'expenses', component: Expenses, meta: { requiresAuth: true } },
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
+  { path: '/service-providers', name: 'service-providers', component: ServiceProviders, meta: { requiresAuth: true } },
   { path: '/system-logs', name: 'system-logs', component: SystemLogs, meta: { requiresAuth: true } },
 
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },

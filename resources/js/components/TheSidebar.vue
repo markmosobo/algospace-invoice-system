@@ -31,6 +31,15 @@
       </router-link>
     </li>
 
+    <li v-show="userRole === 'office'" class="nav-item">
+      <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
+        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+          <i class="bi bi-cash-stack"></i>
+          <span>Expenses</span>
+        </a>
+      </router-link>
+    </li>
+
 
       <!-- Payments -->
       <!-- <li v-show="userRole === 'office'" class="nav-item">
@@ -67,6 +76,31 @@
         </ul>
       </li>
 
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#office-config-nav">
+          <i class="bi bi-gear"></i>
+          <span>Configurations</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="office-config-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/services" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Services
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/provider-services" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Provider Services
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>
+
+
       <!-- Inventory -->
       <li v-show="userRole === 'office'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">
@@ -102,6 +136,7 @@
         <ul id="users-nav" class="nav-content collapse">
           <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
           <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
+          <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
         </ul>
       </li>
 

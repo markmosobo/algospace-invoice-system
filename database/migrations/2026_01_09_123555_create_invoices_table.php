@@ -13,15 +13,24 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('customer_id'); // Foreign key to customers
-            $table->string('invoice_number')->unique(); // Unique invoice number
-            $table->date('invoice_date'); // Date of invoice
-            $table->date('due_date')->nullable(); // Optional due date
-            $table->enum('status', ['pending', 'paid', 'overdue'])->default('pending'); // Payment status
-            $table->decimal('total_amount', 10, 2); // Total invoice amount
+
+            // For sales invoices (customer) and expense invoices (vendor)
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->string('vendor_name')->nullable();
+
+            $table->string('invoice_number')->unique();
+            $table->enum('invoice_type', ['sales', 'expense'])->default('sales');
+
+            $table->date('invoice_date');
+            $table->date('due_date')->nullable();
+
+            $table->enum('status', ['pending', 'paid', 'overdue'])->default('pending');
+
+            $table->decimal('total_amount', 10, 2);
+
             $table->timestamps();
 
-            // Foreign key constraint
+            // Foreign key constraint (customer_id)
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
         });
     }

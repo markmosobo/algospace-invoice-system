@@ -24,7 +24,8 @@ return new class extends Migration
             $table->date('invoice_date');
             $table->date('due_date')->nullable();
 
-            $table->enum('status', ['pending', 'paid', 'overdue'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'partial', 'overdue'])->default('pending');
+            $table->decimal('amount_paid', 10, 2)->default(0);
 
             $table->decimal('total_amount', 10, 2);
 

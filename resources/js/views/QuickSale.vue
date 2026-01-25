@@ -673,44 +673,44 @@ export default {
         modal.show();
     },
 
-async updateSale() {
-    if (!this.editForm.id) return;
+    async updateSale() {
+        if (!this.editForm.id) return;
 
-    this.submitting = true;
+        this.submitting = true;
 
-    try {
-        const res = await axios.put(
-            `/api/sales/${this.editForm.id}`,
-            this.editForm
-        );
+        try {
+            const res = await axios.put(
+                `/api/sales/${this.editForm.id}`,
+                this.editForm
+            );
 
-        toast.fire(
-            'Success!',
-            res.data.message || 'Sale updated successfully',
-            'success'
-        );
+            toast.fire(
+                'Success!',
+                res.data.message || 'Sale updated successfully',
+                'success'
+            );
 
-        // close modal
-        const modal = bootstrap.Modal.getInstance(
-            document.getElementById('editSaleModal')
-        );
-        modal.hide();
+            // close modal
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById('editSaleModal')
+            );
+            modal.hide();
 
-        // reload data
-        this.loadLists();
+            // reload data
+            this.loadLists();
 
-    } catch (error) {
-        console.error(error);
+        } catch (error) {
+            console.error(error);
 
-        toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Failed to update sale',
-            'error'
-        );
-    } finally {
-        this.submitting = false;
-    }
-},
+            toast.fire(
+                'Error!',
+                error.response?.data?.message || 'Failed to update sale',
+                'error'
+            );
+        } finally {
+            this.submitting = false;
+        }
+    },
  
     async completePayment(sale) {
     try {

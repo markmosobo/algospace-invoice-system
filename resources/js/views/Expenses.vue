@@ -56,7 +56,6 @@
                       <table id="ExpensesTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Type</th>
                             <th scope="col">Amount</th>
                             <th scope="col">Description</th>
                             <th scope="col">Action</th>
@@ -74,9 +73,21 @@
                         </tbody>
                         <tbody v-else>
                           <tr v-for="item in expenses" :key="item.id">
-                            <td>{{item.type}}</td>
                             <td>{{item.amount ?? "N/A"}}</td>
-                            <td>{{item.description ?? "N/A"}}</td>
+                            <td>
+                              <div>
+                                <small class="text-muted">{{ item.expense_date }}</small><br>
+
+                                <span v-if="item.type === 'provider_service'">
+                                  {{ item.provider_service_name || 'Provider Service' }}
+                                </span>
+
+                                <span v-else>
+                                  {{ item.description || 'No description provided' }}
+                                </span>
+                              </div>
+                            </td>
+
 
                            
                             <td>
@@ -116,15 +127,32 @@
 
                         <!-- BASIC INFO -->
                         <div class="col-md-6" v-if="selectedExpense.type">
-                          <strong>Type:</strong> <br> {{ selectedExpense.type }}
+                        <strong>Type:</strong> <br>
+
+                        <span v-if="selectedExpense.type === 'expense'" class="badge bg-danger">
+                          Expense
+                        </span>
+
+                        <span v-else-if="selectedExpense.type === 'provider_service'" class="badge bg-primary">
+                          Service(s) rendered
+                        </span>
+
+                        <span v-else-if="selectedExpense.type === 'inventory'" class="badge bg-success">
+                          Inventory
+                        </span>
+
+                        <span v-else class="badge bg-secondary">
+                          Other
+                        </span>
                         </div>
 
+
                         <div class="col-md-6" v-if="selectedExpense.service_provider_id">
-                          <strong>Provider:</strong> <br> {{ selectedExpense.serviceProvider.name }}
+                          <strong>Provider:</strong> <br> {{ selectedExpense.service_provider.name }}
                         </div>
 
                         <div class="col-md-6" v-if="selectedExpense.provider_service_id">
-                          <strong>Service:</strong> <br> {{ selectedExpense.providerService.name }}
+                          <strong>Service:</strong> <br> {{ selectedExpense.provider_service.name }}
                         </div>
 
                         <div class="col-md-6" v-if="selectedExpense.amount">
@@ -192,7 +220,22 @@
                           <!-- Amount -->
                           <div class="col-md-6">
                             <label class="form-label">Amount</label>
-                            <input type="number" id="amount" class="form-control" v-model="data.amount">
+                            <input
+                              type="number"
+                              class="form-control"
+                              v-model="data.amount"
+                              :readonly="data.type === 'provider_service' && !allowOverride"
+                            />
+
+                            <button
+                              v-if="data.type === 'provider_service' && !allowOverride"
+                              type="button"
+                              class="btn btn-sm btn-outline-secondary mt-1"
+                              @click="allowOverride = true"
+                            >
+                              Override amount
+                            </button>
+
                           </div>
 
                           <div class="col-md-6">
@@ -336,7 +379,7 @@
               provider_service_id: "",
               description: "",
               amount: "",
-              invoice_id: ""
+              invoice_id: null
             },
 
             form: {        // EDIT expense
@@ -346,18 +389,42 @@
               provider_service_id: "",
               description: "",
               amount: "",
-              invoice_id: ""
-            }
+              invoice_id: null
+            },
+            allowOverride: false,
         }
-      },      
+      },   
+      watch: {
+        'data.provider_service_id'(id) {
+          if (!id) return;
+
+          const service = this.providerServices.find(s => s.id === id);
+          if (service) {
+            this.data.amount = service.price;
+            this.allowOverride = false; // 👈 reset
+          }
+        },
+
+        'data.type'(val) {
+          if (val !== 'provider_service') {
+            this.allowOverride = true; // free edit for other types
+          }
+        }
+      },
+
+   
       methods: {                
-        viewExpense(item)
-        {
-          console.log(this.selectedExpense)
-          this.selectedExpense = item;
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewExpenseModal'));
-          modal.show();
+        async viewExpense(expense) {
+          try {
+            const res = await axios.get(`/api/expenses/${expense.id}`);
+            this.selectedExpense = res.data.expense;
+
+            const modal = new bootstrap.Modal(document.getElementById('viewExpenseModal'));
+            modal.show();
+
+          } catch (error) {
+            toast.fire('Error!', 'Failed to load expense details', 'error');
+          }
         },
         editExpense(item) {
         this.form = {
@@ -480,7 +547,7 @@
               provider_service_id: "",
               description: "",
               amount: "",
-              invoice_id: ""
+              invoice_id: null
             };
 
             this.loadLists();

@@ -13,6 +13,9 @@ class ListController extends Controller
     public function quickSales()
     {
         $sales = Payment::with(['invoice.customer'])
+            ->whereHas('invoice', function ($q) {
+                $q->where('invoice_type', 'sales');
+            })
             ->orderBy('payment_date', 'desc')
             ->get()
             ->map(function ($payment) {
@@ -26,6 +29,7 @@ class ListController extends Controller
                     'status' => $payment->invoice->status,
                 ];
             });
+
 
         // Load customers for wizard dropdown
         $customers = Customer::select('id', 'name','phone')->get();

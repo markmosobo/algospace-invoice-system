@@ -129,10 +129,6 @@
                           <strong>Price:</strong> <br> {{ selectedService.price }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedService.unit">
-                          <strong>Unit:</strong> <br> {{ selectedService.unit }}
-                        </div>
-
                       </div>
                     </div>
 
@@ -169,12 +165,11 @@
                             <label class="form-label">Category</label>
                             <select class="form-select" v-model="data.category">
                               <option value="">Select</option>
-                              <option value="Printing & Copying">Printing & Copying</option>
-                              <option value="Typing & Documents">Typing & Documents</option>
-                              <option value="Online Applications">Online Applications</option>
-                              <option value="Internet & Computer Use">Internet & Computer Use</option>
-                              <option value="Other Services">Other Services</option>
-                              <option value="Bundles">Bundles</option>
+                              <option value="Painting">Painting</option>
+                              <option value="Electrical">Electrical</option>
+                              <option value="Plumbing">Plumbing</option>
+                              <option value="Repairs">Repairs</option>
+                              <option value="Other">Other</option>
                             </select>
                           </div>
 
@@ -182,12 +177,6 @@
                           <div class="col-md-6">
                             <label class="form-label">Price</label>
                             <input type="number" class="form-control" v-model="data.price">
-                          </div>
-
-                          <!-- Unit -->
-                          <div class="col-md-6">
-                            <label class="form-label">Unit</label>
-                            <input type="text" class="form-control" v-model="data.unit">
                           </div>
 
 
@@ -231,12 +220,11 @@
                             <label class="form-label">Category</label>
                             <select class="form-select" v-model="form.category">
                               <option value="">Select</option>
-                              <option value="Printing & Copying">Printing & Copying</option>
-                              <option value="Typing & Documents">Typing & Documents</option>
-                              <option value="Online Applications">Online Applications</option>
-                              <option value="Internet & Computer Use">Internet & Computer Use</option>
-                              <option value="Other Services">Other Services</option>
-                              <option value="Bundles">Bundles</option>
+                              <option value="Painting">Painting</option>
+                              <option value="Electrical">Electrical</option>
+                              <option value="Plumbing">Plumbing</option>
+                              <option value="Repairs">Repairs</option>
+                              <option value="Other">Other</option>
                             </select>
                           </div>
 
@@ -244,12 +232,6 @@
                           <div class="col-md-6">
                             <label class="form-label">Price</label>
                             <input type="number" class="form-control" v-model="form.price">
-                          </div>
-
-                          <!-- Unit -->
-                          <div class="col-md-6">
-                            <label class="form-label">Unit</label>
-                            <input type="text" class="form-control" v-model="form.unit">
                           </div>
 
 

@@ -10,6 +10,7 @@ class Payment extends Model
     protected $fillable = [
         'invoice_id',
         'amount',
+        'amount_paid',
         'payment_date',
         'method',
         'mpesa_code',

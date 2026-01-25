@@ -40,28 +40,32 @@ class PaymentController extends Controller
             'invoice_id'   => 'required|exists:invoices,id',
             'amount'       => 'required|numeric|min:1',
             'payment_date' => 'required|date',
-            'method'       => 'required|in:cash,mpesa,bank',
-            'mpesa_code' => 'nullable|required_if:method,mpesa|string|max:20',
+            'method'       => 'required|in:cash,mpesa,card,other',
+            'mpesa_code'   => 'nullable|required_if:method,mpesa|string|max:20',
         ]);
 
-        $invoice = Invoice::find($request->invoice_id);
+        $invoice = Invoice::findOrFail($request->invoice_id);
 
         // create payment
         $payment = Payment::create([
             'invoice_id'   => $request->invoice_id,
             'amount'       => $request->amount,
-            'payment_date' => $request->payment_date,
+            'payment_date' => now(),
             'method'       => $request->method,
             'mpesa_code'   => $request->mpesa_code ?? null,
             'comment'      => $request->comment ?? null,
         ]);
 
-        // ✅ Update invoice status if paid
-        if ($invoice->total_amount <= $request->amount) {
+        // update invoice amount paid
+        $invoice->amount_paid += $request->amount;
+        $invoice->save();
+
+        // Update invoice status if fully paid
+        if ($invoice->amount_paid >= $invoice->total_amount) {
             $invoice->update(['status' => 'paid']);
         }
 
-        //record system log
+        // record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' created payment id '.$payment->id
@@ -72,6 +76,7 @@ class PaymentController extends Controller
             'payment' => $payment
         ]);
     }
+
 
 
 
@@ -156,32 +161,46 @@ class PaymentController extends Controller
         return response()->json(['message' => 'Sale deleted successfully']);
     }
 
-    public function complete($id)
-    {
-        $payment = Payment::findOrFail($id);
-        $invoice = $payment->invoice;
+public function complete($id)
+{
+    $payment = Payment::findOrFail($id);
+    $invoice = $payment->invoice;
 
-        $totalPaid = $invoice->payments()->sum('amount');
-        $balance = $invoice->total_amount - $totalPaid;
+    // Total already paid
+    $totalPaid = $invoice->payments()->sum('amount');
 
-        if ($balance > 0) {
-            Payment::create([
-                'invoice_id'   => $invoice->id,
-                'amount'       => $balance,
-                'payment_date' => now(),
-                'method'       => $payment->method,
-                'mpesa_code'   => $payment->mpesa_code,
-                'comment'      => 'Balance cleared',
-            ]);
-        }
+    // Remaining balance
+    $balance = $invoice->total_amount - $totalPaid;
 
-        $invoice->update(['status' => 'paid']);
-
-        return response()->json([
-            'message' => 'Invoice fully paid',
-            'invoice_status' => 'paid'
+    // If there is a balance, store it as a payment
+    if ($balance > 0) {
+        Payment::create([
+            'invoice_id'   => $invoice->id,
+            'amount'       => $balance,
+            'payment_date' => now(),
+            'method'       => $payment->method,
+            'mpesa_code'   => $payment->mpesa_code,
+            'comment'      => 'Balance cleared',
         ]);
+
+        // Update totalPaid to reflect the new payment
+        $totalPaid += $balance;
     }
+
+    // 🔑 FORCE invoice to reflect reality
+    $invoice->update([
+        'amount_paid' => $totalPaid,
+        'status'      => 'paid',
+    ]);
+
+    return response()->json([
+        'message'        => 'Invoice fully paid',
+        'amount_paid'    => $invoice->amount_paid,
+        'total_amount'   => $invoice->total_amount,
+        'invoice_status' => 'paid',
+    ]);
+}
+
 
 
     public function showSale($id)

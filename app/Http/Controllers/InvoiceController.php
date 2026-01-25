@@ -57,7 +57,7 @@ class InvoiceController extends Controller
         $invoice = Invoice::create([
             'customer_id'    => $request->customer_id,
             'invoice_number' => Invoice::generateInvoiceNumber(),
-            'invoice_date'   => $request->invoice_date ?? now(),
+            'invoice_date'   => now(),
             'due_date'       => $request->due_date,
             'status'         => $request->status ?? 'pending',
             'total_amount'   => $request->total_amount,
@@ -93,49 +93,48 @@ class InvoiceController extends Controller
      */
     public function show(string $id)
     {
-        $invoice = Invoice::find($id);
-        return response()->json($invoice);
+        $invoice = Invoice::with(['customer', 'items'])
+                        ->findOrFail($id);
+
+        return response()->json([
+            'invoice' => $invoice
+        ]);
     }
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        // Find the invoice
+        $request->validate([
+            'invoice_type' => 'required|in:sales,expense',
+            'customer_id'  => 'nullable|exists:customers,id',
+            'vendor_name'  => 'nullable|string|max:255',
+            'invoice_date' => 'required|date',
+            'due_date'     => 'nullable|date',
+            'total_amount' => 'required|numeric|min:0',
+            'status'       => 'nullable|in:pending,paid,overdue',
+        ]);
+
         $invoice = Invoice::findOrFail($id);
 
-        // Validate incoming request
-        $request->validate([
-            'customer_id'    => 'required|exists:customers,id',
-            'invoice_number' => 'required|unique:invoices,invoice_number,' . $id, // Ignore current invoice
-            'invoice_date'   => 'required|date',
-            'due_date'       => 'nullable|date',
-            'status'         => 'nullable|in:pending,paid,overdue',
-            'total_amount'   => 'required|numeric|min:0',
-        ]);
-
-        // Update invoice
         $invoice->update([
-            'customer_id'    => $request->customer_id,
-            'invoice_number' => $request->invoice_number,
-            'invoice_date'   => $request->invoice_date,
-            'due_date'       => $request->due_date,
-            'status'         => $request->status ?? $invoice->status,
-            'total_amount'   => $request->total_amount,
+            'invoice_type' => $request->invoice_type,
+            'customer_id'  => $request->invoice_type === 'sales' ? $request->customer_id : null,
+            'vendor_name'  => $request->invoice_type === 'expense' ? $request->vendor_name : null,
+            'invoice_date' => $request->invoice_date,
+            'due_date'     => $request->due_date,
+            'total_amount' => $request->total_amount,
+            'status'       => $request->status,
         ]);
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated invoice id '.$invoice->id
-        ]);        
 
         return response()->json([
             'message' => 'Invoice updated successfully',
             'invoice' => $invoice
         ]);
     }
+
 
 
     /**

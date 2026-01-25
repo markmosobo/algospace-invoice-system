@@ -21,13 +21,13 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Paid Invoices <span>| Paid invoices of AlgoSpace Cyber customers</span></h5>
+                      <h5 class="card-title">Invoices <span>| Invoices of AlgoSpace Cyber customers</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
                    
                    
-                                <a
+                                <!-- <a
                                   :href="href"
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
@@ -35,7 +35,7 @@
                                   @click="addInvoice()"
                                 >
                                   Add Invoice
-                                </a>
+                                </a> -->
                           </div>
                           <div class="col-auto d-flex justify-content-end">
                           <div class="btn-group" role="group">
@@ -56,13 +56,15 @@
                       <table id="InvoicesTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Customer</th>
+                            <th scope="col">Customer / Vendor</th>
                             <th scope="col">Invoice Date</th>
                             <th scope="col">Due Date</th>
                             <th scope="col">Amount</th>
+                            <th scope="col">Status</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
+
                         <!-- Spinner shown while data is initializing -->
                         <tbody v-if="initializing">
                           <tr>
@@ -73,141 +75,212 @@
                             </td>
                           </tr>
                         </tbody>
+
                         <tbody v-else>
                           <tr v-for="item in invoices" :key="item.id">
-                            <td>{{item.customer.name}}</td>
-                            <td>{{item.invoice_date ?? "N/A"}}</td>
-                            <td>{{item.due_date ?? "N/A"}}</td>
+                            <!-- 1. Customer OR Vendor -->
+                            <td>
+                              <span v-if="item.invoice_type === 'expense'">
+                                <span class="badge bg-secondary">VENDOR</span>
+                                {{ item.vendor_name }}
+                              </span>
 
-                            <td>{{item.total_amount ?? "N/A"}}</td>
-                           
+                              <span v-else>
+                                <span class="badge bg-primary">CUSTOMER</span>
+                                {{ item.customer?.name ?? "N/A" }}
+                              </span>
+                            </td>
+
+
+                            <td>{{ item.invoice_date ?? "N/A" }}</td>
+                            <td>{{ item.due_date ?? "N/A" }}</td>
+                            <td>{{ item.total_amount ?? "N/A" }}</td>
+
+                            <td>
+                              <span
+                                class="badge"
+                                :class="{
+                                  'bg-secondary': item.status === 'pending',
+                                  'bg-warning': item.status === 'partial',
+                                  'bg-success': item.status === 'paid'
+                                }"
+                              >
+                                {{ item.status.toUpperCase() }}
+                              </span>
+
+                            </td>
+
                             <td>
                               <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <button id="btnGroupDrop1" type="button"
+                                  style="background-color: darkgreen; border-color: darkgreen;"
+                                  class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                                  data-toggle="dropdown" data-bs-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">
                                   Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewInvoice(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editInvoice(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteInvoice(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
+                                </button>
+
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                  <a @click="viewInvoice(item)" class="dropdown-item" href="#">
+                                    <i class="ri-eye-fill mr-2"></i>View
+                                  </a>
+                                  <a @click="editInvoice(item)" class="dropdown-item" href="#">
+                                    <i class="ri-pencil-fill mr-2"></i>Edit
+                                  </a>
+                                  <a
+                                    v-if="item.status !== 'paid'"
+                                    @click="addPayment(item)"
+                                    class="dropdown-item text-success"
+                                    href="#"
+                                  >
+                                    <i class="ri-money-dollar-circle-line me-2"></i>
+                                    Add Payment
+                                    <small class="text-muted">
+                                      (KES {{ (item.total_amount - item.amount_paid).toFixed(2) }})
+                                    </small>
+                                  </a>
+
+
+                                    <div class="dropdown-divider"></div>
+                                  <a @click="deleteInvoice(item.id)" class="dropdown-item" href="#">
+                                    <i class="ri-delete-bin-line mr-2"></i>Delete
+                                  </a>
+                                </div>
                               </div>
                             </td>
                           </tr>
                         </tbody>
                       </table>
+
     
                     </div>
     
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Invoice Modal -->
-              <div class="modal fade" id="viewInvoiceModal" tabindex="-1" aria-labelledby="viewInvoiceModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Invoice Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedInvoice">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedInvoice.customer_id">
-                          <strong>Customer:</strong> <br> {{ selectedInvoice.customer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedInvoice.invoice_number">
-                          <strong>Invoice Number:</strong> <br> {{ selectedInvoice.invoice_number }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedInvoice.invoice_date">
-                          <strong>Invoice Date:</strong> <br> {{ selectedInvoice.invoice_date }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedInvoice.due_date">
-                          <strong>Due Date:</strong> <br> {{ selectedInvoice.due_date }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedInvoice.total_amount">
-                          <strong>Amount:</strong> <br> {{ selectedInvoice.total_amount }}
-                        </div>                        
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-
-                <!-- Add Invoice Modal -->
-                <div class="modal fade" id="AddInvoiceModal" tabindex="-1" aria-labelledby="AddInvoiceModalLabel" aria-hidden="true">
+                <!-- View Invoice Modal -->
+                <div class="modal fade" id="viewInvoiceModal" tabindex="-1" aria-labelledby="viewInvoiceModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddInvoiceModalLabel">Add Invoice</h5>
+                        <h5 class="modal-title">View Invoice Details</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
-                      <div class="modal-body">
-                        <form class="row g-3 needs-validation" novalidate>
+                      <div class="modal-body" v-if="selectedInvoice">
 
-                          <!-- Customer Name -->
-                          <div class="col-md-6">
-                            <label class="form-label">Customer*</label>
-                            <select name="customer" v-model="data.customer_id" class="form-select" id="customer">
-                                <option value="0" selected disabled>Select Customer</option>
-                                <option v-for="customer in customers" :value="customer.id"
-                                :selected="customer.id == data.customer_id" :key="customer.id">{{ customer.name}} </option>
-    
-                            </select>
+                        <div class="row g-3">
+
+                          <!-- CUSTOMER / VENDOR -->
+                          <div class="col-md-6" v-if="selectedInvoice.invoice_type === 'sales'">
+                            <strong>Customer:</strong> <br> {{ selectedInvoice.customer?.name || "N/A" }}
                           </div>
 
-                          <!-- Invoice Date -->
-                          <div class="col-md-6">
-                            <label class="form-label">Invoice Date</label>
-                            <input type="date" id="invoice_date" class="form-control" v-model="data.invoice_date" required>
+                          <div class="col-md-6" v-if="selectedInvoice.invoice_type === 'expense'">
+                            <strong>Vendor:</strong> <br> {{ selectedInvoice.vendor_name || "N/A" }}
                           </div>
 
-                          <!-- Due Date -->
-                          <div class="col-md-6">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" id="due_date" class="form-control" v-model="data.due_date">
+                          <!-- INVOICE NUMBER -->
+                          <div class="col-md-6" v-if="selectedInvoice.invoice_number">
+                            <strong>Invoice Number:</strong> <br> {{ selectedInvoice.invoice_number }}
                           </div>
 
-                          <!-- Amount -->
-                          <div class="col-md-6">
-                            <label class="form-label">Amount</label>
-                            <input type="number" id="total_amount" class="form-control" v-model="data.total_amount">
+                          <!-- INVOICE DATE -->
+                          <div class="col-md-6" v-if="selectedInvoice.invoice_date">
+                            <strong>Invoice Date:</strong> <br> {{ selectedInvoice.invoice_date }}
                           </div>
 
-                        </form>
+                          <!-- DUE DATE -->
+                          <div class="col-md-6" v-if="selectedInvoice.due_date">
+                            <strong>Due Date:</strong> <br> {{ selectedInvoice.due_date }}
+                          </div>
+
+                          <!-- STATUS BADGE -->
+                          <div class="col-md-6" v-if="selectedInvoice.status">
+                            <strong>Status:</strong> <br>
+                            <span
+                              class="badge"
+                              :class="{
+                                'bg-success': selectedInvoice.status === 'paid',
+                                'bg-warning': selectedInvoice.status === 'pending',
+                                'bg-danger': selectedInvoice.status === 'overdue'
+                              }"
+                            >
+                              {{ selectedInvoice.status.toUpperCase() }}
+                            </span>
+                          </div>
+
+                          <!-- TOTAL AMOUNT -->
+                          <div class="col-md-6" v-if="selectedInvoice.total_amount">
+                            <strong>Total Amount:</strong> <br> {{ selectedInvoice.total_amount }}
+                          </div>
+
+                          <!-- AMOUNT PAID -->
+                          <div class="col-md-6">
+                            <strong>
+                              {{ selectedInvoice.invoice_type === 'sales'
+                                ? 'Amount Paid (Received)'
+                                : 'Amount Paid (Paid Out)' }}
+                            </strong><br>
+                            <span class="text-success fw-bold">
+                              {{ selectedInvoice.amount_paid }}
+                            </span>
+                          </div>
+
+
+                          <!-- AMOUNT DUE -->
+                          <div class="col-md-6">
+                            <strong>
+                              {{ selectedInvoice.invoice_type === 'sales'
+                                ? 'Balance (Customer Owes)'
+                                : 'Balance (You Owe Vendor)' }}
+                            </strong><br>
+                            <span class="text-danger fw-bold">
+                              {{ (selectedInvoice.total_amount - selectedInvoice.amount_paid) }}
+                            </span>
+                          </div>
+                         
+
+                          <!-- ITEMS LIST -->
+                          <div class="row g-3 mt-4" v-if="selectedInvoice.items && selectedInvoice.items.length">
+                            <div class="col-12">
+                              <h6>Invoice Items</h6>
+                              <table class="table table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th>#</th>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr v-for="(item, index) in selectedInvoice.items" :key="item.id">
+                                    <td>{{ index + 1 }}</td>
+                                    <td>{{ item.service_name || item.provider_service_name || item.expense_name }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.unit_price }}</td>
+                                    <td>{{ item.line_total }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                        </div>
                       </div>
 
-                      <!-- Footer -->
                       <div class="modal-footer">
                         <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
-                          Save
-                        </button>
                       </div>
 
                     </div>
                   </div>
                 </div>
 
-
-                <!-- EDIT Invoice MODAL -->
+                <!-- Edit Invoice MODAL -->
                 <div class="modal fade" id="EditInvoiceModal" tabindex="-1" aria-labelledby="EditInvoiceModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
@@ -220,14 +293,30 @@
                       <div class="modal-body">
                         <form class="row g-3">
 
+                          <!-- INVOICE TYPE -->
                           <div class="col-md-6">
-                            <label class="form-label">Customer</label>
-                            <select name="customer" v-model="form.customer_id" class="form-select" id="customer_edit">
-                                <option value="0" selected disabled>Select Customer</option>
-                                <option v-for="customer in customers" :value="customer.id"
-                                :selected="customer.id == form.customer_id" :key="customer.id">{{ customer.name}} </option>
-    
+                            <label class="form-label">Invoice Type</label>
+                            <select v-model="form.invoice_type" class="form-select" disabled>
+                              <option value="sales">Sales</option>
+                              <option value="expense">Expense</option>
                             </select>
+                          </div>
+
+                          <!-- CUSTOMER (Sales only) -->
+                          <div class="col-md-6" v-if="form.invoice_type === 'sales'">
+                            <label class="form-label">Customer</label>
+                            <select v-model="form.customer_id" class="form-select" id="customer_edit">
+                              <option value="" disabled>Select Customer</option>
+                              <option v-for="customer in customers" :value="customer.id" :key="customer.id">
+                                {{ customer.name }}
+                              </option>
+                            </select>
+                          </div>
+
+                          <!-- VENDOR (Expense only) -->
+                          <div class="col-md-6" v-if="form.invoice_type === 'expense'">
+                            <label class="form-label">Vendor Name</label>
+                            <input type="text" v-model="form.vendor_name" id="vendor_edit" class="form-control" placeholder="Vendor Name">
                           </div>
 
                           <!-- Invoice Date -->
@@ -246,7 +335,7 @@
                           <div class="col-md-6">
                             <label class="form-label">Amount</label>
                             <input type="number" id="total_amount_edit" class="form-control" v-model="form.total_amount">
-                          </div>                          
+                          </div>
 
                         </form>
                       </div>
@@ -255,6 +344,96 @@
                         <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button class="btn btn-success" @click="submitChanges" style="background: darkgreen; border-color: darkgreen;">
                           Save Changes
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Payment Modal -->
+                <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+
+                      <div class="modal-header">
+                        <h5 class="modal-title">Add Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <div class="modal-body">
+
+                        <!-- INVOICE SUMMARY -->
+                        <div v-if="selectedInvoice" class="mb-3">
+                          <p class="mb-1"><strong>Invoice:</strong> {{ selectedInvoice.invoice_number }}</p>
+                          <p class="mb-1">
+                            <strong>Total:</strong> {{ selectedInvoice.total_amount }}
+                          </p>
+                          <p class="mb-1 text-success">
+                            <strong>Paid:</strong> {{ selectedInvoice.amount_paid }}
+                          </p>
+                          <p class="mb-1 text-danger">
+                            <strong>Balance:</strong>
+                            {{ remainingBalance.toFixed(2) }}
+                          </p>
+                        </div>
+
+                        <hr>
+
+                        <!-- PAYMENT FORM -->
+                        <div class="mb-3">
+                          <label class="form-label">Amount Paying</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="paymentForm.amount"
+                            :max="remainingBalance"
+                            min="1"
+                          >
+                          <small class="text-muted">
+                            Max: {{ remainingBalance }}
+                          </small>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label">Payment Method</label>
+                          <select v-model="paymentForm.method" class="form-select">
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="bank">Bank</option>
+                          </select>
+                        </div>
+
+                        <div class="mb-3" v-if="paymentForm.method === 'mpesa'">
+                          <label class="form-label">Mpesa Code</label>
+                          <input type="text" class="form-control" v-model="paymentForm.mpesa_code">
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label">Payment Date</label>
+                          <input
+                            type="date"
+                            class="form-control"
+                            v-model="paymentForm.payment_date"
+                          >
+                        </div>
+
+
+                        <div class="mb-3">
+                          <label class="form-label">Comment (optional)</label>
+                          <textarea class="form-control" v-model="paymentForm.comment"></textarea>
+                        </div>
+
+                      </div>
+
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button
+                          class="btn btn-success"
+                          :disabled="submitting || paymentForm.amount > remainingBalance"
+                          @click="submitPayment"
+                        >
+                          Pay {{ paymentForm.amount || 0 }}
                         </button>
                       </div>
 
@@ -298,53 +477,111 @@
             initializing: true,
             submitting: false,
 
-            data: {        // ADD invoice
-              customer_id: "",
-              invoice_number: "",
-              invoice_date: "",
-              due_date: "",
-              total_amount: "",
-              status: "pending"
+            paymentForm: {
+              invoice_id: null,
+              amount: null,
+              method: 'cash',
+              mpesa_code: null,
+              comment: null,
+              payment_date: new Date().toISOString().substr(0, 10),
             },
 
-            form: {        // EDIT invoice
+            form: {
+              id: "",
+              invoice_type: "",
               customer_id: "",
-              invoice_number: "",
+              vendor_name: "",
               invoice_date: "",
               due_date: "",
               total_amount: "",
               status: "pending"
             }
+
+        }
+      },
+      computed: {
+        remainingBalance() {
+          if (!this.selectedInvoice) return 0;
+          return Number(this.selectedInvoice.total_amount) -
+                Number(this.selectedInvoice.amount_paid);
         }
       },      
-      methods: {                
-        viewInvoice(invoice)
-        {
-          console.log(this.selectedInvoice)
+      methods: {   
+        addPayment(invoice) {
           this.selectedInvoice = invoice;
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewInvoiceModal'));
+          this.paymentForm.invoice_id = invoice.id;
+          this.paymentForm.amount = '';
+          this.paymentForm.method = 'cash';
+
+          const modal = new bootstrap.Modal(
+            document.getElementById('addPaymentModal')
+          );
           modal.show();
+        },   
+        async submitPayment() {
+          if (this.paymentForm.amount <= 0) return;
+
+          this.submitting = true;
+
+          try {
+            await axios.post('/api/payments', this.paymentForm);
+
+            toast.fire('Success', 'Payment recorded', 'success');
+
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById('addPaymentModal')
+            );
+            modal.hide();
+
+            this.loadLists(); // reload invoices
+
+          } catch (err) {
+            toast.fire(
+              'Error',
+              err.response?.data?.message || 'Failed to record payment',
+              'error'
+            );
+          } finally {
+            this.submitting = false;
+          }
         },
+          
+        async viewInvoice(invoice) {
+          try {
+            const res = await axios.get(`/api/invoices/${invoice.id}`);
+            this.selectedInvoice = res.data.invoice;
+
+            const modal = new bootstrap.Modal(document.getElementById('viewInvoiceModal'));
+            modal.show();
+
+          } catch (error) {
+            toast.fire('Error!', 'Failed to load invoice details', 'error');
+          }
+        },
+
         editInvoice(invoice) {
-        this.form = {
+          this.form = {
             id: invoice.id,
-            invoice_number: invoice.invoice_number,
+            invoice_type: invoice.invoice_type,
+            customer_id: invoice.customer_id,
+            vendor_name: invoice.vendor_name,
             invoice_date: invoice.invoice_date,
             due_date: invoice.due_date,
-            total_amount: invoice.total_amount
-        };
+            total_amount: invoice.total_amount,
+            status: invoice.status
+          };
 
-        const modal = new bootstrap.Modal(
+          const modal = new bootstrap.Modal(
             document.getElementById('EditInvoiceModal')
-        );
-        modal.show();
+          );
+          modal.show();
         },
+
 
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
+        if (!this.form.customer_id) {
             document.getElementById('customer_edit').classList.add('is-invalid');
             isValid = false;
         } else {
@@ -375,83 +612,6 @@
             toast.fire(
             'Error!',
             error.response?.data?.message || 'Failed to update customer',
-            'error'
-            );
-        } finally {
-            this.submitting = false;
-        }
-        },
-
-        addInvoice()
-        {
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddInvoiceModal'));
-          modal.show();
-        },
-        async submit() {
-            if (this.validateForm()) {
-
-                // Start submitting process
-                this.submitting = true;
-                
-                try {
-                    // Simulate asynchronous submission process (you would replace this with your actual submission logic)
-                    await this.submitForm();
-
-                    // Submission successful
-                    this.submitted = true;
-                } catch (error) {
-                    // Handle submission error
-                    console.error("Submission error:", error);
-                } finally {
-                    // End submitting process
-                    this.submitting = false;
-                }
-            }
-        },
-        validateForm() {
-        let isValid = true;
-
-        if (!this.data.customer_id) {
-            document.getElementById('customer').classList.add('is-invalid');
-            isValid = false;
-        } else {
-            document.getElementById('customer').classList.remove('is-invalid');
-        }
-
-        return isValid;
-        },
-        async submit() {
-        if (!this.validateForm()) return;
-
-        this.submitting = true;
-
-        try {
-            await axios.post('/api/invoices', this.data);
-
-            toast.fire('Success!', 'Invoice added successfully', 'success');
-
-            const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddInvoiceModal')
-            );
-            modal.hide();
-
-            // Reset form
-            this.data = {
-            customer_id: "",
-            invoice_number: "",
-            invoice_date: "",
-            due_date: "",
-            total_amount: ""
-            };
-
-            this.loadLists();
-
-        } catch (error) {
-            console.error(error);
-            toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Something went wrong',
             'error'
             );
         } finally {

@@ -47,19 +47,6 @@ class Expense extends Model
      * Create an InvoiceItem when expense is created
      * (Optional but recommended)
      */
-    protected static function booted()
-    {
-        static::created(function ($expense) {
-            InvoiceItem::create([
-                'invoice_id' => $expense->invoice_id,
-                'item_type' => $expense->type,
-                'provider_service_id' => $expense->provider_service_id,
-                'provider_service_name' => optional($expense->providerService)->name,
-                'expense_name' => $expense->description,
-                'quantity' => 1,
-                'unit_price' => $expense->amount,
-                'line_total' => $expense->amount,
-            ]);
-        });
-    }
+
+
 }

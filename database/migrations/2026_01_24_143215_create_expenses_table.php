@@ -16,10 +16,22 @@ return new class extends Migration
             $table->enum('type', ['expense', 'provider_service', 'inventory','other']);
             $table->unsignedBigInteger('service_provider_id')->nullable();
             $table->unsignedBigInteger('provider_service_id')->nullable();
-            $table->string('description');
+            $table->string('description')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->date('expense_date')->default(now());
+            $table->date('expense_date')->useCurrent();
             $table->unsignedBigInteger('invoice_id')->nullable();
+            $table->foreign('service_provider_id')
+                ->references('id')->on('service_providers')
+                ->nullOnDelete();
+
+            $table->foreign('provider_service_id')
+                ->references('id')->on('provider_services')
+                ->nullOnDelete();
+
+            $table->foreign('invoice_id')
+                ->references('id')->on('invoices')
+                ->nullOnDelete();
+
             $table->timestamps();
         });
 

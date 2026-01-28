@@ -85,8 +85,16 @@
                         <td>{{ sale.method }}</td>
                         <td>{{ sale.payment_date }}</td>
                         <td>
-                            <span class="badge bg-success" v-if="sale.status === 'paid'">Paid</span>
-                            <span class="badge bg-warning" v-else>Pending</span>
+                            <span
+                              class="badge"
+                              :class="{
+                                'bg-success': sale.status === 'paid',
+                                'bg-warning': sale.status === 'pending',
+                                'bg-danger': sale.status === 'overdue'
+                              }"
+                            >
+                              {{ sale.status.toUpperCase() }}
+                            </span>
                         </td>
 
                         <td>
@@ -99,12 +107,11 @@
                                 <a @click="viewSale(sale)" class="dropdown-item" href="#">
                                 <i class="ri-eye-fill mr-2"></i>View
                                 </a>
-                                <a v-if="sale.status === 'pending'" @click="completePayment(sale)" class="dropdown-item" href="#">
-                                    <i class="ri-check-fill mr-2"></i>Complete Payment
-                                </a>
                                 <a @click="editSale(sale)" class="dropdown-item" href="#">
                                 <i class="ri-pencil-fill mr-2"></i>Edit
                                 </a>
+                                <div class="dropdown-divider"></div>
+
                                 <a @click="deleteSale(sale.id)" class="dropdown-item" href="#">
                                 <i class="ri-delete-bin-line mr-2"></i>Delete
                                 </a>
@@ -263,6 +270,43 @@
                             <input type="number" class="form-control" :value="invoiceForm.total_amount" readonly>
                             </div>
                         </div>
+
+                        <!-- Invoice Preview Button -->
+                        <div class="mt-3" v-if="invoiceForm.items.length > 0">
+                        <button class="btn btn-info mb-2" @click="previewInvoice">
+                            Generate Preview
+                        </button>
+
+                        <!-- PDF Preview iframe -->
+                        <div v-if="previewPdf" class="mt-2">
+                            <iframe 
+                            :src="previewPdf" 
+                            style="width:100%; height:400px;" 
+                            frameborder="0">
+                            </iframe>
+                        </div>
+                        </div>
+
+                        <!-- Invoice Sharing Options -->
+                        <div class="mt-4 border-top pt-3" v-if="invoiceForm.items.length > 0">
+                        <h6 class="fw-bold">Share Invoice</h6>
+
+                        <div class="btn-group w-100">
+                            <button class="btn btn-success" @click="shareWhatsApp">
+                            WhatsApp
+                            </button>
+                            <button class="btn btn-primary" @click="shareEmail">
+                            Email
+                            </button>
+                            <button class="btn btn-secondary" @click="downloadInvoice">
+                            Download PDF
+                            </button>
+                            <button class="btn btn-outline-dark" @click="printInvoice">
+                            Print
+                            </button>
+                        </div>
+                        </div>
+
 
                         </div>
 
@@ -480,6 +524,11 @@ export default {
    
 
       step: 1,
+      invoiceId: null,
+      invoicePdfUrl: null,
+      previewPdf: null, // URL of generated preview PDF
+      printUrl: null,   // print URL
+
       customerForm: { customer_id: null, type: 'existing', name: '', email: '', phone: '' },
       invoiceForm: { due_date: new Date().toISOString().substr(0, 10), total_amount: 0, items: [] },
       paymentForm: { 
@@ -494,7 +543,8 @@ export default {
         amount: '',
         method: '',
         payment_date: ''
-      }
+      },
+
     }
   },
   watch: {
@@ -509,6 +559,87 @@ export default {
    },
 
   methods: {
+    previewInvoice() {
+        if (!this.invoiceForm.items.length) {
+            toast.fire({ icon: 'warning', title: 'Add at least one item to preview' });
+            return;
+        }
+
+        axios.post('/api/invoices/preview', {
+            customer: this.customerForm,
+            items: this.invoiceForm.items,
+            due_date: this.invoiceForm.due_date
+        }).then(res => {
+            this.previewPdf = res.data.pdf_url;
+            this.printUrl = res.data.print_url;
+            this.invoicePdfUrl = res.data.pdf_url; // optional: for sharing buttons
+            toast.fire({ icon: 'success', title: 'Preview generated!' });
+        }).catch(err => {
+            console.error(err);
+            toast.fire({ icon: 'error', title: 'Failed to generate preview' });
+        });
+    },
+
+    shareWhatsApp() {
+        if (!this.previewPdf) {
+            return toast.fire({ icon: 'info', title: 'Generate preview first' });
+        }
+
+        const amount = this.invoiceForm.total_amount;
+        const dueDate = this.invoiceForm.due_date;
+        const invoiceNo = 'PREVIEW'; // or store preview invoice no if returned
+        const customerName = this.customerForm.name || 'Customer';
+
+        const text = `
+    Dear ${customerName},
+
+    🧾 *INVOICE PREVIEW*
+    Invoice No: ${invoiceNo}
+    Amount Due: KES ${amount}
+    Due Date: ${dueDate}
+
+    💳 *Payment Options*
+    • Cash
+    • M-Pesa Pochi: 0112514440
+    Account: INVOICE-${invoiceNo}
+    • Bank Transfer (on request)
+
+    📄 Download Invoice:
+    ${this.previewPdf}
+
+    Thank you for choosing AlgoSpace Cyber & Tech Services.
+        `.trim();
+
+        window.open(
+            `https://wa.me/?text=${encodeURIComponent(text)}`,
+            '_blank'
+        );
+    },
+
+
+    shareEmail() {
+        if (!this.previewPdf) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+
+        axios.post('/api/invoices/preview/email', {
+            email: this.customerForm.email,
+            pdf_path: this.previewPdf.replace(window.location.origin + '/', '')
+        }).then(() => {
+            toast.fire({ icon: 'success', title: 'Preview emailed!' });
+        }).catch(() => {
+            toast.fire({ icon: 'error', title: 'Failed to email preview' });
+        });
+    },
+
+    downloadInvoice() {
+        if (!this.previewPdf) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+        window.open(this.previewPdf, '_blank');
+    },
+
+    printInvoice() {
+        if (!this.printUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+        window.open(this.printUrl, '_blank');
+    },
+
     async viewSale(sale) {
         try {
             const res = await axios.get(`/api/sales/${sale.id}`);

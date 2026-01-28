@@ -57,7 +57,7 @@ class InvoiceController extends Controller
         $invoice = Invoice::create([
             'customer_id'    => $request->customer_id,
             'invoice_number' => Invoice::generateInvoiceNumber(),
-            'invoice_date'   => now(),
+            'invoice_date' => $request->invoice_date ?? now(),
             'due_date'       => $request->due_date,
             'status'         => $request->status ?? 'pending',
             'total_amount'   => $request->total_amount,
@@ -151,5 +151,20 @@ class InvoiceController extends Controller
         ]);
 
         return response()->json(['message' => 'Deleted']);
+    }
+
+    public function download($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        return response()->file(storage_path('app/public/' . $invoice->pdf_path));
+    }
+
+    /**
+     * Print FINAL invoice
+     */
+    public function print($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        return response()->file(storage_path('app/public/' . $invoice->pdf_path));
     }
 }

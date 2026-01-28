@@ -29,31 +29,33 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate incoming request
         $request->validate([
-            'name' => 'required|string|max:255',
-            'rate' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
+            'name'      => 'required|string|max:255',
+            'category'  => 'required|string|max:255',
+            'price'     => 'required|numeric|min:0',
+            'unit'      => 'required|string|max:50',
+            'is_bundle' => 'sometimes|boolean',
         ]);
 
-        // Create the service
         $service = Service::create([
-            'name' => $request->name,
-            'rate' => $request->rate,
-            'unit' => $request->unit,
+            'name'      => $request->name,
+            'category'  => $request->category,
+            'price'     => $request->price,
+            'unit'      => $request->unit,
+            'is_bundle' => $request->is_bundle ?? false,
         ]);
 
-        //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' created service id '.$service->id
-        ]);         
+        ]);
 
         return response()->json([
             'message' => 'Service created successfully',
             'service' => $service
         ]);
     }
+
 
 
     /**
@@ -70,34 +72,40 @@ class ServiceController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Find the service or fail with 404
+        // Find the service or fail
         $service = Service::findOrFail($id);
 
-        // Validate incoming request
+        // Validate request
         $request->validate([
-            'name' => 'required|string|max:255',
-            'rate' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
+            'name'      => 'required|string|max:255',
+            'category'  => 'required|string|max:255',
+            'price'     => 'required|numeric|min:0',
+            'unit'      => 'required|string|max:50',
+            'is_bundle' => 'sometimes|boolean',
         ]);
 
         // Update service
         $service->update([
-            'name' => $request->name,
-            'rate' => $request->rate,
-            'unit' => $request->unit,
+            'name'      => $request->name,
+            'category'  => $request->category,
+            'price'     => $request->price,
+            'unit'      => $request->unit,
+            'is_bundle' => $request->is_bundle ?? $service->is_bundle,
         ]);
 
-        //record system log
+        // System log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated service id '.$service->id
-        ]);         
+            'description' =>
+                auth('api')->user()->name.' updated service id '.$service->id
+        ]);
 
         return response()->json([
             'message' => 'Service updated successfully',
             'service' => $service
         ]);
     }
+
 
 
     /**

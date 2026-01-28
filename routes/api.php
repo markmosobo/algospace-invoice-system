@@ -7,12 +7,14 @@ use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
+use App\Http\Controllers\InvoicePreviewController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
 use App\Http\Controllers\PersonalCategoryController;
 use App\Http\Controllers\PersonalTransactionController;
 use App\Http\Controllers\ProviderServiceController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RestockController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceProviderController;
@@ -58,5 +60,15 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/sales/{id}', [PaymentController::class, 'updateSale']);
     Route::get('/sales/{id}', [PaymentController::class, 'showSale']);
     Route::post('/payments/{id}/complete', [PaymentController::class, 'complete']);
+
+    Route::get('/reports/profit', [ReportController::class, 'profit']);
+
+    // PREVIEW (NO DB)
+    Route::post('/invoices/preview', [InvoicePreviewController::class, 'preview']);
+    Route::post('/invoices/preview/email', [InvoicePreviewController::class, 'email']);
+    Route::get('/invoices/preview/print', [InvoicePreviewController::class, 'print']);
+
+    // FINAL (DB)
+    Route::get('/invoices/{id}/print', [InvoiceController::class, 'print']);
 
 });

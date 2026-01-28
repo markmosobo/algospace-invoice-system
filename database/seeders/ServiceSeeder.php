@@ -106,6 +106,13 @@ class ServiceSeeder extends Seeder
                 'is_bundle' => false,
             ],
             [
+                'name' => 'Pension Application',
+                'category' => 'Online Applications',
+                'price' => 400,
+                'unit' => 'service',
+                'is_bundle' => false,
+            ],            
+            [
                 'name' => 'Passport Application',
                 'category' => 'Online Applications',
                 'price' => 500,

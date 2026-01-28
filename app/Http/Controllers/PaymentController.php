@@ -50,7 +50,7 @@ class PaymentController extends Controller
         $payment = Payment::create([
             'invoice_id'   => $request->invoice_id,
             'amount'       => $request->amount,
-            'payment_date' => now(),
+            'payment_date' => $request->payment_date ?? now(),
             'method'       => $request->method,
             'mpesa_code'   => $request->mpesa_code ?? null,
             'comment'      => $request->comment ?? null,

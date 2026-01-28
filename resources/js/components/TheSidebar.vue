@@ -41,6 +41,15 @@
     </li>
 
 
+    <li v-show="userRole === 'office'" class="nav-item">
+      <router-link to="/reports" custom v-slot="{ href, navigate, isActive }">
+        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>Reports</span>
+        </a>
+      </router-link>
+    </li>
+
       <!-- Payments -->
       <!-- <li v-show="userRole === 'office'" class="nav-item">
         <router-link to="/payments" custom v-slot="{ href, navigate }">

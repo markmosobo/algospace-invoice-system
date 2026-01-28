@@ -70,5 +70,8 @@ Route::middleware(['auth:api'])->group(function () {
 
     // FINAL (DB)
     Route::get('/invoices/{id}/print', [InvoiceController::class, 'print']);
+    
+    // routes/api.php
+    Route::get('/invoices/preview-html', [InvoicePreviewController::class, 'previewHtml']);
 
 });

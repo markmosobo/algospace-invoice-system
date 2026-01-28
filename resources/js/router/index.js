@@ -17,6 +17,10 @@ import Expenses from '../views/Expenses.vue';
 import Services from '../views/Services.vue';
 import ProviderServices from '../views/ProviderServices.vue';
 import Reports from '../views/Reports.vue';
+import PersonalAccounts from '../views/personal/PersonalAccounts.vue';
+import PersonalCategory from '../views/personal/PersonalCategory.vue';
+import PersonalTransactions from '../views/personal/PersonalTransactions.vue';
+import Diary from '../views/Diary.vue';
 
 const routes = [
   // Public routes
@@ -40,6 +44,12 @@ const routes = [
   { path: '/provider-services', name: 'provider-services', component: ProviderServices, meta: { requiresAuth: true } },
   { path: '/reports', name: 'reports', component: Reports, meta: { requiresAuth: true } },
 
+  //personal routes
+  { path: '/personal-accounts', name: 'personal-accounts', component: PersonalAccounts, meta: { requiresAuth: true } },
+  { path: '/personal-categories', name: 'personal-categories', component: PersonalCategory, meta: { requiresAuth: true } },
+  { path: '/personal-transactions', name: 'personal-transactions', component: PersonalTransactions, meta: { requiresAuth: true } },
+
+  { path: '/diary', name: 'diary', component: Diary, meta: { requiresAuth: true } },
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
 ];
 

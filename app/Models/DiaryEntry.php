@@ -10,7 +10,6 @@ class DiaryEntry extends Model
         'title',
         'type',
         'amount',
-        'amount',
         'category',
         'description',
         'attachment',

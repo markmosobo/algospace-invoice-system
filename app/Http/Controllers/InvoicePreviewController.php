@@ -28,19 +28,29 @@ class InvoicePreviewController extends Controller
             'due_date'   => $data['due_date'],
             'total'      => collect($data['items'])->sum('line_total'),
             'date'       => now()->format('Y-m-d'),
+            'status'     => 'Preview',
             'is_preview' => true,
         ];
 
-        $pdf = Pdf::loadView('invoices.preview', $invoice);
+        // Render Blade to HTML
+        $html = view('invoices.preview', $invoice)->render();
 
-        $path = 'previews/' . Str::uuid() . '.pdf';
-        Storage::disk('public')->put($path, $pdf->output());
+        // Generate PDF from HTML
+        $pdf = Pdf::loadHTML($html);
+        $fileName = 'previews/' . $invoice['invoice_no'] . '.pdf';
+        Storage::disk('public')->put($fileName, $pdf->output());
+
+        $pdfUrl = Storage::url($fileName); // public URL for sharing
 
         return response()->json([
-            'pdf_url' => asset('storage/' . $path),
-            'print_url' => url('/invoices/preview/print?path=storage/' . $path),
+            'pdf_url'     => $html,          // HTML for iframe preview
+            'print_url'   => $html,          // reuse for printing
+            'invoice_no'  => $invoice['invoice_no'],
+            'pdf_file_url'=> $pdfUrl,        // new: real PDF link
         ]);
     }
+
+
 
     public function previewHtml(Request $request)
     {

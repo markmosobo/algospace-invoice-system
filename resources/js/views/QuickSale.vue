@@ -280,11 +280,12 @@
                         <!-- PDF Preview iframe -->
                         <div v-if="previewPdf" class="mt-2">
                             <iframe 
-                            :src="previewPdf" 
-                            style="width:100%; height:400px;" 
-                            frameborder="0">
+                                :srcdoc="previewPdf" 
+                                style="width:100%; height:400px; border:1px solid #ccc; border-radius:5px;" 
+                                frameborder="0">
                             </iframe>
                         </div>
+
                         </div>
 
                         <!-- Invoice Sharing Options -->
@@ -292,12 +293,22 @@
                         <h6 class="fw-bold">Share Invoice</h6>
 
                         <div class="btn-group w-100">
-                            <button class="btn btn-success" @click="shareWhatsApp">
-                            WhatsApp
+                            <button 
+                                class="btn btn-success" 
+                                @click="shareWhatsApp"
+                                v-if="customerForm.phone && customerForm.phone.trim() !== '' && pdfFileUrl"
+                            >
+                                WhatsApp
                             </button>
-                            <button class="btn btn-primary" @click="shareEmail">
-                            Email
+                            <button 
+                                class="btn btn-primary" 
+                                @click="shareEmail" 
+                                :disabled="!customerForm.email || customerForm.email.trim() === ''"
+                                v-if="customerForm.email && customerForm.email.trim() !== ''"
+                            >
+                                Email
                             </button>
+
                             <button class="btn btn-secondary" @click="downloadInvoice">
                             Download PDF
                             </button>
@@ -570,9 +581,10 @@ export default {
             items: this.invoiceForm.items,
             due_date: this.invoiceForm.due_date
         }).then(res => {
-            this.previewPdf = res.data.pdf_url;
-            this.printUrl = res.data.print_url;
-            this.invoicePdfUrl = res.data.pdf_url; // optional: for sharing buttons
+            this.previewPdf   = res.data.pdf_url;   // HTML iframe
+            this.printUrl     = res.data.print_url;
+            this.invoiceNo    = res.data.invoice_no;
+            this.pdfFileUrl   = res.data.pdf_file_url; // NEW: real PDF for sharing
             toast.fire({ icon: 'success', title: 'Preview generated!' });
         }).catch(err => {
             console.error(err);
@@ -580,14 +592,17 @@ export default {
         });
     },
 
+
     shareWhatsApp() {
-        if (!this.previewPdf) {
-            return toast.fire({ icon: 'info', title: 'Generate preview first' });
-        }
+        // Check if preview exists
+        if (!this.pdfFileUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+
+        // Check if customer provided phone
+        if (!this.customerForm.phone) return toast.fire({ icon: 'warning', title: 'Customer phone number is required' });
 
         const amount = this.invoiceForm.total_amount;
         const dueDate = this.invoiceForm.due_date;
-        const invoiceNo = 'PREVIEW'; // or store preview invoice no if returned
+        const invoiceNo = this.invoiceNo || 'PREVIEW';
         const customerName = this.customerForm.name || 'Customer';
 
         const text = `
@@ -605,11 +620,12 @@ export default {
     • Bank Transfer (on request)
 
     📄 Download Invoice:
-    ${this.previewPdf}
+    ${this.pdfFileUrl}
 
     Thank you for choosing AlgoSpace Cyber & Tech Services.
         `.trim();
 
+        // Open WhatsApp with message
         window.open(
             `https://wa.me/?text=${encodeURIComponent(text)}`,
             '_blank'
@@ -617,12 +633,20 @@ export default {
     },
 
 
+
+
     shareEmail() {
-        if (!this.previewPdf) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+        // Check if PDF is ready
+        if (!this.pdfFileUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
+
+        // Check if customer has provided email
+        if (!this.customerForm.email || this.customerForm.email.trim() === '') {
+            return toast.fire({ icon: 'warning', title: 'Customer has no email provided' });
+        }
 
         axios.post('/api/invoices/preview/email', {
             email: this.customerForm.email,
-            pdf_path: this.previewPdf.replace(window.location.origin + '/', '')
+            pdf_path: this.pdfFileUrl
         }).then(() => {
             toast.fire({ icon: 'success', title: 'Preview emailed!' });
         }).catch(() => {
@@ -630,15 +654,34 @@ export default {
         });
     },
 
+
+
     downloadInvoice() {
-        if (!this.previewPdf) return toast.fire({ icon: 'info', title: 'Generate preview first' });
-        window.open(this.previewPdf, '_blank');
+        if (!this.pdfFileUrl) {
+            return toast.fire({ icon: 'info', title: 'Generate preview first' });
+        }
+
+        // Create a temporary link for downloading
+        const link = document.createElement('a');
+        link.href = this.pdfFileUrl; // server URL to the saved file
+        link.download = `${this.invoiceNo || 'PREVIEW'}-invoice.pdf`; // filename suggestion
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.fire({ icon: 'success', title: 'Invoice downloaded!' });
     },
 
     printInvoice() {
         if (!this.printUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
-        window.open(this.printUrl, '_blank');
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(this.printUrl); // raw HTML
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
     },
+
 
     async viewSale(sale) {
         try {

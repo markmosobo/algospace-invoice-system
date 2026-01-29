@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\DiaryEntry;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\SystemLog;
@@ -47,5 +48,6 @@ class ListController extends Controller
             'services' => $services
         ]);
     }
+
     
 }

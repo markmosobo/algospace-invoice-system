@@ -74,4 +74,8 @@ Route::middleware(['auth:api'])->group(function () {
     // routes/api.php
     Route::get('/invoices/preview-html', [InvoicePreviewController::class, 'previewHtml']);
 
+    //notifications
+    Route::get('/reminders/overview', [DiaryEntryController::class, 'remindersOverview']);
+    Route::put('/diary-entries/{id}/done', [DiaryEntryController::class, 'markDone']);
+
 });

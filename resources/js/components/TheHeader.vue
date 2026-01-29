@@ -33,33 +33,91 @@
       <nav class="header-nav ms-auto">
         <ul class="d-flex align-items-center">
   
+<li class="nav-item dropdown">
+  <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+    <i class="bi bi-bell"></i>
+    <span
+      v-if="notificationCount > 0"
+      class="badge bg-danger badge-number"
+    >
+      {{ notificationCount }}
+    </span>
+  </a>
 
-          <!-- <li class="nav-item dropdown">
-            <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
-              <i class="bi bi-bell"></i>
-              <span class="badge bg-danger badge-number">{{ notificationCount }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
-              <li class="dropdown-header">
-                You have {{ notificationCount }} new notifications
-              </li>
-              <li><hr class="dropdown-divider"></li>
+  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+    <li class="dropdown-header">
+      You have {{ notificationCount }} due reminders
+    </li>
 
-              <li class="notification-item" v-for="(notification, index) in notifications" :key="index">
-                <i class="bi bi-exclamation-circle text-warning"></i>
-                <div>
-                  <h4>{{ notification.title }}</h4>
-                  <p>{{ notification.message }}</p>
-                  <p>{{ notification.time }}</p>
-                </div>
-              </li>
+    <li><hr class="dropdown-divider"></li>
 
-              <li><hr class="dropdown-divider"></li>
-              <li class="dropdown-footer">
-                <a href="#">Show all notifications</a>
-              </li>
-            </ul>
-          </li> -->
+<li v-if="reminders.filter(r => r.status==='overdue').length">
+  <small class="text-danger">Overdue</small>
+</li>
+<li
+  class="notification-item"
+  v-for="r in reminders.filter(r => r.status==='overdue')"
+  :key="r.id"
+>
+  <i class="bi bi-exclamation-triangle text-danger"></i>
+  <div>
+    <h4>{{ r.title }}</h4>
+    <p>{{ r.time }}</p>
+    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
+      Mark Done
+    </button>
+  </div>
+</li>
+
+<li v-if="reminders.filter(r => r.status==='today').length" class="mt-2">
+  <small class="text-warning">Today</small>
+</li>
+<li
+  class="notification-item"
+  v-for="r in reminders.filter(r => r.status==='today')"
+  :key="r.id"
+>
+  <i class="bi bi-alarm text-warning"></i>
+  <div>
+    <h4>{{ r.title }}</h4>
+    <p>{{ r.time }}</p>
+    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
+      Mark Done
+    </button>
+  </div>
+</li>
+
+<li v-if="reminders.filter(r => r.status==='tomorrow').length" class="mt-2">
+  <small class="text-info">Tomorrow</small>
+</li>
+<li
+  class="notification-item"
+  v-for="r in reminders.filter(r => r.status==='tomorrow')"
+  :key="r.id"
+>
+  <i class="bi bi-alarm text-info"></i>
+  <div>
+    <h4>{{ r.title }}</h4>
+    <p>{{ r.time }}</p>
+    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
+      Mark Done
+    </button>
+  </div>
+</li>
+
+<li v-if="notificationCount === 0" class="px-3 py-2 text-center text-muted">
+  No pending reminders 🎉
+</li>
+
+
+    <li><hr class="dropdown-divider"></li>
+
+    <li class="dropdown-footer">
+      <a href="/diary?filter=reminders">View all reminders</a>
+    </li>
+  </ul>
+</li>
+
 
 
   
@@ -172,7 +230,8 @@ import axios from 'axios';
         searchResults: [],
         idleTimeout: null,
         idleTime: 600000, // 10 minutes in milliseconds
-        notificationCount: 2
+        notificationCount: 0,
+        reminders: []
       }
     },
       methods: {
@@ -201,48 +260,63 @@ import axios from 'axios';
         this.searchResults = [];
       }
     },
-async logout() {
-  try {
-    await axios.post('/api/logout', {}, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+    async logout() {
+      try {
+        await axios.post('/api/logout', {}, {
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        // Clear auth data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        // Redirect to login
+        this.$router.replace('/login');
+
+      } catch (error) {
+        console.error('Logout error:', error);
+
+        // Even if API fails, force logout locally
+        localStorage.removeItem('token');
+        this.$router.push('/login');
       }
-    });
-
-    // Clear auth data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    // Redirect to login
-    this.$router.replace('/login');
-
-  } catch (error) {
-    console.error('Logout error:', error);
-
-    // Even if API fails, force logout locally
-    localStorage.removeItem('token');
-    this.$router.push('/login');
-  }
-}
-
-  
-      // loadLists(){
-      //   axios.get('api/lists').then((response) => {
-      //       this.displaymessages = response.data.lists.displaymessages
-      //       console.log("messages",this.displaymessages)
-      //   }).catch((error) => {
-      //       console.log(error)
-      //   })
-      // },
     },
-    mounted(){ 
-      // this.loadLists();
-      this.user = localStorage.getItem('user');
-      this.user = JSON.parse(this.user);
+    async loadReminders() {
+      try {
+        const res = await axios.get('/api/reminders/overview');
+        this.reminders = res.data;
+        this.notificationCount = res.data.length; // total pending reminders
+      } catch (err) {
+        console.error('Failed to load reminders', err);
+      }
+    },
+
+    async markAsDone(id) {
+      try {
+        await axios.put(`/api/diary-entries/${id}/done`);
+        this.loadReminders(); // refresh list & bell
+      } catch (err) {
+        console.error('Failed to mark as done', err);
+      }
+    }
+
+
+    },
+    mounted() {
+      this.user = JSON.parse(localStorage.getItem('user'));
       this.current_user = this.user;
 
+      this.loadReminders();
+
+      // OPTIONAL: refresh every minute
+      setInterval(() => {
+        this.loadReminders();
+      }, 60000);
     }
+
     
   }
   </script>

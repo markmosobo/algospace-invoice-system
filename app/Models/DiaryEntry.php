@@ -15,6 +15,7 @@ class DiaryEntry extends Model
         'attachment',
         'category',
         'tags',
-        'entry_date'
+        'entry_date',
+        'remind_at'
     ];     
 }

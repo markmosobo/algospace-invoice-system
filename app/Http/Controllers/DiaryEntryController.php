@@ -164,4 +164,51 @@ class DiaryEntryController extends Controller
             'message' => 'Diary entry deleted successfully'
         ]);
     }
+
+
+public function remindersOverview()
+{
+    $now = now();
+    $todayStart = Carbon::today()->startOfDay();
+    $todayEnd = Carbon::today()->endOfDay();
+    $tomorrowStart = Carbon::tomorrow()->startOfDay();
+    $tomorrowEnd = Carbon::tomorrow()->endOfDay();
+
+    $reminders = DiaryEntry::where('type', 'reminder')
+        ->where('status', 'pending')
+        ->whereNotNull('remind_at')
+        ->get()
+        ->map(function ($r) use ($now, $todayStart, $todayEnd, $tomorrowStart, $tomorrowEnd) {
+            $status = '';
+
+            if ($r->remind_at < $now) {
+                $status = 'overdue';
+            } elseif ($r->remind_at >= $todayStart && $r->remind_at <= $todayEnd) {
+                $status = 'today';
+            } elseif ($r->remind_at >= $tomorrowStart && $r->remind_at <= $tomorrowEnd) {
+                $status = 'tomorrow';
+            }
+
+            return [
+                'id' => $r->id,
+                'title' => $r->title,
+                'remind_at' => $r->remind_at,
+                'time' => $r->remind_at->format('H:i'),
+                'status' => $status
+            ];
+        });
+
+    return $reminders->filter(fn($r) => $r['status'] !== ''); // drop others
+}
+
+
+    public function markDone($id)
+    {
+        DiaryEntry::where('id', $id)->update([
+            'is_done' => 1
+        ]);
+
+        return response()->json(['message' => 'Marked as done']);
+    }
+
 }

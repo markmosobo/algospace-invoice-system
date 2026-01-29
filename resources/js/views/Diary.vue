@@ -32,7 +32,7 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addEntry()"
                                 >
                                   Add Entry
                                 </a>
@@ -53,7 +53,7 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="EntriesTable" class="table table-borderless">
                         <thead>
                           <tr>
                             <th scope="col">Title</th>
@@ -73,10 +73,10 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.title}}</td>
-                            <td>{{customer.entry_date ?? "N/A"}}</td>
-                            <td>{{customer.description ?? "N/A"}}</td>
+                          <tr v-for="item in diaryEntries" :key="item.id">
+                            <td>{{item.title}}</td>
+                            <td>{{item.entry_date ?? "N/A"}}</td>
+                            <td>{{item.description ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +85,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewEntry(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editEntry(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteEntry(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,98 +100,182 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedCustomer">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- View Entry Modal -->
+                <div class="modal fade" id="viewEntryModal" tabindex="-1" aria-labelledby="viewEntryModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title">View Entry Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <div class="modal-body" v-if="selectedEntry">
+                        <div class="row g-3">
+
+                          <!-- Title + Category Badge -->
+                          <div class="col-md-6" v-if="selectedEntry.title">
+                            <strong>Title:</strong><br>
+                            {{ selectedEntry.title }}
+                            <span
+                              class="badge ms-2"
+                              :class="selectedEntry.category === 'office' ? 'bg-primary' : 'bg-success'"
+                              v-if="selectedEntry.category"
+                            >
+                              {{ selectedEntry.category }}
+                            </span>
+                          </div>
+
+
+                          <!-- Entry Date -->
+                          <div class="col-md-6" v-if="selectedEntry.entry_date">
+                            <strong>Date:</strong> <br> {{ selectedEntry.entry_date }}
+                          </div>
+
+                          <!-- Category -->
+                          <div class="col-md-6" v-if="selectedEntry.category">
+                            <strong>Category:</strong> <br> {{ selectedEntry.category }}
+                          </div>
+
+                          <!-- Type -->
+                          <div class="col-md-6" v-if="selectedEntry.type">
+                            <strong>Type:</strong> <br> {{ selectedEntry.type }}
+                          </div>
+
+                          <!-- Amount (for credit/debit) -->
+                          <div class="col-md-6" v-if="selectedEntry.type === 'credit' || selectedEntry.type === 'debit'">
+                            <strong>Amount:</strong> <br> {{ selectedEntry.amount }}
+                          </div>
+
+                          <!-- Tags -->
+                          <div class="col-md-6" v-if="selectedEntry.tags">
+                            <strong>Tags:</strong> <br> {{ selectedEntry.tags }}
+                          </div>
+
+                          <!-- Description -->
+                          <div class="col-12" v-if="selectedEntry.description">
+                            <strong>Description:</strong> <br> {{ selectedEntry.description }}
+                          </div>
+
+                          <!-- Attachment -->
+                          <div class="col-12" v-if="selectedEntry.attachment">
+                            <strong>Attachment:</strong> <br>
+                            <a :href="selectedEntry.attachment" target="_blank">View / Download</a>
+                          </div>
+
+                          <!-- Status (for reminder/event) -->
+                          <div class="col-md-6" v-if="selectedEntry.type === 'reminder' || selectedEntry.type === 'event'">
+                            <strong>Status:</strong> <br> {{ selectedEntry.status }}
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Entry Modal -->
+                <div class="modal fade" id="addEntryModal" tabindex="-1" aria-labelledby="addEntryModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="addEntryModalLabel">Add Diary Entry</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- Hidden ID -->
+                          <!-- Hidden ID (for edit) -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- First & Last Name -->
+                          <!-- Title -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
+                            <label class="form-label">Title*</label>
+                            <input type="text" class="form-control" id="title" v-model="data.title" required>
                           </div>
 
-                          <!-- Email -->
+                          <!-- Category -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" v-model="data.category">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                              <option value="office">Office</option>
+                              <option value="personal">Personal</option>
                             </select>
                           </div>
 
+                          <!-- Type -->
+                          <div class="col-md-6">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" v-model="data.type">
+                              <option value="">Select</option>
+                              <option value="note">Note</option>
+                              <option value="credit">Credit</option>
+                              <option value="debit">Debit</option>
+                              <option value="reminder">Reminder</option>
+                              <option value="event">Event</option>
+                            </select>
+                          </div>
+
+                          <!-- Amount (only for credit/debit) -->
+                          <div class="col-md-6" v-if="data.type === 'credit' || data.type === 'debit'">
+                            <label class="form-label">Amount</label>
+                            <input type="number" step="0.01" class="form-control" v-model="data.amount">
+                          </div>
+
+                          <!-- Tags -->
+                          <div class="col-md-6">
+                            <label class="form-label">Tags</label>
+                            <input type="text" class="form-control" v-model="data.tags" placeholder="Comma separated">
+                          </div>
+
+                          <!-- Description -->
+                          <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" v-model="data.description"></textarea>
+                          </div>
+
+                          <!-- Attachment -->
+                          <div class="col-md-6">
+                            <label class="form-label">Attachment</label>
+                            <input type="file" class="form-control" @change="handleFileUpload">
+                          </div>
+
+                          <!-- Entry Date (not reminder) -->
+                          <div class="col-md-6" v-if="data.type !== 'reminder'">
+                            <label class="form-label">
+                              {{ data.type === 'event' ? 'Event Date' : 'Entry Date' }}
+                            </label>
+                            <input type="datetime-local" class="form-control" v-model="data.entry_date">
+                          </div>
+
+                          <!-- Remind At (only for reminders) -->
+                          <div class="col-md-6" v-if="data.type === 'reminder'">
+                            <label class="form-label">Remind Me At</label>
+                            <input type="datetime-local" class="form-control" v-model="data.remind_at">
+                          </div>
+
+
+                          <!-- Status (for reminder/event) -->
+                          <div class="col-md-6" v-if="data.type === 'reminder' || data.type === 'event'">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" v-model="data.status">
+                              <option value="pending">Pending</option>
+                              <option value="done">Done</option>
+                              <option value="overdue">Overdue</option>
+                            </select>
+                          </div>
 
                         </form>
                       </div>
 
-                      <!-- Footer -->
                       <div class="modal-footer">
                         <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
@@ -204,47 +288,87 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT Entry Modal -->
+                <div class="modal fade" id="editEntryModal" tabindex="-1" aria-labelledby="editEntryModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Diary Entry</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3">
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
+                          <!-- Title -->
+                          <div class="col-md-6">
+                            <label class="form-label">Title*</label>
+                            <input type="text" id="title_edit" class="form-control" v-model="form.title" required>
                           </div>
 
-                          <!-- Email -->
+                          <!-- Category -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" v-model="form.category">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                              <option value="office">Office</option>
+                              <option value="personal">Personal</option>
                             </select>
                           </div>
 
+                          <!-- Type -->
+                          <div class="col-md-6">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" v-model="form.type">
+                              <option value="">Select</option>
+                              <option value="note">Note</option>
+                              <option value="credit">Credit</option>
+                              <option value="debit">Debit</option>
+                              <option value="reminder">Reminder</option>
+                              <option value="event">Event</option>
+                            </select>
+                          </div>
+
+                          <!-- Amount (for credit/debit) -->
+                          <div class="col-md-6" v-if="form.type === 'credit' || form.type === 'debit'">
+                            <label class="form-label">Amount</label>
+                            <input type="number" step="0.01" class="form-control" v-model="form.amount">
+                          </div>
+
+                          <!-- Tags -->
+                          <div class="col-md-6">
+                            <label class="form-label">Tags</label>
+                            <input type="text" class="form-control" v-model="form.tags" placeholder="Comma separated">
+                          </div>
+
+                          <!-- Description -->
+                          <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" v-model="form.description"></textarea>
+                          </div>
+
+                          <!-- Attachment -->
+                          <div class="col-md-6">
+                            <label class="form-label">Attachment</label>
+                            <input type="file" class="form-control" @change="handleFileUpload">
+                          </div>
+
+                          <!-- Entry Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Entry Date</label>
+                            <input type="datetime-local" class="form-control" v-model="form.entry_date">
+                          </div>
+
+                          <!-- Status (for reminder/event) -->
+                          <div class="col-md-6" v-if="form.type === 'reminder' || form.type === 'event'">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" v-model="form.status">
+                              <option value="pending">Pending</option>
+                              <option value="done">Done</option>
+                              <option value="overdue">Overdue</option>
+                            </select>
+                          </div>
 
                         </form>
                       </div>
@@ -260,6 +384,7 @@
                   </div>
                 </div>
 
+
                     
 
             </div>
@@ -274,7 +399,6 @@
     import "jquery/dist/jquery.min.js";
     import "datatables.net-dt/js/dataTables.dataTables";
     import "datatables.net-dt/css/jquery.dataTables.min.css";
-    import DefaultProfile from '@/assets/img/default-profile.png'
     import $ from "jquery";
     
     const toast = Swal.mixin({
@@ -290,48 +414,68 @@
       data() {
         return {
             customers: [],
-            selectedCustomer: {},
+            selectedEntry: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {
+              id: null,
+              title: '',
+              type: 'note',
+              category: 'office',
+              amount: null,
+              tags: '',
+              description: '',
+              attachment: null,
+              entry_date: '',
+              remind_at: '',
+              status: 'pending'
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
-            }
+            form: {
+              id: '',
+              title: '',
+              type: '',
+              category: '',
+              amount: '',
+              tags: '',
+              description: '',
+              attachment: '',
+              entry_date: '',
+              remind_at: '',
+              status: ''
+            },
         }
       },      
-      methods: {                
-        viewCustomer(customer)
+      methods: {   
+        handleFileUpload(event) {
+          this.data.attachment = event.target.files[0];
+        },             
+        viewEntry(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedEntry)
+          this.selectedEntry = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewEntryModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editEntry(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            title: item.title,
+            type: item.type,
+            amount: item.amount,
+            category: item.category,
+            tags: item.tags,
+            description: item.description,
+            attachment: item.attachment,
+            entry_date: item.entry_date,
+            status: item.status,
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editEntryModal')
         );
         modal.show();
         },
@@ -339,11 +483,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.title) {
+            document.getElementById('title_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('title_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +498,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/diary-entries/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Diary entry updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editEntryModal')
             );
             modal.hide();
 
@@ -369,7 +513,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update entry',
             'error'
             );
         } finally {
@@ -377,10 +521,10 @@
         }
         },
 
-        addCustomer()
+        addEntry()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('addEntryModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +551,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.title) {
+            document.getElementById('title').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('title').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +566,27 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/diary-entries', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Diary entry added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('addEntryModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: '',
+              title: '',
+              type: '',
+              category: '',
+              amount: '',
+              tags: '',
+              description: '',
+              attachment: '',
+              entry_date: '',
+              status: ''
             };
 
             this.loadLists();
@@ -456,7 +605,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteEntry(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +617,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/diary-entries/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Diary entry has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -492,11 +641,11 @@
           this.initializing = true; // Start spinner
           axios.get('/api/diary-entries')
             .then((response) => {
-              this.customers = response.data;
+              this.diaryEntries = response.data;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#EntriesTable").DataTable();
               }, 10);
             })
             .catch((error) => {

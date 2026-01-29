@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('description')->nullable(); // detailed description
             $table->string('attachment')->nullable(); // optional file path
             $table->timestamp('entry_date')->useCurrent();
+            $table->timestamp('remind_at')->nullable();  // reminder trigger time
             $table->enum('status', ['pending', 'done', 'overdue'])->default('pending'); // for reminders/events
             $table->timestamps();
         });

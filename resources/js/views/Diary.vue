@@ -53,47 +53,61 @@
             
                       </p>
     
-                      <table id="EntriesTable" class="table table-borderless">
-                        <thead>
-                          <tr>
-                            <th scope="col">Title</th>
-                            <th scope="col">Date</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Action</th>
-                          </tr>
-                        </thead>
-                        <!-- Spinner shown while data is initializing -->
-                        <tbody v-if="initializing">
-                          <tr>
-                            <td colspan="7" class="text-center">
-                              <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                        <tbody v-else>
-                          <tr v-for="item in diaryEntries" :key="item.id">
-                            <td>{{item.title}}</td>
-                            <td>{{item.entry_date ?? "N/A"}}</td>
-                            <td>{{item.description ?? "N/A"}}</td>
+<table id="EntriesTable" class="table table-borderless">
+  <thead>
+    <tr>
+      <th scope="col">Title</th>
+      <th scope="col">Date</th>
+      <th scope="col">Description</th>
+      <th scope="col">Action</th>
+    </tr>
+  </thead>
+  <!-- Spinner while loading -->
+  <tbody v-if="initializing">
+    <tr>
+      <td colspan="7" class="text-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+  <tbody v-else>
+    <tr v-for="item in diaryEntries" :key="item.id">
+      <td>{{ item.title }}</td>
 
-                           
-                            <td>
-                              <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewEntry(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editEntry(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteEntry(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+      <!-- Format date as dd/mm/yyyy -->
+      <td>{{ formatDate(item.entry_date) }}</td>
+
+      <!-- Truncate description to 30 characters -->
+      <td>{{ truncateText(item.description, 30) }}</td>
+
+      <td>
+        <div class="btn-group" role="group">
+          <button id="btnGroupDrop1" type="button"
+                  style="background-color: darkgreen; border-color: darkgreen;"
+                  class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                  data-toggle="dropdown" data-bs-toggle="dropdown"
+                  aria-haspopup="true" aria-expanded="false">
+            Action
+          </button>
+          <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+            <a @click="viewEntry(item)" class="dropdown-item" href="#">
+              <i class="ri-eye-fill mr-2"></i>View
+            </a> 
+            <a @click="editEntry(item)" class="dropdown-item" href="#">
+              <i class="ri-pencil-fill mr-2"></i>Edit
+            </a>
+            <a @click="deleteEntry(item.id)" class="dropdown-item" href="#">
+              <i class="ri-delete-bin-line mr-2"></i>Delete
+            </a>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
     
                     </div>
     
@@ -129,13 +143,20 @@
 
                           <!-- Entry Date -->
                           <div class="col-md-6" v-if="selectedEntry.entry_date">
-                            <strong>Date:</strong> <br> {{ selectedEntry.entry_date }}
+                            <strong>Date:</strong> <br> {{ formatDateTime(selectedEntry.entry_date) }}
                           </div>
 
-                          <!-- Category -->
-                          <div class="col-md-6" v-if="selectedEntry.category">
-                            <strong>Category:</strong> <br> {{ selectedEntry.category }}
+                          <!-- Remind At (for reminders/events) -->
+                          <div 
+                            class="col-md-6" 
+                            v-if="selectedEntry.remind_at && (selectedEntry.type === 'reminder' || selectedEntry.type === 'event')"
+                          >
+                            <strong>Remind At:</strong> <br> 
+                            <span :class="remindAtClass(selectedEntry.remind_at)">
+                              {{ formatDateTime(selectedEntry.remind_at) }}
+                            </span>
                           </div>
+
 
                           <!-- Type -->
                           <div class="col-md-6" v-if="selectedEntry.type">
@@ -360,6 +381,12 @@
                             <input type="datetime-local" class="form-control" v-model="form.entry_date">
                           </div>
 
+                          <!-- Remind At (for reminder/event) -->
+                          <div class="col-md-6" v-if="form.type === 'reminder' || form.type === 'event'">
+                            <label class="form-label">Remind At</label>
+                            <input type="datetime-local" class="form-control" v-model="form.remind_at">
+                          </div>
+
                           <!-- Status (for reminder/event) -->
                           <div class="col-md-6" v-if="form.type === 'reminder' || form.type === 'event'">
                             <label class="form-label">Status</label>
@@ -383,6 +410,7 @@
                     </div>
                   </div>
                 </div>
+
 
 
                     
@@ -451,7 +479,55 @@
       methods: {   
         handleFileUpload(event) {
           this.data.attachment = event.target.files[0];
-        },             
+        }, 
+          // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },
+        formatDateTime(dateTime) {
+            if (!dateTime) return "N/A";
+            const d = new Date(dateTime);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+            const year = d.getFullYear();
+
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+          },
+          remindAtClass(remindAt) {
+          const now = new Date();
+          const r = new Date(remindAt);
+
+          const startOfToday = new Date();
+          startOfToday.setHours(0,0,0,0);
+
+          const endOfToday = new Date();
+          endOfToday.setHours(23,59,59,999);
+
+          const startOfTomorrow = new Date(startOfToday);
+          startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+          const endOfTomorrow = new Date(endOfToday);
+          endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
+
+          if (r < now) return 'text-danger';        // overdue → red
+          if (r >= startOfToday && r <= endOfToday) return 'text-warning'; // today → orange
+          if (r >= startOfTomorrow && r <= endOfTomorrow) return 'text-info'; // tomorrow → blue
+
+          return 'text-secondary'; // default / later dates
+        },
+        // Truncate text to specified length
+        truncateText(text, maxLength = 30) {
+          if (!text) return "N/A";
+          return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        },            
         viewEntry(item)
         {
           console.log(this.selectedEntry)

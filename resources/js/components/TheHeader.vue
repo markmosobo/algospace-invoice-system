@@ -36,87 +36,72 @@
 <li class="nav-item dropdown">
   <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
     <i class="bi bi-bell"></i>
-    <span
-      v-if="notificationCount > 0"
-      class="badge bg-danger badge-number"
-    >
+    <span v-if="notificationCount > 0" class="badge bg-danger badge-number">
       {{ notificationCount }}
     </span>
   </a>
 
-  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
-    <li class="dropdown-header">
-      You have {{ notificationCount }} due reminders
+  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications p-2" style="min-width: 320px;">
+    
+    <!-- OVERDUE -->
+    <li v-if="reminders.filter(r => r.status==='overdue').length" class="dropdown-header d-flex justify-content-between align-items-center">
+      <span>Overdue</span>
+      <span class="badge bg-danger">{{ reminders.filter(r => r.status==='overdue').length }}</span>
+    </li>
+    <li v-for="r in reminders.filter(r => r.status==='overdue')" :key="r.id" 
+        class="notification-item d-flex align-items-start p-2 rounded hover-shadow mb-1">
+      <i class="bi bi-exclamation-triangle text-danger me-2 fs-5"></i>
+      <div class="flex-grow-1">
+        <h6 class="mb-0">{{ r.title }}</h6>
+        <small class="text-muted">{{ r.time }}</small>
+      </div>
+      <button class="btn btn-sm btn-success ms-2" @click.stop="markAsDone(r.id)">Mark Done</button>
+    </li>
+
+    <!-- TODAY -->
+    <li v-if="reminders.filter(r => r.status==='today').length" class="dropdown-header d-flex justify-content-between align-items-center mt-2">
+      <span>Today</span>
+      <span class="badge bg-warning text-dark">{{ reminders.filter(r => r.status==='today').length }}</span>
+    </li>
+    <li v-for="r in reminders.filter(r => r.status==='today')" :key="r.id" 
+        class="notification-item d-flex align-items-start p-2 rounded hover-shadow mb-1">
+      <i class="bi bi-alarm text-warning me-2 fs-5"></i>
+      <div class="flex-grow-1">
+        <h6 class="mb-0">{{ r.title }}</h6>
+        <small class="text-muted">{{ r.time }}</small>
+      </div>
+      <button class="btn btn-sm btn-success ms-2" @click.stop="markAsDone(r.id)">Mark Done</button>
+    </li>
+
+    <!-- TOMORROW -->
+    <li v-if="reminders.filter(r => r.status==='tomorrow').length" class="dropdown-header d-flex justify-content-between align-items-center mt-2">
+      <span>Tomorrow</span>
+      <span class="badge bg-info text-dark">{{ reminders.filter(r => r.status==='tomorrow').length }}</span>
+    </li>
+    <li v-for="r in reminders.filter(r => r.status==='tomorrow')" :key="r.id" 
+        class="notification-item d-flex align-items-start p-2 rounded hover-shadow mb-1">
+      <i class="bi bi-alarm text-info me-2 fs-5"></i>
+      <div class="flex-grow-1">
+        <h6 class="mb-0">{{ r.title }}</h6>
+        <small class="text-muted">{{ r.time }}</small>
+      </div>
+      <button class="btn btn-sm btn-success ms-2" @click.stop="markAsDone(r.id)">Mark Done</button>
+    </li>
+
+    <!-- NO REMINDERS -->
+    <li v-if="notificationCount === 0" class="px-3 py-2 text-center text-muted">
+      No pending reminders 🎉
     </li>
 
     <li><hr class="dropdown-divider"></li>
 
-<li v-if="reminders.filter(r => r.status==='overdue').length">
-  <small class="text-danger">Overdue</small>
-</li>
-<li
-  class="notification-item"
-  v-for="r in reminders.filter(r => r.status==='overdue')"
-  :key="r.id"
->
-  <i class="bi bi-exclamation-triangle text-danger"></i>
-  <div>
-    <h4>{{ r.title }}</h4>
-    <p>{{ r.time }}</p>
-    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
-      Mark Done
-    </button>
-  </div>
-</li>
-
-<li v-if="reminders.filter(r => r.status==='today').length" class="mt-2">
-  <small class="text-warning">Today</small>
-</li>
-<li
-  class="notification-item"
-  v-for="r in reminders.filter(r => r.status==='today')"
-  :key="r.id"
->
-  <i class="bi bi-alarm text-warning"></i>
-  <div>
-    <h4>{{ r.title }}</h4>
-    <p>{{ r.time }}</p>
-    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
-      Mark Done
-    </button>
-  </div>
-</li>
-
-<li v-if="reminders.filter(r => r.status==='tomorrow').length" class="mt-2">
-  <small class="text-info">Tomorrow</small>
-</li>
-<li
-  class="notification-item"
-  v-for="r in reminders.filter(r => r.status==='tomorrow')"
-  :key="r.id"
->
-  <i class="bi bi-alarm text-info"></i>
-  <div>
-    <h4>{{ r.title }}</h4>
-    <p>{{ r.time }}</p>
-    <button class="btn btn-sm btn-success mt-1" @click="markAsDone(r.id)">
-      Mark Done
-    </button>
-  </div>
-</li>
-
-<li v-if="notificationCount === 0" class="px-3 py-2 text-center text-muted">
-  No pending reminders 🎉
-</li>
-
-
-    <li><hr class="dropdown-divider"></li>
-
-    <li class="dropdown-footer">
+    <!-- FOOTER LINK -->
+    <li class="dropdown-footer text-center">
       <a href="/diary?filter=reminders">View all reminders</a>
     </li>
   </ul>
 </li>
+
 
 
 
@@ -322,4 +307,10 @@ import axios from 'axios';
   </script>
   
   
-  
+<style>
+.hover-shadow:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+</style>

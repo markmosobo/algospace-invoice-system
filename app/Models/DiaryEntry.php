@@ -13,9 +13,15 @@ class DiaryEntry extends Model
         'category',
         'description',
         'attachment',
-        'category',
         'tags',
         'entry_date',
-        'remind_at'
-    ];     
+        'remind_at',
+        'status',
+    ];
+
+    // Ensure dates are Carbon instances
+    protected $casts = [
+        'entry_date' => 'datetime',
+        'remind_at' => 'datetime',
+    ];
 }

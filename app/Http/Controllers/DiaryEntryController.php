@@ -42,10 +42,12 @@ class DiaryEntryController extends Controller
             'attachment' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'entry_date' => 'nullable|date',
+            'remind_at' => 'nullable|date', // <--- added
         ]);
 
-        // Default date to now if not provided
+        // Default dates
         $entryDate = $request->entry_date ?? Carbon::now();
+        $remindAt = $request->remind_at ?? null; // only set if provided
 
         // Create the diary entry
         $diaryEntry = DiaryEntry::create([
@@ -58,9 +60,10 @@ class DiaryEntryController extends Controller
             'attachment' => $request->attachment,
             'entry_date' => $entryDate,
             'status' => $request->status ?? 'pending',
+            'remind_at' => $remindAt, // <--- added
         ]);
 
-        //record system log
+        // Record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' created diary entry id '.$diaryEntry->id
@@ -71,6 +74,7 @@ class DiaryEntryController extends Controller
             'diaryEntry' => $diaryEntry
         ], 201);          
     }
+
 
     /**
      * Display the specified resource.
@@ -112,6 +116,7 @@ class DiaryEntryController extends Controller
             'attachment' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'entry_date' => 'nullable|date',
+            'remind_at' => 'nullable|date', // <--- added
         ]);
 
         // Update fields safely
@@ -124,10 +129,11 @@ class DiaryEntryController extends Controller
         $diaryEntry->attachment = $request->attachment ?? $diaryEntry->attachment;
         $diaryEntry->status = $request->status ?? $diaryEntry->status;
         $diaryEntry->entry_date = $request->entry_date ?? $diaryEntry->entry_date;
+        $diaryEntry->remind_at = $request->remind_at ?? $diaryEntry->remind_at; // <--- added
 
         $diaryEntry->save();
 
-        //record system log
+        // Record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' updated diary entry id '.$id
@@ -138,6 +144,7 @@ class DiaryEntryController extends Controller
             'diaryEntry' => $diaryEntry
         ]);        
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -166,49 +173,62 @@ class DiaryEntryController extends Controller
     }
 
 
-public function remindersOverview()
-{
-    $now = now();
-    $todayStart = Carbon::today()->startOfDay();
-    $todayEnd = Carbon::today()->endOfDay();
-    $tomorrowStart = Carbon::tomorrow()->startOfDay();
-    $tomorrowEnd = Carbon::tomorrow()->endOfDay();
+    public function remindersOverview()
+    {
+        $now = now();
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+        $tomorrowStart = Carbon::tomorrow()->startOfDay();
+        $tomorrowEnd = Carbon::tomorrow()->endOfDay();
 
-    $reminders = DiaryEntry::where('type', 'reminder')
-        ->where('status', 'pending')
-        ->whereNotNull('remind_at')
-        ->get()
-        ->map(function ($r) use ($now, $todayStart, $todayEnd, $tomorrowStart, $tomorrowEnd) {
-            $status = '';
+        $reminders = DiaryEntry::where('type', 'reminder')
+            ->where('status', 'pending')
+            ->whereNotNull('remind_at')
+            ->get()
+            ->map(function ($r) use ($now, $todayStart, $todayEnd, $tomorrowStart, $tomorrowEnd) {
+                $rRemind = $r->remind_at; // now Carbon
+                $status = '';
 
-            if ($r->remind_at < $now) {
-                $status = 'overdue';
-            } elseif ($r->remind_at >= $todayStart && $r->remind_at <= $todayEnd) {
-                $status = 'today';
-            } elseif ($r->remind_at >= $tomorrowStart && $r->remind_at <= $tomorrowEnd) {
-                $status = 'tomorrow';
-            }
+                if ($rRemind < $now) {
+                    $status = 'overdue';
+                } elseif ($rRemind->between($todayStart, $todayEnd)) {
+                    $status = 'today';
+                } elseif ($rRemind->between($tomorrowStart, $tomorrowEnd)) {
+                    $status = 'tomorrow';
+                }
 
-            return [
-                'id' => $r->id,
-                'title' => $r->title,
-                'remind_at' => $r->remind_at,
-                'time' => $r->remind_at->format('H:i'),
-                'status' => $status
-            ];
-        });
+                return [
+                    'id' => $r->id,
+                    'title' => $r->title,
+                    'remind_at' => $rRemind,
+                    'time' => $rRemind->format('H:i'),
+                    'status' => $status
+                ];
+            })
+            ->filter(fn($r) => $r['status'] !== '') // remove anything not in these 3 categories
+            ->sortBy(function($r) { // optional: overdue first, then today, then tomorrow
+                $order = ['overdue' => 0, 'today' => 1, 'tomorrow' => 2];
+                return $order[$r['status']];
+            })
+            ->values(); // reset keys
 
-    return $reminders->filter(fn($r) => $r['status'] !== ''); // drop others
-}
+        return response()->json($reminders);
+    }
 
 
     public function markDone($id)
     {
-        DiaryEntry::where('id', $id)->update([
-            'is_done' => 1
-        ]);
+        $diaryEntry = DiaryEntry::find($id);
+
+        if (!$diaryEntry) {
+            return response()->json(['message' => 'Diary entry not found'], 404);
+        }
+
+        $diaryEntry->status = 'done';
+        $diaryEntry->save();
 
         return response()->json(['message' => 'Marked as done']);
     }
+
 
 }

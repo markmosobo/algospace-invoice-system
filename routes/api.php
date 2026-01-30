@@ -78,4 +78,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/reminders/overview', [DiaryEntryController::class, 'remindersOverview']);
     Route::put('/diary-entries/{id}/done', [DiaryEntryController::class, 'markDone']);
 
+    // Logout user
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
 });

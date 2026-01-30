@@ -173,10 +173,11 @@
       <!-- Diary -->
       <li class="nav-item mt-3">
         <RouterLink to="/diary" :class="{ active: isActive }" class="nav-link">
-          <i class="bi bi-person-circle"></i>
+          <i class="bi bi-journal-text"></i>
           <span>My Diary</span>
         </RouterLink>
       </li>
+
 
       <!-- Profile -->
       <li class="nav-item mt-3">

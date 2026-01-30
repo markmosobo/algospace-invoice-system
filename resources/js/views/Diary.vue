@@ -74,7 +74,17 @@
   </tbody>
   <tbody v-else>
     <tr v-for="item in diaryEntries" :key="item.id">
-      <td>{{ item.title }}</td>
+      <td>
+        <span class="fw-semibold">{{ item.title }}</span>
+
+        <span
+          class="badge ms-2 text-uppercase"
+          :class="item.category === 'office' ? 'bg-primary' : 'bg-secondary'"
+          style="font-size: 0.65rem; letter-spacing: 0.08em;"
+        >
+          {{ item.category }}
+        </span>
+      </td>
 
       <!-- Format date as dd/mm/yyyy -->
       <td>{{ formatDate(item.entry_date) }}</td>
@@ -143,7 +153,7 @@
 
                           <!-- Entry Date -->
                           <div class="col-md-6" v-if="selectedEntry.entry_date">
-                            <strong>Date:</strong> <br> {{ formatDateTime(selectedEntry.entry_date) }}
+                            <strong>Entry Date:</strong> <br> {{ formatDateTime(selectedEntry.entry_date) }}
                           </div>
 
                           <!-- Remind At (for reminders/events) -->

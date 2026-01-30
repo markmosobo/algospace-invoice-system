@@ -76,7 +76,7 @@
                             <td>{{item.amount ?? "N/A"}}</td>
                             <td>
                               <div>
-                                <small class="text-muted">{{ item.expense_date }}</small><br>
+                                <small class="text-muted">{{ formatDate(item.expense_date) }}</small><br>
 
                                 <span v-if="item.type === 'provider_service'">
                                   {{ item.provider_service_name || 'Provider Service' }}
@@ -111,64 +111,81 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Expense Modal -->
-              <div class="modal fade" id="viewExpenseModal" tabindex="-1" aria-labelledby="viewExpenseModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
+                <!-- View Expense Modal -->
+                <div class="modal fade" id="viewExpenseModal" tabindex="-1" aria-labelledby="viewExpenseModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
 
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Expense Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedExpense">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedExpense.type">
-                        <strong>Type:</strong> <br>
-
-                        <span v-if="selectedExpense.type === 'expense'" class="badge bg-danger">
-                          Expense
-                        </span>
-
-                        <span v-else-if="selectedExpense.type === 'provider_service'" class="badge bg-primary">
-                          Service(s) rendered
-                        </span>
-
-                        <span v-else-if="selectedExpense.type === 'inventory'" class="badge bg-success">
-                          Inventory
-                        </span>
-
-                        <span v-else class="badge bg-secondary">
-                          Other
-                        </span>
-                        </div>
-
-
-                        <div class="col-md-6" v-if="selectedExpense.service_provider_id">
-                          <strong>Provider:</strong> <br> {{ selectedExpense.service_provider.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedExpense.provider_service_id">
-                          <strong>Service:</strong> <br> {{ selectedExpense.provider_service.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedExpense.amount">
-                          <strong>Amount:</strong> <br> {{ selectedExpense.amount }}
-                        </div>
-
+                      <!-- Header -->
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="viewExpenseModalLabel">Expense Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
-                    </div>
 
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
+                      <!-- Body -->
+                      <div class="modal-body" v-if="selectedExpense">
+                        <div class="row g-3">
 
+                          <!-- Type -->
+                          <div class="col-md-6" v-if="selectedExpense.type">
+                            <strong>Type:</strong> <br>
+                            <span
+                              class="badge text-uppercase"
+                              :class="{
+                                'bg-danger': selectedExpense.type === 'expense',
+                                'bg-primary': selectedExpense.type === 'provider_service',
+                                'bg-success': selectedExpense.type === 'inventory',
+                                'bg-secondary': selectedExpense.type === 'other'
+                              }"
+                              style="letter-spacing: 0.05em; font-size: 0.75rem;"
+                            >
+                              {{ selectedExpense.type }}
+                            </span>
+                          </div>
+
+                          <!-- Provider -->
+                          <div class="col-md-6" v-if="selectedExpense.service_provider_id && selectedExpense.service_provider">
+                            <strong>Provider:</strong> <br> {{ selectedExpense.service_provider.name }}
+                          </div>
+
+                          <!-- Service -->
+                          <div class="col-md-6" v-if="selectedExpense.provider_service_id && selectedExpense.provider_service">
+                            <strong>Service:</strong> <br> {{ selectedExpense.provider_service.name }}
+                          </div>
+
+                          <!-- Amount -->
+                          <div class="col-md-6" v-if="selectedExpense.amount">
+                            <strong>Amount:</strong> <br> KSh {{ Number(selectedExpense.amount).toLocaleString() }}
+                          </div>
+
+                          <!-- Description -->
+                          <div class="col-12" v-if="selectedExpense.description">
+                            <strong>Description:</strong> <br>
+                            {{ selectedExpense.description }}
+                          </div>
+
+                          <!-- Date -->
+                          <div class="col-md-6" v-if="selectedExpense.expense_date">
+                            <strong>Date:</strong> <br> {{ formatDate(selectedExpense.expense_date) }}
+                          </div>
+
+                          <!-- Linked Invoice -->
+                          <div class="col-md-6" v-if="selectedExpense.invoice_id">
+                            <strong>Invoice:</strong> <br> {{ selectedExpense.invoice_id }}
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- Footer -->
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+
+                    </div>
                   </div>
                 </div>
-              </div>
+
 
 
                 <!-- Add Expense Modal -->
@@ -413,7 +430,16 @@
       },
 
    
-      methods: {                
+      methods: { 
+        // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },               
         async viewExpense(expense) {
           try {
             const res = await axios.get(`/api/expenses/${expense.id}`);

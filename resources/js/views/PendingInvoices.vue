@@ -92,8 +92,8 @@
                             </td>
 
 
-                            <td>{{ item.invoice_date ?? "N/A" }}</td>
-                            <td>{{ item.due_date ?? "N/A" }}</td>
+                            <td>{{ formatDate(item.invoice_date) ?? "N/A" }}</td>
+                            <td>{{ formatDate(item.due_date) ?? "N/A" }}</td>
                             <td>{{ item.total_amount ?? "N/A" }}</td>
 
                             <td>
@@ -188,12 +188,12 @@
 
                           <!-- INVOICE DATE -->
                           <div class="col-md-6" v-if="selectedInvoice.invoice_date">
-                            <strong>Invoice Date:</strong> <br> {{ selectedInvoice.invoice_date }}
+                            <strong>Invoice Date:</strong> <br> {{ formatDate(selectedInvoice.invoice_date) }}
                           </div>
 
                           <!-- DUE DATE -->
                           <div class="col-md-6" v-if="selectedInvoice.due_date">
-                            <strong>Due Date:</strong> <br> {{ selectedInvoice.due_date }}
+                            <strong>Due Date:</strong> <br> {{ formatDate(selectedInvoice.due_date) }}
                           </div>
 
                           <!-- STATUS BADGE -->
@@ -506,7 +506,16 @@
                 Number(this.selectedInvoice.amount_paid);
         }
       },      
-      methods: {   
+      methods: { 
+        // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },  
         addPayment(invoice) {
           this.selectedInvoice = invoice;
           this.paymentForm.invoice_id = invoice.id;

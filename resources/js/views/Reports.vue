@@ -61,33 +61,59 @@
         </div>
 
         <!-- Optional Table -->
-        <div class="col-12 mt-3" v-if="showTable">
-        <div class="card">
-            <div class="card-body">
-            <h5>Details</h5>
-            <table class="table table-bordered">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Type</th>
-                    <th>Reference</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="(d, index) in details" :key="d.id">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ d.type }}</td>
-                    <td>{{ d.reference }}</td>
-                    <td>{{ d.amount }}</td>
-                    <td>{{ d.payment_date }}</td>
-                </tr>
-                </tbody>
-            </table>
-            </div>
-        </div>
-        </div>
+<div class="col-12 mt-3" v-if="showTable">
+  <div class="card">
+    <div class="card-body">
+      <h5>Details</h5>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Type</th>
+            <th>Reference</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(d, index) in paginatedDetails" :key="d.id">
+            <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
+            <td>{{ d.type }}</td>
+            <td>{{ d.reference }}</td>
+            <td>{{ Number(d.amount).toLocaleString() }}</td>
+            <td>{{ formatDate(d.payment_date) }}</td>
+          </tr>
+          <tr v-if="details.length === 0">
+            <td colspan="5" class="text-center">No details found.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <nav v-if="totalPages > 1" class="mt-2">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <button class="page-link" @click="currentPage--">Previous</button>
+          </li>
+
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }"
+          >
+            <button class="page-link" @click="currentPage = page">{{ page }}</button>
+          </li>
+
+          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+            <button class="page-link" @click="currentPage++">Next</button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
 
     </div>
     </section>
@@ -121,7 +147,8 @@
         return {
         initializing: true,
         submitting: false,
-
+        currentPage: 1,
+        perPage: 10, // rows per page
         // Summary cards
         summary: {
             total_sales: 0,
@@ -169,8 +196,32 @@
         showTable: true,
         };
     },
+    computed: {
+        paginatedDetails() {
+            const start = (this.currentPage - 1) * this.perPage;
+            const end = start + this.perPage;
+            return this.details.slice(start, end);
+        },
+        totalPages() {
+            return Math.ceil(this.details.length / this.perPage);
+        },
+    },
+    watch: {
+        details() {
+            this.currentPage = 1;
+        }
+    },
 
     methods: {
+        // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },
         async loadReport() {
         this.initializing = true;
 

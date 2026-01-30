@@ -82,8 +82,22 @@
                         <td>{{ sale.invoice_no }}</td>
                         <td>{{ sale.customer_name }}</td>
                         <td>{{ sale.amount }}</td>
-                        <td>{{ sale.method }}</td>
-                        <td>{{ sale.payment_date }}</td>
+                        <td>
+                        <span
+                            class="badge text-uppercase"
+                            :class="{
+                            'bg-success': sale.method.toLowerCase() === 'cash',
+                            'bg-primary': sale.method.toLowerCase() === 'm-pesa',
+                            'bg-secondary': sale.method.toLowerCase() === 'bank',
+                            'bg-warning': ['cash','m-pesa','bank'].indexOf(sale.method.toLowerCase()) === -1
+                            }"
+                            style="letter-spacing: 0.05em; font-size: 0.75rem;"
+                        >
+                            {{ sale.method }}
+                        </span>
+                        </td>
+
+                        <td>{{ formatDate(sale.payment_date) }}</td>
                         <td>
                             <span
                               class="badge"
@@ -451,9 +465,9 @@
                             <p><strong>Invoice Total:</strong> KES {{ viewSaleData.invoice_total }}</p>
                             <p><strong>Total Paid:</strong> KES {{ viewSaleData.total_paid }}</p>
                             <p>
-                            <strong>Status:</strong>
+                            <strong>Status: </strong>
                             <span
-                                class="badge"
+                                class="badge text-uppercase"
                                 :class="viewSaleData.status === 'paid' ? 'bg-success' : 'bg-warning'"
                             >
                                 {{ viewSaleData.status }}
@@ -462,8 +476,21 @@
                         </div>
 
                         <div class="col-md-6">
-                            <p><strong>Payment Method:</strong> {{ viewSaleData.method }}</p>
-                            <p><strong>Payment Date:</strong> {{ viewSaleData.payment_date }}</p>
+                            <p>
+                            <strong>Payment Method: </strong>
+                            <span
+                                class="badge text-uppercase"
+                                :class="{
+                                'bg-success': viewSaleData.method.toLowerCase() === 'cash',
+                                'bg-primary': viewSaleData.method.toLowerCase() === 'm-pesa',
+                                'bg-secondary': viewSaleData.method.toLowerCase() === 'bank',
+                                'bg-warning': ['cash','m-pesa','bank'].indexOf(viewSaleData.method.toLowerCase()) === -1
+                                }"
+                            >
+                                {{ viewSaleData.method }}
+                            </span>
+                            </p>
+                            <p><strong>Payment Date:</strong> {{ formatDate(viewSaleData.payment_date) }}</p>
                             <p v-if="viewSaleData.mpesa_code">
                             <strong>M-Pesa Code:</strong> {{ viewSaleData.mpesa_code }}
                             </p>
@@ -592,7 +619,15 @@ export default {
         });
     },
 
-
+        // Format date as dd/mm/yyyy
+    formatDate(date) {
+        if (!date) return "N/A";
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    },
     shareWhatsApp() {
         // Check if preview exists
         if (!this.pdfFileUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });

@@ -120,7 +120,7 @@ class ServiceSeeder extends Seeder
                 'is_bundle' => false,
             ],
             [
-                'name' => 'NSSF / NHIF Services',
+                'name' => 'SHA / NHIF Services',
                 'category' => 'Online Applications',
                 'price' => 250,
                 'unit' => 'service',

@@ -118,7 +118,7 @@ class ExpenseController extends Controller
 
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name . ' created expense id ' . $expense->id
+            'description' => auth('api')->user()->name . ' created expense #' . $expense->id
         ]);
 
         return response()->json([
@@ -165,7 +165,7 @@ class ExpenseController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated expense id '.$expense->id
+            'description' => auth('api')->user()->name.' updated expense #'.$expense->id
         ]);         
 
         return response()->json([
@@ -181,7 +181,7 @@ class ExpenseController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted expense id '.$id
+            'description' => auth('api')->user()->name.' deleted expense #'.$id
         ]); 
 
         return response()->json(['message' => 'Deleted']);

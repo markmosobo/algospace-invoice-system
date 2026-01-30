@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Personal Accounts <span>| Accounts asssociated with me</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addAccount()"
                                 >
-                                  Add Customer
+                                  Add Account
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,12 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="PersonalAccountsTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col"> Name</th>
+                            <th scope="col">Balance</th>
+                            <th scope="col">Currency</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,10 +73,10 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
+                          <tr v-for="account in personalAccounts" :key="account.id">
+                            <td>{{account.name}}</td>
+                            <td>{{account.balance ?? "N/A"}}</td>
+                            <td>{{account.currency ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +85,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewAccount(account)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editAccount(account)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteAccount(account.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,102 +100,91 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedCustomer">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
+                <!-- View Account Modal -->
+                <div
+                  class="modal fade"
+                  id="viewAccountModal"
+                  tabindex="-1"
+                  aria-labelledby="viewAccountModalLabel"
+                  aria-hidden="true"
+                >
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
 
+                      <!-- Header -->
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title" id="viewAccountModalLabel">
+                          Account Details
+                        </h5>
+                        <button
+                          type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"
+                        ></button>
                       </div>
 
-                      <div class="modal-body">
-                        <form class="row g-3 needs-validation" novalidate>
+                      <!-- Body -->
+                      <div class="modal-body" v-if="selectedAccount">
+                        <div class="row gy-3">
 
-                          <!-- Hidden ID -->
-                          <input type="hidden" v-model="data.id" />
-
-                          <!-- First & Last Name -->
+                          <!-- Account Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
+                            <small class="text-muted">Account Name</small>
+                            <div class="fw-semibold">
+                              {{ selectedAccount.name }}
+                            </div>
                           </div>
 
-                          <!-- Email -->
+                          <!-- Balance -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
+                            <small class="text-muted">Balance</small>
+                            <div class="fw-bold text-success">
+                              {{ selectedAccount.currency }}
+                              {{ Number(selectedAccount.balance).toLocaleString() }}
+                            </div>
                           </div>
 
-                          <!-- Phone -->
+                          <!-- Currency -->
                           <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
+                            <small class="text-muted">Currency</small>
+                            <div class="fw-semibold">
+                              {{ selectedAccount.currency }}
+                            </div>
                           </div>
 
+                          <!-- Created At -->
                           <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </select>
+                            <small class="text-muted">Created At</small>
+                            <div class="fw-semibold">
+                              {{ formatDate(selectedAccount.created_at) }}
+                            </div>
                           </div>
 
+                          <!-- Updated At -->
+                          <div class="col-md-6">
+                            <small class="text-muted">Last Updated</small>
+                            <div class="fw-semibold">
+                              {{ formatDate(selectedAccount.updated_at) }}
+                            </div>
+                          </div>
 
-                        </form>
+                        </div>
+                      </div>
+
+                      <!-- Empty State -->
+                      <div class="modal-body text-center text-muted" v-else>
+                        No account selected.
                       </div>
 
                       <!-- Footer -->
                       <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
-                          Save
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-bs-dismiss="modal"
+                        >
+                          Close
                         </button>
                       </div>
 
@@ -203,55 +192,192 @@
                   </div>
                 </div>
 
-
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
+                <!-- Add Account Modal -->
+                <div
+                  class="modal fade"
+                  id="AddAccountModal"
+                  tabindex="-1"
+                  aria-labelledby="AddAccountModalLabel"
+                  aria-hidden="true"
+                >
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
 
+                      <!-- Header -->
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title" id="AddAccountModalLabel">
+                          Add Personal Account
+                        </h5>
+                        <button
+                          type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"
+                        ></button>
                       </div>
 
+                      <!-- Body -->
                       <div class="modal-body">
                         <form class="row g-3">
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
+                          <!-- Hidden ID (future edit support) -->
+                          <input type="hidden" v-model="data.id" />
+
+                          <!-- Account Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Account Name <span class="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="data.name"
+                              id="name"
+                              placeholder="e.g. Cash, Mpesa, Bank Account"
+                              required
+                            >
                           </div>
 
-                          <!-- Email -->
+                          <!-- Opening Balance -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
+                            <label class="form-label">
+                              Opening Balance
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              class="form-control"
+                              v-model="data.balance"
+                              placeholder="0.00"
+                            >
                           </div>
 
-                          <!-- Phone -->
+                          <!-- Currency -->
                           <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">
+                              Currency
+                            </label>
+                            <select class="form-select" v-model="data.currency">
+                              <option value="KES">KES</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
                             </select>
                           </div>
-
 
                         </form>
                       </div>
 
+                      <!-- Footer -->
                       <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submitChanges" style="background: darkgreen; border-color: darkgreen;">
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-bs-dismiss="modal"
+                        >
+                          Close
+                        </button>
+
+                        <button
+                          type="button"
+                          class="btn btn-success"
+                          @click="submit"
+                        >
+                          Save Account
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- EDIT Account MODAL -->
+                <div
+                  class="modal fade"
+                  id="EditAccountModal"
+                  tabindex="-1"
+                  aria-labelledby="EditAccountModalLabel"
+                  aria-hidden="true"
+                >
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+
+                      <!-- Header -->
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="EditAccountModalLabel">
+                          Edit Personal Account
+                        </h5>
+                        <button
+                          type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"
+                        ></button>
+                      </div>
+
+                      <!-- Body -->
+                      <div class="modal-body">
+                        <form class="row g-3">
+
+                          <!-- Hidden ID -->
+                          <input type="hidden" v-model="form.id" />
+
+                          <!-- Account Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Account Name <span class="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              id="name_edit"
+                              v-model="form.name"
+                              required
+                            >
+                          </div>
+
+                          <!-- Balance -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Balance
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              class="form-control"
+                              v-model="form.balance"
+                            >
+                          </div>
+
+                          <!-- Currency -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Currency
+                            </label>
+                            <select class="form-select" v-model="form.currency">
+                              <option value="KES">KES</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                            </select>
+                          </div>
+
+                        </form>
+                      </div>
+
+                      <!-- Footer -->
+                      <div class="modal-footer">
+                        <button
+                          class="btn btn-secondary"
+                          data-bs-dismiss="modal"
+                        >
+                          Close
+                        </button>
+
+                        <button
+                          class="btn btn-success"
+                          @click="submitChanges"
+                        >
                           Save Changes
                         </button>
                       </div>
@@ -259,6 +385,7 @@
                     </div>
                   </div>
                 </div>
+
 
                     
 
@@ -289,49 +416,56 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            personalAccounts: [],
+            selectedAccount: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {        // ADD account
+              id: null,
+              name: '',
+              balance: 0,
+              currency: 'KES'
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {
+              id: null,
+              name: '',
+              balance: 0,
+              currency: 'KES'
             }
+
         }
       },      
-      methods: {                
-        viewCustomer(customer)
+      methods: {     
+        // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },            
+        viewAccount(account)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedAccount)
+          this.selectedAccount = account;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewAccountModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editAccount(account) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: account.id,
+            name: account.name,
+            balance: account.balance,
+            currency: account.currency,
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditAccountModal')
         );
         modal.show();
         },
@@ -354,12 +488,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/personal-accounts/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Account updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditAccountModal')
             );
             modal.hide();
 
@@ -369,7 +503,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update account',
             'error'
             );
         } finally {
@@ -377,10 +511,10 @@
         }
         },
 
-        addCustomer()
+        addAccount()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddAccountModal'));
           modal.show();
         },
         async submit() {
@@ -422,22 +556,21 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/personal-accounts', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Account added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddAccountModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              name: "",
+              balance: "",
+              currency: "",
             };
 
             this.loadLists();
@@ -456,7 +589,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteAccount(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +601,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/personal-accounts/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Account has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +623,17 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/personal-accounts')
             .then((response) => {
-              this.customers = response.data;
+              this.personalAccounts = response.data;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#PersonalAccountsTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching accounts list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

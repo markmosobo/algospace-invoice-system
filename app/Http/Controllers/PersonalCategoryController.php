@@ -42,7 +42,7 @@ class PersonalCategoryController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal category id '.$personalCategory->id
+            'description' => auth('api')->user()->name.' created personal category #'.$personalCategory->id
         ]);        
 
         return response()->json([
@@ -92,7 +92,7 @@ class PersonalCategoryController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal category id '.$personalCategory->id
+            'description' => auth('api')->user()->name.' created personal category #'.$personalCategory->id
         ]);        
 
         return response()->json([
@@ -119,7 +119,7 @@ class PersonalCategoryController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal category id '.$id
+            'description' => auth('api')->user()->name.' deleted personal category #'.$id
         ]);        
 
         return response()->json([

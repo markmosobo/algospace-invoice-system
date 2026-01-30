@@ -52,7 +52,7 @@ class InvoiceItemController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created invoice item id '.$invoiceItem->id
+            'description' => auth('api')->user()->name.' created invoice item #'.$invoiceItem->id
         ]);        
 
         return response()->json([
@@ -102,7 +102,7 @@ class InvoiceItemController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated invoice item id '.$invoiceItem->id
+            'description' => auth('api')->user()->name.' updated invoice item #'.$invoiceItem->id
         ]);        
 
         return response()->json([
@@ -122,7 +122,7 @@ class InvoiceItemController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted invoice item id '.$id
+            'description' => auth('api')->user()->name.' deleted invoice item #'.$id
         ]);
 
         return response()->json(['message' => 'Deleted']);

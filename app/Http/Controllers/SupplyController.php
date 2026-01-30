@@ -61,7 +61,7 @@ class SupplyController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created product id '.$supply->id
+            'description' => auth('api')->user()->name.' created product #'.$supply->id
         ]);        
 
         return response()->json([
@@ -112,7 +112,7 @@ class SupplyController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated product id '.$supply->id
+            'description' => auth('api')->user()->name.' updated product #'.$supply->id
         ]);          
 
         return response()->json([
@@ -131,46 +131,46 @@ class SupplyController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted product id '.$id
+            'description' => auth('api')->user()->name.' deleted product #'.$id
         ]);  
 
         return response()->json(['message' => 'Deleted']);        
     }
 
-    public function restock(Request $request)
-{
-    $request->validate([
-        'supply_id' => 'required|integer|exists:supplies,id',
-        'quantity' => 'required|integer|min:1',
-        'buying_price' => 'required|numeric',
-        'supplier_id' => 'required|integer|exists:suppliers,id',
-    ]);
+        public function restock(Request $request)
+    {
+        $request->validate([
+            'supply_id' => 'required|integer|exists:supplies,id',
+            'quantity' => 'required|integer|min:1',
+            'buying_price' => 'required|numeric',
+            'supplier_id' => 'required|integer|exists:suppliers,id',
+        ]);
 
-    $product = Supply::find($request->supply_id);
+        $product = Supply::find($request->supply_id);
 
-    // 1️⃣ Update product quantity
-    $product->quantity += $request->quantity;
-    $product->save();
+        // 1️⃣ Update product quantity
+        $product->quantity += $request->quantity;
+        $product->save();
 
-    // 2️⃣ Save restock history
-    Restock::create([
-        'supply_id' => $request->supply_id,
-        'quantity' => $request->quantity,
-        'buying_price' => $request->buying_price,
-        'supplier_id' => $request->supplier_id,
-        'user_id' => auth('api')->id(),
-    ]);
+        // 2️⃣ Save restock history
+        Restock::create([
+            'supply_id' => $request->supply_id,
+            'quantity' => $request->quantity,
+            'buying_price' => $request->buying_price,
+            'supplier_id' => $request->supplier_id,
+            'user_id' => auth('api')->id(),
+        ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' restocked product id '.$product->id
-        ]);      
+            //record system log
+            SystemLog::create([
+                'user_id' => auth('api')->user()->id,
+                'description' => auth('api')->user()->name.' restocked product #'.$product->id
+            ]);      
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Product restocked successfully'
-    ]);
-    }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product restocked successfully'
+        ]);
+        }
 
     }

@@ -78,7 +78,7 @@ class InvoiceController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created invoice id '.$invoice->id
+            'description' => auth('api')->user()->name.' created invoice #'.$invoice->id
         ]);        
 
         return response()->json([
@@ -129,6 +129,12 @@ class InvoiceController extends Controller
             'status'       => $request->status,
         ]);
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' updated invoice #'.$invoice->id
+        ]);        
+
         return response()->json([
             'message' => 'Invoice updated successfully',
             'invoice' => $invoice
@@ -147,7 +153,7 @@ class InvoiceController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted invoice id '.$id
+            'description' => auth('api')->user()->name.' deleted invoice #'.$id
         ]);
 
         return response()->json(['message' => 'Deleted']);
@@ -156,6 +162,13 @@ class InvoiceController extends Controller
     public function download($id)
     {
         $invoice = Invoice::findOrFail($id);
+
+                //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' downloaded invoice #'.$id
+        ]);
+
         return response()->file(storage_path('app/public/' . $invoice->pdf_path));
     }
 
@@ -165,6 +178,13 @@ class InvoiceController extends Controller
     public function print($id)
     {
         $invoice = Invoice::findOrFail($id);
+
+                //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' printed invoice #'.$id
+        ]);
+
         return response()->file(storage_path('app/public/' . $invoice->pdf_path));
     }
 }

@@ -68,7 +68,7 @@ class PaymentController extends Controller
         // record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created payment id '.$payment->id
+            'description' => auth('api')->user()->name.' created payment #'.$payment->id
         ]);
 
         return response()->json([
@@ -117,7 +117,7 @@ class PaymentController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated payment id '.$payment->id
+            'description' => auth('api')->user()->name.' updated payment #'.$payment->id
         ]);         
 
         return response()->json([
@@ -137,7 +137,7 @@ class PaymentController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted payment id '.$id
+            'description' => auth('api')->user()->name.' deleted payment #'.$id
         ]); 
 
         return response()->json(['message' => 'Deleted']);

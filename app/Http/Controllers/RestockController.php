@@ -56,7 +56,7 @@ class RestockController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created restock id '.$restock->id
+            'description' => auth('api')->user()->name.' created restock #'.$restock->id
         ]);         
 
         return response()->json([
@@ -104,7 +104,7 @@ class RestockController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated restock id '.$restock->id
+            'description' => auth('api')->user()->name.' updated restock #'.$restock->id
         ]);        
 
         return response()->json([
@@ -124,7 +124,7 @@ class RestockController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted restock id '.$id
+            'description' => auth('api')->user()->name.' deleted restock #'.$id
         ]); 
 
         return response()->json(['message' => 'Deleted']);

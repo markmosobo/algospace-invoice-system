@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Transactions <span>| Day to day personal transactions</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addTransaction()"
                                 >
-                                  Add Customer
+                                  Add Transaction
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,14 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="TransactionsTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Account</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Method</th>
+                            <th scope="col">Date</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,10 +75,12 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
+                          <tr v-for="transaction in personalTransactions" :key="transaction.id">
+                            <td>{{transaction.account.name}}</td>
+                            <td>{{transaction.type ?? "N/A"}}</td>
+                            <td>{{transaction.amount ?? "N/A"}}</td>
+                            <td>{{transaction.method ?? "N/A"}}</td>
+                            <td>{{formatDate(transaction.date) ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +89,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewTransaction(transaction)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editTransaction(transaction)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteTransaction(transaction.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,38 +104,64 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+              <!-- View Transaction Modal -->
+              <div class="modal fade" id="viewTransactionModal" tabindex="-1" aria-labelledby="viewTransactionModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
+                      <h5 class="modal-title">View Transaction Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedTransaction">
 
                       <div class="row g-3">
 
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
+                        <!-- Account -->
+                        <div class="col-md-6" v-if="selectedTransaction.account">
+                          <strong>Account:</strong> <br>
+                          {{ selectedTransaction.account.name }} ({{ selectedTransaction.account.currency }} {{ selectedTransaction.account.balance.toFixed(2) }})
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
+                        <!-- Category -->
+                        <div class="col-md-6" v-if="selectedTransaction.category">
+                          <strong>Category:</strong> <br>
+                          {{ selectedTransaction.category.name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
+                        <!-- Type -->
+                        <div class="col-md-6">
+                          <strong>Type:</strong> <br>
+                          {{ selectedTransaction.type | capitalize }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
+                        <!-- Amount -->
+                        <div class="col-md-6">
+                          <strong>Amount:</strong> <br>
+                          {{ selectedTransaction.amount.toFixed(2) }}
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="col-md-6" v-if="selectedTransaction.payment_method">
+                          <strong>Payment Method:</strong> <br>
+                          {{ selectedTransaction.payment_method }}
+                        </div>
+
+                        <!-- Transaction Date -->
+                        <div class="col-md-6">
+                          <strong>Transaction Date:</strong> <br>
+                          {{ formatDateTime(selectedTransaction.transaction_date) }}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-12" v-if="selectedTransaction.description">
+                          <strong>Description:</strong> <br>
+                          {{ selectedTransaction.description }}
                         </div>
 
                       </div>
+
                     </div>
 
                     <div class="modal-footer">
@@ -142,123 +172,185 @@
                 </div>
               </div>
 
+              <!-- Add Transaction Modal -->
+              <div class="modal fade" id="AddTransactionModal" tabindex="-1" aria-labelledby="AddTransactionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-
-                      <div class="modal-body">
-                        <form class="row g-3 needs-validation" novalidate>
-
-                          <!-- Hidden ID -->
-                          <input type="hidden" v-model="data.id" />
-
-                          <!-- First & Last Name -->
-                          <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </select>
-                          </div>
-
-
-                        </form>
-                      </div>
-
-                      <!-- Footer -->
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
-                          Save
-                        </button>
-                      </div>
-
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="AddTransactionModalLabel">Add Transaction</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
+
+                    <div class="modal-body">
+                      <form class="row g-3 needs-validation" novalidate>
+                        
+                        <!-- Hidden ID -->
+                        <input type="hidden" v-model="data.id" />
+
+                        <!-- Account -->
+                        <div class="col-md-6">
+                          <label class="form-label">Account*</label>
+                          <select class="form-select" v-model="data.account_id" required>
+                            <option value="">Select Account</option>
+                            <option v-for="account in accounts" :key="account.id" :value="account.id">
+                              {{ account.name }} ({{ account.currency }})
+                            </option>
+                          </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                          <label class="form-label">Category</label>
+                          <select class="form-select" v-model="data.category_id">
+                            <option value="">Uncategorized</option>
+                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                              {{ category.name }}
+                            </option>
+                          </select>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="col-md-6">
+                          <label class="form-label">Type*</label>
+                          <select class="form-select" v-model="data.type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                          </select>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="col-md-6">
+                          <label class="form-label">Amount*</label>
+                          <input type="number" step="0.01" id="amount" class="form-control" v-model.number="data.amount" required>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="col-md-6">
+                          <label class="form-label">Payment Method</label>
+                          <select class="form-select" v-model="data.payment_method">
+                            <option value="">Select Method</option>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="bank">Bank</option>
+                          </select>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-6">
+                          <label class="form-label">Description</label>
+                          <input type="text" class="form-control" v-model="data.description" placeholder="Optional notes">
+                        </div>
+
+                        <!-- Transaction Date -->
+                        <div class="col-md-6">
+                          <label class="form-label">Date</label>
+                          <input type="date" class="form-control" v-model="data.transaction_date">
+                        </div>
+
+                      </form>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button class="btn btn-success" @click="submitTransaction" style="background: darkgreen; border-color: darkgreen;">
+                        Save Transaction
+                      </button>
+                    </div>
+
                   </div>
                 </div>
+              </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
 
-                      <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
+              <!-- EDIT Transaction MODAL -->
+              <div class="modal fade" id="EditTransactionModal" tabindex="-1" aria-labelledby="EditTransactionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
 
-                      <div class="modal-body">
-                        <form class="row g-3">
-
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </select>
-                          </div>
-
-
-                        </form>
-                      </div>
-
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submitChanges" style="background: darkgreen; border-color: darkgreen;">
-                          Save Changes
-                        </button>
-                      </div>
-
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Transaction</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
+
+                    <div class="modal-body">
+                      <form class="row g-3">
+
+                        <!-- Account -->
+                        <div class="col-md-6">
+                          <label class="form-label">Account*</label>
+                          <select class="form-select" v-model="form.account_id" required>
+                            <option value="">Select Account</option>
+                            <option v-for="account in accounts" :key="account.id" :value="account.id">
+                              {{ account.name }} ({{ account.currency }} {{ account.balance.toFixed(2) }})
+                            </option>
+                          </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                          <label class="form-label">Category</label>
+                          <select class="form-select" v-model="form.category_id">
+                            <option value="">Select Category</option>
+                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                              {{ category.name }}
+                            </option>
+                          </select>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="col-md-6">
+                          <label class="form-label">Type*</label>
+                          <select class="form-select" v-model="form.type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                          </select>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="col-md-6">
+                          <label class="form-label">Amount*</label>
+                          <input type="number" step="0.01" id="amount_edit" class="form-control" v-model="form.amount" required>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="col-md-6">
+                          <label class="form-label">Payment Method</label>
+                          <select class="form-select" v-model="form.payment_method">
+                            <option value="">Select Method</option>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">Mpesa</option>
+                            <option value="bank">Bank</option>
+                          </select>
+                        </div>
+
+                        <!-- Transaction Date -->
+                        <div class="col-md-6">
+                          <label class="form-label">Transaction Date</label>
+                          <input type="datetime-local" class="form-control" v-model="form.transaction_date">
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-12">
+                          <label class="form-label">Description</label>
+                          <textarea class="form-control" rows="3" v-model="form.description"></textarea>
+                        </div>
+
+                      </form>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button class="btn btn-success" @click="submitChanges" style="background: darkgreen; border-color: darkgreen;">
+                        Save Changes
+                      </button>
+                    </div>
+
                   </div>
                 </div>
+              </div>
+
 
                     
 
@@ -289,18 +381,21 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            personalTransactions: [],
+            selectedTransaction: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {
+              id: null,
+              account_id: null,
+              category_id: null,
+              type: "expense",
+              amount: null,
+              payment_method: null,
+              description: "",
+              transaction_date: new Date().toISOString().slice(0, 10),
             },
 
             form: {        // EDIT customer
@@ -312,26 +407,38 @@
             }
         }
       },      
-      methods: {                
-        viewCustomer(customer)
+      methods: { 
+        // Format date as dd/mm/yyyy
+        formatDate(date) {
+          if (!date) return "N/A";
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        },                       
+        viewTransaction(transaction)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedTransaction)
+          this.selectedTransaction = transaction;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewTransactionModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editTransaction(transaction) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: transaction.id,
+            account_id: transaction.account_id,
+            category_id: transaction.category_id,
+            type: transaction.type,
+            amount: transaction.amount,
+            payment_method: transaction.payment_method,
+            description: transaction.description,
+            transaction_date: transaction.transaction_date
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditTransactionModal')
         );
         modal.show();
         },
@@ -339,11 +446,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.amount) {
+            document.getElementById('amount_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('amount_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +461,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/personal-transactions/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Transaction updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditTransactionModal')
             );
             modal.hide();
 
@@ -369,7 +476,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update transaction',
             'error'
             );
         } finally {
@@ -377,10 +484,10 @@
         }
         },
 
-        addCustomer()
+        addTransaction()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddTransactionModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +514,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.amount) {
+            document.getElementById('amount').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('amount').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +529,25 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/personal-transactions', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Transaction added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddTransactionModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              account_id: "",
+              category: "",
+              type: "",
+              amount: "",
+              payment_method: "",
+              description: "",
+              transaction_id: ""
             };
 
             this.loadLists();
@@ -456,7 +566,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteTransaction(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +578,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/personal-transactions/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Transaction has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,13 +600,15 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/personal-transactions')
             .then((response) => {
-              this.customers = response.data;
+              this.personalTransactions = response.data.personalTransactions;
+              this.categories = response.data.categories;
+              this.accounts = response.data.accounts;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#TransactionsTable").DataTable();
               }, 10);
             })
             .catch((error) => {

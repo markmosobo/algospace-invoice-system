@@ -47,7 +47,7 @@ class UserController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created user id '.$user->id
+            'description' => auth('api')->user()->name.' created user #'.$user->id
         ]);         
 
         return response()->json([
@@ -97,7 +97,7 @@ class UserController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for user id '.$user->id
+            'description' => auth('api')->user()->name.' updated details for user #'.$user->id
         ]);         
 
         return response()->json([
@@ -116,7 +116,7 @@ class UserController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted user id '.$id
+            'description' => auth('api')->user()->name.' deleted user #'.$id
         ]); 
 
         return response()->json(['message' => 'Deleted']);

@@ -47,7 +47,7 @@ class ServiceController extends Controller
 
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created service id '.$service->id
+            'description' => auth('api')->user()->name.' created service #'.$service->id
         ]);
 
         return response()->json([
@@ -97,7 +97,7 @@ class ServiceController extends Controller
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' =>
-                auth('api')->user()->name.' updated service id '.$service->id
+                auth('api')->user()->name.' updated service #'.$service->id
         ]);
 
         return response()->json([
@@ -118,7 +118,7 @@ class ServiceController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted service id '.$id
+            'description' => auth('api')->user()->name.' deleted service #'.$id
         ]); 
 
         return response()->json(['message' => 'Deleted']);

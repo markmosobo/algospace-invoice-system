@@ -15,6 +15,12 @@ class SystemLogController extends Controller
         // Latest logs first
         $systemLogs = SystemLog::orderBy('created_at', 'desc')->get();
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved system logs'
+        ]);
+
         return response()->json($systemLogs);
     }
 

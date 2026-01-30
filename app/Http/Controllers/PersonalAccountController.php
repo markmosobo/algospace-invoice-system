@@ -46,7 +46,7 @@ class PersonalAccountController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal account id '.$personalAccount->id
+            'description' => auth('api')->user()->name.' created personal account #'.$personalAccount->id
         ]);        
 
         return response()->json([
@@ -107,7 +107,7 @@ class PersonalAccountController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated personal account id '.$personalAccount->id
+            'description' => auth('api')->user()->name.' updated personal account #'.$personalAccount->id
         ]);        
 
         return response()->json([
@@ -134,7 +134,7 @@ class PersonalAccountController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal account id '.$id
+            'description' => auth('api')->user()->name.' deleted personal account #'.$id
         ]);        
 
         return response()->json([

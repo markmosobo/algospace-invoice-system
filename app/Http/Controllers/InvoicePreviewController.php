@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
@@ -41,6 +42,12 @@ class InvoicePreviewController extends Controller
         Storage::disk('public')->put($fileName, $pdf->output());
 
         $pdfUrl = Storage::url($fileName); // public URL for sharing
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' generated preview invoice for '.$data['customer']
+        ]);        
 
         return response()->json([
             'pdf_url'     => $html,          // HTML for iframe preview
@@ -89,6 +96,12 @@ class InvoicePreviewController extends Controller
                 ->subject('Invoice Preview')
                 ->attach(public_path($request->pdf_path));
         });
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' sent email to '.$request->email
+        ]);  
 
         return response()->json([
             'message' => 'Preview invoice emailed successfully'

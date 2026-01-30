@@ -11,6 +11,7 @@ use App\Models\PersonalTransaction;
 use App\Models\Service;
 use App\Models\Supplier;
 use App\Models\Supply;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,6 +21,12 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // ✅ Log once
+        SystemLog::create([
+            'user_id' => $user->id,
+            'description' => $user->name . ' retrieved dashboard stats'
+        ]);
+        
         switch ($user->role) {
 
             /* =========================

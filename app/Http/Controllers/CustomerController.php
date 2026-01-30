@@ -38,7 +38,7 @@ class CustomerController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created customer id '.$customer->id
+            'description' => auth('api')->user()->name.' created customer #'.$customer->id
         ]);          
                 
         return response()->json($customer);
@@ -69,7 +69,7 @@ class CustomerController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for customer id '.$customer->id
+            'description' => auth('api')->user()->name.' updated details for customer #'.$customer->id
         ]);         
 
         return response()->json(['message' => 'Updated']);
@@ -86,7 +86,7 @@ class CustomerController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted customer id '.$id
+            'description' => auth('api')->user()->name.' deleted customer #'.$id
         ]);         
         return response()->json(['message' => 'Deleted']);
     }

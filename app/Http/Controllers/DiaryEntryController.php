@@ -66,7 +66,7 @@ class DiaryEntryController extends Controller
         // Record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created diary entry id '.$diaryEntry->id
+            'description' => auth('api')->user()->name.' created diary entry #'.$diaryEntry->id
         ]);          
 
         return response()->json([
@@ -136,7 +136,7 @@ class DiaryEntryController extends Controller
         // Record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated diary entry id '.$id
+            'description' => auth('api')->user()->name.' updated diary entry #'.$id
         ]);           
 
         return response()->json([
@@ -164,7 +164,7 @@ class DiaryEntryController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted entry id '.$diaryEntry->id
+            'description' => auth('api')->user()->name.' deleted entry #'.$diaryEntry->id
         ]);           
 
         return response()->json([

@@ -46,7 +46,7 @@ class SupplierController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created supplier id '.$supplier->id
+            'description' => auth('api')->user()->name.' created supplier #'.$supplier->id
         ]);         
 
         return response()->json([
@@ -89,7 +89,7 @@ class SupplierController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated supplier id '.$supplier->id
+            'description' => auth('api')->user()->name.' updated supplier #'.$supplier->id
         ]);        
 
         return response()->json([
@@ -108,7 +108,7 @@ class SupplierController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted supplier id '.$id
+            'description' => auth('api')->user()->name.' deleted supplier #'.$id
         ]);
 
         return response()->json(['message' => 'Deleted']);        

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -124,6 +125,11 @@ class ReportController extends Controller
             return strtotime($b->payment_date) - strtotime($a->payment_date);
         });
 
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved reports'
+        ]);
 
         return response()->json([
             'summary' => [

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PersonalAccount;
+use App\Models\PersonalCategory;
 use App\Models\PersonalTransaction;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
@@ -14,16 +16,23 @@ class PersonalTransactionController extends Controller
      */
     public function index()
     {
-        $personalTransactions = PersonalTransaction::all();
+        $accounts = PersonalAccount::all();
+        $categories = PersonalCategory::all();
+        $personalTransactions = PersonalTransaction::with('account', 'category')->get();
 
-        //record system log
+        // Record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' retrieved personal transactions'
         ]);
 
-        return response()->json($personalTransactions);         
+        return response()->json([
+            'personalTransactions' => $personalTransactions,
+            'accounts'     => $accounts,
+            'categories'   => $categories
+        ]);
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -58,7 +67,7 @@ class PersonalTransactionController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal transaction id '.$personalTransaction->id
+            'description' => auth('api')->user()->name.' created personal transaction #'.$personalTransaction->id
         ]);        
 
         return response()->json([
@@ -121,7 +130,7 @@ class PersonalTransactionController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated personal transaction id '.$transaction->id
+            'description' => auth('api')->user()->name.' updated personal transaction #'.$transaction->id
         ]);         
 
         return response()->json([
@@ -148,7 +157,7 @@ class PersonalTransactionController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal transaction id '.$id
+            'description' => auth('api')->user()->name.' deleted personal transaction #'.$id
         ]);         
 
         return response()->json([

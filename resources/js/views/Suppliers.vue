@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Categories <span>| Personal categories</span></h5>
+                      <h5 class="card-title">Suppliers <span>| Suppliers of AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCategory()"
+                                  @click="addSupplier()"
                                 >
-                                  Add Category
+                                  Add Supplier
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,10 +53,12 @@
             
                       </p>
     
-                      <table id="CategoriesTable" class="table table-borderless">
+                      <table id="SuppliersTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Name</th>
+                            <th scope="col">Full Name</th>
+                            <th scope="col">Email Address</th>
+                            <th scope="col">Phone</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -71,8 +73,10 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="category in personalCategories" :key="category.id">
-                            <td>{{category.name}}</td>
+                          <tr v-for="supplier in suppliers" :key="supplier.id">
+                            <td>{{supplier.name}}</td>
+                            <td>{{supplier.email ?? "N/A"}}</td>
+                            <td>{{supplier.phone ?? "N/A"}}</td>
 
                            
                             <td>
@@ -81,9 +85,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCategory(category)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCategory(category)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCategory(category.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewSupplier(supplier)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editSupplier(supplier)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteSupplier(supplier.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -96,23 +100,35 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Category Modal -->
-              <div class="modal fade" id="viewCategoryModal" tabindex="-1" aria-labelledby="viewCategoryModalLabel" aria-hidden="true">
+              <!-- View Customer Modal -->
+              <div class="modal fade" id="viewSupplierModal" tabindex="-1" aria-labelledby="viewSupplierModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Category Details</h5>
+                      <h5 class="modal-title">View Supplier Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCategory">
+                    <div class="modal-body" v-if="selectedSupplier">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCategory.name">
-                          <strong>Name:</strong> <br> {{ selectedCategory.name }}
+                        <div class="col-md-6" v-if="selectedSupplier.name">
+                          <strong>Full Name:</strong> <br> {{ selectedSupplier.name }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedSupplier.email">
+                          <strong>Email:</strong> <br> {{ selectedSupplier.email }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedSupplier.phone">
+                          <strong>Phone:</strong> <br> {{ selectedSupplier.phone }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedSupplier.address">
+                          <strong>Address:</strong> <br> {{ selectedSupplier.address }}
                         </div>
 
                       </div>
@@ -127,13 +143,13 @@
               </div>
 
 
-                <!-- Add Category Modal -->
-                <div class="modal fade" id="AddCategoryModal" tabindex="-1" aria-labelledby="AddCategoryModalLabel" aria-hidden="true">
+                <!-- Add Supplier Modal -->
+                <div class="modal fade" id="AddSupplierModal" tabindex="-1" aria-labelledby="AddSupplierModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCategoryModalLabel">Add Category</h5>
+                        <h5 class="modal-title" id="AddSupplierModalLabel">Add Supplier</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
@@ -143,10 +159,28 @@
                           <!-- Hidden ID -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- Name -->
+                          <!-- First & Last Name -->
                           <div class="col-md-6">
                             <label class="form-label">Name*</label>
                             <input type="text" id="name" class="form-control" v-model="data.name" required>
+                          </div>
+
+                          <!-- Email -->
+                          <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="email" class="form-control" v-model="data.email" required>
+                          </div>
+
+                          <!-- Phone -->
+                          <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" id="phone" class="form-control" v-model="data.phone">
+                          </div>
+
+                          <!-- Address -->
+                          <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" v-model="data.address">
                           </div>
 
 
@@ -166,23 +200,41 @@
                 </div>
 
 
-                <!-- EDIT Category MODAL -->
-                <div class="modal fade" id="EditCategoryModal" tabindex="-1" aria-labelledby="EditCategoryModalLabel" aria-hidden="true">
+                <!-- EDIT Supplier MODAL -->
+                <div class="modal fade" id="EditSupplierModal" tabindex="-1" aria-labelledby="EditSupplierModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Category</h5>
+                        <h5 class="modal-title">Edit Supplier</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
                         <form class="row g-3">
 
-                          <!-- Name -->
+                          <!-- First & Last Name -->
                           <div class="col-md-12">
                             <label class="form-label">Name*</label>
                             <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
+                          </div>
+
+                          <!-- Email -->
+                          <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
+                          </div>
+
+                          <!-- Phone -->
+                          <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" v-model="form.phone">
+                          </div>
+
+                          <!-- Address -->
+                          <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" v-model="form.address">
                           </div>
 
 
@@ -229,40 +281,49 @@
     export default {
       data() {
         return {
-            personalCategories: [],
-            selectedCategory: {},
+            suppliers: [],
+            selectedSupplier: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD category
-              id: "",
-              name: "",
+            data: {        // ADD supplier
+                id: "",
+                name: "",
+                email: "",
+                phone: "",
+                address: ""
             },
 
-            form: {        // EDIT category
-              id: "",
-              name: "",
+            form: {        // EDIT supplier
+                id: "",
+                name: "",
+                email: "",
+                phone: "",
+                address: ""
             }
         }
       },      
       methods: {                
-        viewCategory(category)
+        viewSupplier(supplier)
         {
-          console.log(this.selectedCategory)
-          this.selectedCategory = category;
+          console.log(this.selectedSupplier)
+          this.selectedSupplier = supplier;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCategoryModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewSupplierModal'));
           modal.show();
         },
-        editCategory(category) {
+        editSupplier(supplier) {
         this.form = {
-            id: category.id,
-            name: category.name,
+            id: supplier.id,
+            name: supplier.name,
+            email: supplier.email,
+            phone: supplier.phone,
+            address: supplier.address
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCategoryModal')
+            document.getElementById('EditSupplierModal')
         );
         modal.show();
         },
@@ -285,12 +346,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/personal-categories/${this.form.id}`, this.form);
+            await axios.put(`/api/suppliers/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Category updated successfully', 'success');
+            toast.fire('Success!', 'Supplier updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCategoryModal')
+            document.getElementById('EditSupplierModal')
             );
             modal.hide();
 
@@ -300,7 +361,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update category',
+            error.response?.data?.message || 'Failed to update supplier',
             'error'
             );
         } finally {
@@ -308,10 +369,10 @@
         }
         },
 
-        addCategory()
+        addSupplier()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCategoryModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddSupplierModal'));
           modal.show();
         },
         async submit() {
@@ -353,19 +414,22 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/personal-categories', this.data);
+            await axios.post('/api/suppliers', this.data);
 
-            toast.fire('Success!', 'Category added successfully', 'success');
+            toast.fire('Success!', 'Supplier added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCategoryModal')
+            document.getElementById('AddSupplierModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
+                id: "",
+                name: "",
+                email: "",
+                phone: "",
+                address: ""
             };
 
             this.loadLists();
@@ -384,7 +448,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCategory(id){
+        deleteSupplier(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -396,10 +460,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/personal-categories/'+id).then(() => {
+                  axios.delete('/api/suppliers/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Category has been deleted.',
+                    'Supplier has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -418,13 +482,13 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/personal-categories')
+          axios.get('/api/suppliers')
             .then((response) => {
-              this.personalCategories = response.data;
+              this.suppliers = response.data;
               console.log(response)
 
               setTimeout(() => {
-                $("#CategoriesTable").DataTable();
+                $("#SuppliersTable").DataTable();
               }, 10);
             })
             .catch((error) => {

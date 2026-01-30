@@ -44,7 +44,7 @@ class ServiceProviderController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created service provider id '.$serviceProvider->id
+            'description' => auth('api')->user()->name.' created service provider #'.$serviceProvider->id
         ]);          
                 
         return response()->json($serviceProvider);        
@@ -75,7 +75,7 @@ class ServiceProviderController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for service provider id '.$serviceProvider->id
+            'description' => auth('api')->user()->name.' updated details for service provider #'.$serviceProvider->id
         ]);         
 
         return response()->json(['message' => 'Updated']);        
@@ -91,7 +91,7 @@ class ServiceProviderController extends Controller
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted service provider id '.$id
+            'description' => auth('api')->user()->name.' deleted service provider #'.$id
         ]);         
         return response()->json(['message' => 'Deleted']);        
     }

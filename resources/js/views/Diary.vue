@@ -53,70 +53,70 @@
             
                       </p>
     
-<table id="EntriesTable" class="table table-borderless">
-  <thead>
-    <tr>
-      <th scope="col">Title</th>
-      <th scope="col">Date</th>
-      <th scope="col">Description</th>
-      <th scope="col">Action</th>
-    </tr>
-  </thead>
-  <!-- Spinner while loading -->
-  <tbody v-if="initializing">
-    <tr>
-      <td colspan="7" class="text-center">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-  <tbody v-else>
-    <tr v-for="item in diaryEntries" :key="item.id">
-      <td>
-        <span class="fw-semibold">{{ item.title }}</span>
+                      <table id="EntriesTable" class="table table-borderless">
+                        <thead>
+                          <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Action</th>
+                          </tr>
+                        </thead>
+                        <!-- Spinner while loading -->
+                        <tbody v-if="initializing">
+                          <tr>
+                            <td colspan="7" class="text-center">
+                              <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tbody v-else>
+                          <tr v-for="item in diaryEntries" :key="item.id">
+                            <td>
+                              <span class="fw-semibold">{{ item.title }}</span>
 
-        <span
-          class="badge ms-2 text-uppercase"
-          :class="item.category === 'office' ? 'bg-primary' : 'bg-secondary'"
-          style="font-size: 0.65rem; letter-spacing: 0.08em;"
-        >
-          {{ item.category }}
-        </span>
-      </td>
+                              <span
+                                class="badge ms-2 text-uppercase"
+                                :class="item.category === 'office' ? 'bg-primary' : 'bg-secondary'"
+                                style="font-size: 0.65rem; letter-spacing: 0.08em;"
+                              >
+                                {{ item.category }}
+                              </span>
+                            </td>
 
-      <!-- Format date as dd/mm/yyyy -->
-      <td>{{ formatDate(item.entry_date) }}</td>
+                            <!-- Format date as dd/mm/yyyy -->
+                            <td>{{ formatDate(item.entry_date) }}</td>
 
-      <!-- Truncate description to 30 characters -->
-      <td>{{ truncateText(item.description, 30) }}</td>
+                            <!-- Truncate description to 30 characters -->
+                            <td>{{ truncateText(item.description, 30) }}</td>
 
-      <td>
-        <div class="btn-group" role="group">
-          <button id="btnGroupDrop1" type="button"
-                  style="background-color: darkgreen; border-color: darkgreen;"
-                  class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
-                  data-toggle="dropdown" data-bs-toggle="dropdown"
-                  aria-haspopup="true" aria-expanded="false">
-            Action
-          </button>
-          <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-            <a @click="viewEntry(item)" class="dropdown-item" href="#">
-              <i class="ri-eye-fill mr-2"></i>View
-            </a> 
-            <a @click="editEntry(item)" class="dropdown-item" href="#">
-              <i class="ri-pencil-fill mr-2"></i>Edit
-            </a>
-            <a @click="deleteEntry(item.id)" class="dropdown-item" href="#">
-              <i class="ri-delete-bin-line mr-2"></i>Delete
-            </a>
-          </div>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
+                            <td>
+                              <div class="btn-group" role="group">
+                                <button id="btnGroupDrop1" type="button"
+                                        style="background-color: darkgreen; border-color: darkgreen;"
+                                        class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                                        data-toggle="dropdown" data-bs-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false">
+                                  Action
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                  <a @click="viewEntry(item)" class="dropdown-item" href="#">
+                                    <i class="ri-eye-fill mr-2"></i>View
+                                  </a> 
+                                  <a @click="editEntry(item)" class="dropdown-item" href="#">
+                                    <i class="ri-pencil-fill mr-2"></i>Edit
+                                  </a>
+                                  <a @click="deleteEntry(item.id)" class="dropdown-item" href="#">
+                                    <i class="ri-delete-bin-line mr-2"></i>Delete
+                                  </a>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
 
     
                     </div>

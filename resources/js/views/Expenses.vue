@@ -83,7 +83,7 @@
                                 </span>
 
                                 <span v-else>
-                                  {{ item.description || 'No description provided' }}
+                                  {{ truncateText(item.description) || 'No description provided' }}
                                 </span>
                               </div>
                             </td>
@@ -431,6 +431,11 @@
 
    
       methods: { 
+        // Truncate text to specified length
+        truncateText(text, maxLength = 30) {
+          if (!text) return "N/A";
+          return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }, 
         // Format date as dd/mm/yyyy
         formatDate(date) {
           if (!date) return "N/A";

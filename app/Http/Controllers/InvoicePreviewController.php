@@ -43,10 +43,13 @@ class InvoicePreviewController extends Controller
 
         $pdfUrl = Storage::url($fileName); // public URL for sharing
 
+        $customerName = $data['customer']['name'] ?? 'Walk-in Customer';
+
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' generated preview invoice for '.$data['customer']
+            'description' => auth('api')->user()->name .
+                ' generated preview invoice for ' . $customerName
         ]);        
 
         return response()->json([

@@ -211,6 +211,7 @@ import axios from 'axios';
     data(){
       return {
         current_user: [],
+        reminderInterval: null,
         query: "",
         searchResults: [],
         idleTimeout: null,
@@ -219,6 +220,12 @@ import axios from 'axios';
         reminders: []
       }
     },
+    computed: {
+      isLoggedIn() {
+        return !!localStorage.getItem('token');
+      }
+    },
+
       methods: {
       handleSidebar() {
         if (document.body.classList.contains("toggle-sidebar")) {
@@ -247,37 +254,49 @@ import axios from 'axios';
     },
     async logout() {
       try {
+        if (this.reminderInterval) {
+          clearInterval(this.reminderInterval);
+        }
+
         await axios.post('/api/logout', {}, {
           headers: {
-            Accept: 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
 
-        // Clear auth data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 
-        // Redirect to login
         this.$router.replace('/login');
 
       } catch (error) {
-        console.error('Logout error:', error);
-
-        // Even if API fails, force logout locally
         localStorage.removeItem('token');
         this.$router.push('/login');
       }
     },
+
     async loadReminders() {
+      if (!this.isLoggedIn) return;
+
       try {
-        const res = await axios.get('/api/reminders/overview');
+        const res = await axios.get('/api/reminders/overview', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
         this.reminders = res.data;
-        this.notificationCount = res.data.length; // total pending reminders
+        this.notificationCount = res.data.length;
       } catch (err) {
+        if (err.response?.status === 401) {
+          // token expired / invalid
+          this.reminders = [];
+          this.notificationCount = 0;
+        }
         console.error('Failed to load reminders', err);
       }
     },
+
 
     async markAsDone(id) {
       try {
@@ -291,16 +310,22 @@ import axios from 'axios';
 
     },
     mounted() {
-      this.user = JSON.parse(localStorage.getItem('user'));
-      this.current_user = this.user;
+      this.current_user = JSON.parse(localStorage.getItem('user'));
 
-      this.loadReminders();
-
-      // OPTIONAL: refresh every minute
-      setInterval(() => {
+      if (this.isLoggedIn) {
         this.loadReminders();
-      }, 60000);
+
+        this.reminderInterval = setInterval(() => {
+          this.loadReminders();
+        }, 60000);
+      }
+    },
+    beforeUnmount() {
+      if (this.reminderInterval) {
+        clearInterval(this.reminderInterval);
+      }
     }
+
 
     
   }

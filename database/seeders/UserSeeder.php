@@ -23,6 +23,14 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
+            'name'              => 'AlgoSpace Farm',
+            'email'             => 'farm@algospace.co.ke',
+            'email_verified_at' => Carbon::now(),
+            'role'              => 'farm',
+            'password'          => Hash::make('password123'),
+        ]);        
+
+        User::create([
             'name'              => 'Personal Account',
             'email'             => 'personal@algospace.co.ke',
             'email_verified_at' => Carbon::now(),

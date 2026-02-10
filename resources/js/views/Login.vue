@@ -85,6 +85,7 @@
                     <p class="small mb-2" style="color: purple;">Quick Auto-Login</p>
                     <div class="d-grid gap-2">
                       <button type="button" class="btn btn-outline-success rounded-pill" @click="autoLogin('office')">Office</button>
+                      <button type="button" class="btn btn-outline-info rounded-pill" @click="autoLogin('farm')">Farm</button>
                       <button type="button" class="btn btn-outline-warning rounded-pill" @click="autoLogin('personal')">Personal</button>
                     </div>
                   </div>
@@ -211,6 +212,10 @@ export default {
           email: "office@algospace.co.ke",
           password: "password123"
         },
+        farm: {
+          email: "farm@algospace.co.ke",
+          password: "password123"
+        },        
         personal: {
           email: "personal@algospace.co.ke",
           password: "password123"

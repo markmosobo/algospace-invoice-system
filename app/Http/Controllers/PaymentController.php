@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\SystemLog;
+use App\Models\PersonalAccount;
+use App\Models\PersonalTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -34,47 +36,107 @@ class PaymentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
         $request->validate([
             'invoice_id'   => 'required|exists:invoices,id',
             'amount'       => 'required|numeric|min:1',
             'payment_date' => 'required|date',
-            'method'       => 'required|in:cash,mpesa,card,other',
+            'method'       => 'required|in:cash,mpesa,bank,card,other',
             'mpesa_code'   => 'nullable|required_if:method,mpesa|string|max:20',
+            'comment'      => 'nullable|string|max:255',
         ]);
 
-        $invoice = Invoice::findOrFail($request->invoice_id);
+        DB::transaction(function () use ($request, &$payment) {
 
-        // create payment
-        $payment = Payment::create([
-            'invoice_id'   => $request->invoice_id,
-            'amount'       => $request->amount,
-            'payment_date' => $request->payment_date ?? now(),
-            'method'       => $request->method,
-            'mpesa_code'   => $request->mpesa_code ?? null,
-            'comment'      => $request->comment ?? null,
-        ]);
+            /* ===============================
+            FETCH INVOICE (LOCKED)
+            =============================== */
+            $invoice = Invoice::lockForUpdate()
+                ->findOrFail($request->invoice_id);
 
-        // update invoice amount paid
-        $invoice->amount_paid += $request->amount;
-        $invoice->save();
+            /* ===============================
+            RESOLVE TARGET ACCOUNT
+            =============================== */
+            $account = null;
 
-        // Update invoice status if fully paid
-        if ($invoice->amount_paid >= $invoice->total_amount) {
-            $invoice->update(['status' => 'paid']);
-        }
+            if ($request->method === 'cash') {
+                $account = PersonalAccount::lockForUpdate()
+                    ->where('name', 'CASH')
+                    ->firstOrFail();
+            }
 
-        // record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created payment #'.$payment->id
-        ]);
+            if ($request->method === 'mpesa') {
+                $account = PersonalAccount::lockForUpdate()
+                    ->whereIn('name', ['POCHI MPESA - 0112514440'])
+                    ->firstOrFail();
+            }
+
+            if ($request->method === 'bank') {
+                $account = PersonalAccount::lockForUpdate()
+                    ->where('name', 'I&M BANK- 0600 6087 5561 50')
+                    ->firstOrFail();
+            }
+
+            /* ===============================
+            CREATE PAYMENT
+            =============================== */
+            $payment = Payment::create([
+                'invoice_id'   => $invoice->id,
+                'amount'       => $request->amount,
+                'payment_date' => $request->payment_date,
+                'method'       => $request->method,
+                'mpesa_code'   => $request->method === 'mpesa'
+                                    ? $request->mpesa_code
+                                    : null,
+                'comment'      => $request->comment,
+            ]);
+
+            /* ===============================
+            CREDIT ACCOUNT (KEY PART)
+            =============================== */
+            if ($account) {
+                $account->balance += $request->amount;
+                $account->save();
+
+                // Optional but recommended
+                PersonalTransaction::create([
+                    'account_id' => $account->id,
+                    'type'       => 'income',
+                    'amount'     => $request->amount,
+                    'reference'  => 'Invoice #' . $invoice->id,
+                    'source'     => 'payment',
+                    'created_at' => now(),
+                ]);
+            }
+
+            /* ===============================
+            UPDATE INVOICE
+            =============================== */
+            $invoice->amount_paid += $request->amount;
+
+            if ($invoice->amount_paid >= $invoice->total_amount) {
+                $invoice->status = 'paid';
+            }
+
+            $invoice->save();
+
+            /* ===============================
+            SYSTEM LOG
+            =============================== */
+            SystemLog::create([
+                'user_id' => auth('api')->user()->id,
+                'description' =>
+                    auth('api')->user()->name .
+                    ' recorded payment #' . $payment->id
+            ]);
+        });
 
         return response()->json([
-            'message' => 'Payment recorded successfully',
+            'message' => 'Payment recorded and account credited successfully',
             'payment' => $payment
-        ]);
+        ], 201);
     }
 
 

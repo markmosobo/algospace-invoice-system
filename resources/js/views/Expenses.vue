@@ -234,6 +234,27 @@
                             </select>
                         </div>                        
 
+                        <div class="col-md-6">
+                          <label class="form-label">Paying Account</label>
+                          <select class="form-select" v-model="data.account_id">
+                            <option value="">Select account</option>
+                            <option v-for="account in accounts" :key="account.id" :value="account.id">
+                              {{ account.name }} ({{ account.balance }})
+                            </option>
+                          </select>
+                        </div>
+
+                        <div class="col-md-6">
+                          <label class="form-label">Payment Method</label>
+                          <select class="form-select" v-model="data.payment_method">
+                            <option value="">Select</option>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="paybill">Paybill</option>
+                            <option value="bank">Bank</option>
+                          </select>
+                        </div>
+                        
                           <!-- Amount -->
                           <div class="col-md-6">
                             <label class="form-label">Amount</label>
@@ -382,6 +403,7 @@
       data() {
         return {
             expenses: [],
+            accounts: [],
             serviceProviders: [],
             providerServices: [],
             selectedExpense: {},
@@ -392,6 +414,8 @@
             data: {        // ADD expense
               id: "",
               type: "",
+              account_id: "",
+              payment_method: "",
               service_provider_id: "",
               provider_service_id: "",
               description: "",
@@ -402,6 +426,8 @@
             form: {        // EDIT expense
               id: "",
               type: "",
+              account_id: "",
+              payment_method: "",              
               service_provider_id: "",
               provider_service_id: "",
               description: "",
@@ -634,6 +660,7 @@
           axios.get('/api/expenses')
             .then((response) => {
               this.expenses = response.data.expenses;
+              this.accounts = response.data.accounts;
               this.invoices = response.data.invoices;
               this.serviceProviders = response.data.serviceProviders;
               this.providerServices = response.data.providerServices;

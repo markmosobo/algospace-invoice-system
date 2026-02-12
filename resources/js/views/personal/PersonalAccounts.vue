@@ -94,7 +94,14 @@
                           </tr>
                         </tbody>
                       </table>
-    
+
+                        <div v-if="personalAccounts" class="mt-2">
+                          <strong>
+                            Grand Total: {{ accountTotal }}
+                            Liquid: {{ liquidTotal }}
+                            Savings & Shares: {{ savingsTotal }}
+                          </strong>
+                        </div>    
                     </div>
     
                   </div>
@@ -417,6 +424,9 @@
       data() {
         return {
             personalAccounts: [],
+            accountTotal: null,
+            liquidTotal: null,
+            savingsTotal: null,
             selectedAccount: {},
             errors: {},
             initializing: true,
@@ -625,7 +635,10 @@
           this.initializing = true; // Start spinner
           axios.get('/api/personal-accounts')
             .then((response) => {
-              this.personalAccounts = response.data;
+              this.personalAccounts = response.data.personalAccounts;
+              this.accountTotal = response.data.accountTotal;
+              this.liquidTotal = response.data.liquidTotal;
+              this.savingsTotal = response.data.savingsTotal;
               console.log(response)
 
               setTimeout(() => {

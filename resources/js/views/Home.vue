@@ -18,7 +18,12 @@
                   <i :class="`bi ${card.icon} text-${card.color}`"></i>
                 </div>
                 <div class="ps-3">
-                  <h6>{{ card.value ?? 0 }}</h6>
+                  <h6 
+                    class="text-truncate" 
+                    :style="{ maxWidth: '120px', fontSize: card.value > 999999 ? '0.9rem' : '1rem' }"
+                  >
+                    {{ card.value ?? 0 }}
+                  </h6>
                 </div>
               </div>
             </div>
@@ -82,7 +87,8 @@ export default {
         ],
 
         personal: [
-          { title: 'My Accounts', value: this.stats.personalAccounts, icon: 'bi-building', color: 'success' },
+          { title: 'Accounts', value: this.stats.personalAccounts, icon: 'bi-building', color: 'success' },
+          { title: 'Grand Total', value: this.stats.grandTotal, icon: 'bi-cash-stack', color: 'primary' }, // <-- new
           { title: 'Categories', value: this.stats.personalCategories, icon: 'bi-house-door', color: 'warning' },
           { title: 'Transactions', value: this.stats.personalTransactions, icon: 'bi-box-arrow-right', color: 'danger' },
         ],

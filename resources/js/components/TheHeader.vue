@@ -267,11 +267,11 @@ import axios from 'axios';
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 
-        this.$router.replace('/login');
+        this.$router.replace('/login2');
 
       } catch (error) {
         localStorage.removeItem('token');
-        this.$router.push('/login');
+        this.$router.push('/login2');
       }
     },
 

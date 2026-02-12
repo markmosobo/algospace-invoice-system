@@ -22,11 +22,13 @@ import PersonalAccounts from '../views/personal/PersonalAccounts.vue';
 import PersonalCategory from '../views/personal/PersonalCategory.vue';
 import PersonalTransactions from '../views/personal/PersonalTransactions.vue';
 import Diary from '../views/Diary.vue';
+import Login2 from '../views/Login2.vue';
 
 const routes = [
   // Public routes
   { path: '/', name: 'index', component: Login },
   { path: '/login', name: 'login', component: Login },
+  { path: '/login2', name: 'login2', component: Login2 },
   { path: '/register', name: 'register', component: Register },
 
   // Protected routes

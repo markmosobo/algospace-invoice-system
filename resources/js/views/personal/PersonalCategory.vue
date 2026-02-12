@@ -144,7 +144,7 @@
                           <input type="hidden" v-model="data.id" />
 
                           <!-- Name -->
-                          <div class="col-md-6">
+                          <div class="col-md-12">
                             <label class="form-label">Name*</label>
                             <input type="text" id="name" class="form-control" v-model="data.name" required>
                           </div>

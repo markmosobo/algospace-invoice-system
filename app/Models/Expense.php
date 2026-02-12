@@ -7,14 +7,17 @@ use App\Models\InvoiceItem;
 use App\Models\ServiceProvider;
 use App\Models\ProviderService;
 use App\Models\Invoice;
+use App\Models\PersonalAccount;
 
 class Expense extends Model
 {
     protected $fillable = [
         'type',
+        'account_id',
         'service_provider_id',
         'provider_service_id',
         'description',
+        'payment_method',
         'amount',
         'expense_date',
         'invoice_id'
@@ -37,6 +40,11 @@ class Expense extends Model
     {
         return $this->belongsTo(Invoice::class);
     }
+
+    public function account()
+    {
+        return $this->belongsTo(PersonalAccount::class);
+    }    
 
     public function invoiceItem()
     {

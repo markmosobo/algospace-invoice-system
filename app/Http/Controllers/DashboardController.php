@@ -55,6 +55,7 @@ class DashboardController extends Controller
                         'personalAccounts'        => PersonalAccount::count(),
                         'personalCategories'        => PersonalCategory::count(),
                         'personalTransactions'        => PersonalTransaction::count(),
+                        'grandTotal'                  => PersonalAccount::sum('balance')  
                     ]
                 ]);
 

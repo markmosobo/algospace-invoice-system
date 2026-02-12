@@ -14,6 +14,9 @@ class PersonalAccountController extends Controller
     public function index()
     {
         $personalAccounts = PersonalAccount::all();
+        $accountTotal = PersonalAccount::sum('balance');
+        $liquidTotal = PersonalAccount::where('name','POCHI MPESA')->orWhere('name','CASH')->sum('balance');
+        $savingsTotal = PersonalAccount::where('name','CARITAS NRB SAVINGS/ JIKAZE SHARES')->orWhere('name','POSTBANK SAVINGS - 029')->sum('balance');
 
         //record system log
         SystemLog::create([
@@ -21,7 +24,15 @@ class PersonalAccountController extends Controller
             'description' => auth('api')->user()->name.' retrieved personal accounts'
         ]);
 
-        return response()->json($personalAccounts);        
+        return response()->json([
+            'message' => 'Whatsapp receipt count updated successfully',
+            'personalAccounts' => $personalAccounts,
+            'accountTotal' => $accountTotal,
+            'liquidTotal' => $liquidTotal,
+            'savingsTotal' => $savingsTotal
+        ]);
+
+        // return response()->json($personalAccounts);        
     }
 
     /**

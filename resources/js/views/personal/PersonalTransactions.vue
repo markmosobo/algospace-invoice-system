@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Transactions <span>| Day to day personal transactions</span></h5>
+                      <h5 class="card-title">Transactions <span>| Day to day transactions</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -77,10 +77,32 @@
                         <tbody v-else>
                           <tr v-for="transaction in personalTransactions" :key="transaction.id">
                             <td>{{transaction.account.name}}</td>
-                            <td>{{transaction.type ?? "N/A"}}</td>
+                            <td>
+                              <span
+                                class="badge"
+                                :class="{
+                                  'bg-danger': transaction.type === 'expense',
+                                  'bg-info text-dark': transaction.type === 'income'
+                                }"
+                              >
+                                {{ transaction.type ? transaction.type.replace('_', ' ').toUpperCase() : 'N/A' }}
+                              </span>
+                            </td>
                             <td>{{transaction.amount ?? "N/A"}}</td>
-                            <td>{{transaction.method ?? "N/A"}}</td>
-                            <td>{{formatDate(transaction.date) ?? "N/A"}}</td>
+                            <td>
+                              <span
+                                class="badge"
+                                :class="{
+                                  'bg-success': transaction.payment_method === 'cash',
+                                  'bg-primary': transaction.payment_method === 'mpesa',
+                                  'bg-warning text-dark': transaction.payment_method === 'bank',
+                                  'bg-secondary': !transaction.payment_method
+                                }"
+                              >
+                                {{ transaction.payment_method ? transaction.payment_method.toUpperCase() : 'N/A' }}
+                              </span>
+                            </td>
+                            <td>{{formatDate(transaction.transaction_date) ?? "N/A"}}</td>
 
                            
                             <td>
@@ -121,7 +143,7 @@
                         <!-- Account -->
                         <div class="col-md-6" v-if="selectedTransaction.account">
                           <strong>Account:</strong> <br>
-                          {{ selectedTransaction.account.name }} ({{ selectedTransaction.account.currency }} {{ selectedTransaction.account.balance.toFixed(2) }})
+                          {{ selectedTransaction.account.name }} ({{ selectedTransaction.account.currency }} {{ selectedTransaction.account.balance }})
                         </div>
 
                         <!-- Category -->
@@ -139,7 +161,7 @@
                         <!-- Amount -->
                         <div class="col-md-6">
                           <strong>Amount:</strong> <br>
-                          {{ selectedTransaction.amount.toFixed(2) }}
+                          {{ selectedTransaction.amount }}
                         </div>
 
                         <!-- Payment Method -->
@@ -194,7 +216,7 @@
                           <select class="form-select" v-model="data.account_id" required>
                             <option value="">Select Account</option>
                             <option v-for="account in accounts" :key="account.id" :value="account.id">
-                              {{ account.name }} ({{ account.currency }})
+                              {{ account.name }} ({{ account.currency }} {{ account.balance }})
                             </option>
                           </select>
                         </div>
@@ -203,7 +225,7 @@
                         <div class="col-md-6">
                           <label class="form-label">Category</label>
                           <select class="form-select" v-model="data.category_id">
-                            <option value="">Uncategorized</option>
+                            <option value="" disabled selected>Select </option>
                             <option v-for="category in categories" :key="category.id" :value="category.id">
                               {{ category.name }}
                             </option>
@@ -283,7 +305,7 @@
                           <select class="form-select" v-model="form.account_id" required>
                             <option value="">Select Account</option>
                             <option v-for="account in accounts" :key="account.id" :value="account.id">
-                              {{ account.name }} ({{ account.currency }} {{ account.balance.toFixed(2) }})
+                              {{ account.name }} ({{ account.currency }} {{ account.balance }})
                             </option>
                           </select>
                         </div>
@@ -523,7 +545,7 @@
 
         return isValid;
         },
-        async submit() {
+        async submitTransaction() {
         if (!this.validateForm()) return;
 
         this.submitting = true;
@@ -565,6 +587,22 @@
         },
         navigateTo(location){
             this.$router.push(location)
+        },
+        formatDateTime(dateTime) {
+          const date = new Date(dateTime);
+
+          // Format date components
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+          const year = date.getFullYear();
+
+          // Format time components
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+
+          // Combine to format 'DD/MM/YYYY HH:mm:ss'
+          return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
         },
         deleteTransaction(id){
                 Swal.fire({

@@ -5,16 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\PersonalAccount;
 use App\Models\ServiceProvider;
 use App\Models\ProviderService;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ExpenseController extends Controller
 {
     public function index()
     {
         $expenses = Expense::with('serviceProvider', 'providerService', 'invoice')->get();
+        $accounts = PersonalAccount::get();
         $serviceProviders = ServiceProvider::get();
         $providerServices = ProviderService::get();
         $invoices =Invoice::with('customer')->where('status', 'pending')->get();
@@ -31,102 +34,134 @@ class ExpenseController extends Controller
             'serviceProviders' => $serviceProviders,
             'providerServices' => $providerServices,
             'invoices' => $invoices,
+            'accounts' => $accounts
         ]);
     } 
     
-    public function store(Request $request)
-    {
-        $request->validate([
-            'type' => 'required|in:expense,provider_service,inventory,other',
-            'invoice_id' => 'nullable|exists:invoices,id',
 
-            'service_provider_id' => 'nullable|exists:service_providers,id',
-            'provider_service_id' => 'nullable|exists:provider_services,id',
+public function store(Request $request)
+{
+    $request->validate([
+        'type' => 'required|in:expense,provider_service,inventory,other',
+        'invoice_id' => 'nullable|exists:invoices,id',
 
-            'amount' => 'nullable|numeric|min:0',
-            'description' => 'nullable|string|max:255',
-            'expense_date' => 'nullable|date',
-        ]);
+        'service_provider_id' => 'nullable|exists:service_providers,id',
+        'provider_service_id' => 'nullable|exists:provider_services,id',
 
-        $amount = $request->amount;
+        'account_id' => 'required|exists:personal_accounts,id',
+        'payment_method' => 'nullable|string|max:50',
+
+        'amount' => 'nullable|numeric|min:0.01',
+        'description' => 'nullable|string|max:255',
+        'expense_date' => 'nullable|date',
+    ]);
+
+    DB::transaction(function () use ($request, &$expense, &$invoiceId) {
+
+        $amount    = $request->amount;
         $invoiceId = $request->invoice_id;
 
-        // ONLY provider_service creates invoice + invoice_item
+        /* ===============================
+           LOCK ACCOUNT
+        =============================== */
+        $account = PersonalAccount::lockForUpdate()
+            ->findOrFail($request->account_id);
+
+        /* ===============================
+           PROVIDER SERVICE LOGIC (NO DEDUCTION)
+        =============================== */
         if ($request->type === 'provider_service') {
 
             if (!$request->service_provider_id || !$request->provider_service_id) {
-                return response()->json([
-                    'message' => 'Service provider and service are required'
-                ], 422);
+                throw new \Exception('Service provider and service are required');
             }
 
-            // ALWAYS load provider service
-            $providerService = ProviderService::find($request->provider_service_id);
+            $providerService = ProviderService::findOrFail(
+                $request->provider_service_id
+            );
 
-            // EXTRA TIP: ensure provider service exists
-            if (!$providerService) {
-                return response()->json([
-                    'message' => 'Invalid provider service'
-                ], 422);
-            }
-
-            // If amount not provided, use provider service price
+            // If amount not provided, use service price
             if (!$amount) {
                 $amount = $providerService->price;
             }
 
-            // create invoice if not provided
+            // Create invoice if missing
             if (!$invoiceId) {
-                $provider = ServiceProvider::find($request->service_provider_id);
+                $provider = ServiceProvider::findOrFail(
+                    $request->service_provider_id
+                );
 
                 $invoice = Invoice::create([
-                    'invoice_type' => 'expense',
-                    'vendor_name' => $provider->name,
+                    'invoice_type'   => 'expense',
+                    'vendor_name'    => $provider->name,
                     'invoice_number' => 'INV-EXP-' . time(),
-                    'invoice_date' => now(),
-                    'due_date' => now()->addDays(7),
-                    'total_amount' => $amount,
-                    'status' => 'pending',
+                    'invoice_date'   => now(),
+                    'due_date'       => now()->addDays(7),
+                    'total_amount'   => $amount,
+                    'status'         => 'pending',
                 ]);
 
                 $invoiceId = $invoice->id;
             }
 
-            // create invoice item (ONLY for provider_service)
+            // Create invoice item
             InvoiceItem::create([
                 'invoice_id' => $invoiceId,
-                'item_type' => 'provider_service',
-                'provider_service_id' => $request->provider_service_id,
+                'item_type'  => 'provider_service',
+                'provider_service_id'   => $providerService->id,
                 'provider_service_name' => $providerService->name,
                 'expense_name' => null,
-                'quantity' => 1,
-                'unit_price' => $amount,
-                'line_total' => $amount,
+                'quantity'     => 1,
+                'unit_price'   => $amount,
+                'line_total'   => $amount,
             ]);
         }
 
-        // Create expense for all types
+        /* ===============================
+           CREATE EXPENSE (ALL TYPES)
+        =============================== */
         $expense = Expense::create([
             'type' => $request->type,
-            'invoice_id' => $invoiceId, // can be null for other types
+            'invoice_id' => $invoiceId,
             'service_provider_id' => $request->service_provider_id,
             'provider_service_id' => $request->provider_service_id,
+            'account_id' => $account->id,
+            'payment_method' => $request->payment_method,
             'amount' => $amount,
             'description' => $request->description,
             'expense_date' => $request->expense_date ?? now(),
         ]);
 
+        /* ===============================
+           DEDUCT BALANCE (NOT provider_service)
+        =============================== */
+        if ($request->type !== 'provider_service') {
+
+            if ($account->balance < $amount) {
+                throw new \Exception('Insufficient account balance');
+            }
+
+            $account->balance -= $amount;
+            $account->save();
+        }
+
+        /* ===============================
+           SYSTEM LOG
+        =============================== */
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name . ' created expense #' . $expense->id
+            'description' =>
+                auth('api')->user()->name .
+                ' created expense #' . $expense->id
         ]);
+    });
 
-        return response()->json([
-            'message' => 'Expense recorded successfully',
-            'expense' => $expense,
-            'invoice_id' => $invoiceId
-        ]);
-    }
+    return response()->json([
+        'message' => 'Expense recorded successfully',
+        'expense' => $expense,
+        'invoice_id' => $invoiceId
+    ], 201);
+}
 
     
     public function show(string $id)

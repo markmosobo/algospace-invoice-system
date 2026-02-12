@@ -11,6 +11,7 @@
               <div class="d-flex justify-content-center py-4">
                 <router-link to="/" class="logo d-flex align-items-center w-auto">
                   <img src="@/assets/img/algospacelogo.png" alt="">
+
                   <span class="d-none d-lg-block" style="color: white;">ALGOSPACE CYBER</span>
                 </router-link>
               </div>
@@ -20,15 +21,15 @@
                 <div class="card-body">
                   <div class="pt-4 pb-2">
                     <h5 class="card-title text-center pb-0 fs-4" style="color: purple;">
-                      Login to Your Account
+                      Welcome to AlgoSpace
                     </h5>
                     <p class="text-center small">
-                      Enter your username & password to login
+                      Choose account to sign into 
                     </p>
                   </div>
 
                   <form @submit.prevent="login_user" class="row g-3 needs-validation" novalidate>
-                    <div class="col-12">
+                    <!-- <div class="col-12">
                       <label for="yourUsername" class="form-label">Email</label>
                       <input
                         type="text"
@@ -79,20 +80,21 @@
                         </span>
                         <span v-else>Login</span>
                       </button>
-                    </div>
+                    </div> -->
 
                   <!-- Auto-Login Quick Buttons -->
-                  <!-- <div class="mt-4 text-center">
-                    <p class="small mb-2" style="color: purple;">Quick Auto-Login</p>
+                  <div class="mt-4 text-center">
+                    <p class="small mb-2" style="color: purple;">Quick Sign-In</p>
                     <div class="d-grid gap-2">
                       <button type="button" class="btn btn-outline-success rounded-pill" @click="autoLogin('office')">Office</button>
                       <button type="button" class="btn btn-outline-info rounded-pill" @click="autoLogin('farm')">Farm</button>
                       <button type="button" class="btn btn-outline-warning rounded-pill" @click="autoLogin('personal')">Personal</button>
+                      <button type="button" class="btn btn-outline-dark rounded-pill" @click="logout()">Logout</button>
                     </div>
-                  </div> -->
+                  </div>
 
 
-                    <div class="col-12">
+                    <!-- <div class="col-12">
                       <p class="small mb-0">
                         Forgot your password?
                         <router-link to="/resetpassword" style="color: orange;">Reset Password</router-link>
@@ -101,7 +103,7 @@
                         Don't have an account?
                         <router-link to="/register" style="color: orange;">Create Account</router-link>
                       </p>
-                    </div>
+                    </div> -->
                   </form>
                 </div>
               </div>
@@ -144,6 +146,27 @@ export default {
     }
   },
   methods: {
+    async logout() {
+      try {
+        if (this.reminderInterval) {
+          clearInterval(this.reminderInterval);
+        }
+
+        await axios.post('/api/logout', {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        this.$router.replace('/login');
+
+      } catch (error) {
+        localStorage.removeItem('token');
+      }
+    },
     togglePasswordVisibility() {
       this.isPasswordVisible = !this.isPasswordVisible
     },
@@ -183,14 +206,14 @@ export default {
         // Success alert (optional)
         toast.fire({
             title: 'Welcome!',
-            text: `Hello ${this.current_user}, you are now logged in.`,
+            text: `Hello ${this.current_user}, you are now signed in.`,
             icon: 'success',
             timer: 2000,
             showConfirmButton: false
         })
 
         // Redirect to dashboard
-        this.$router.push('/login2')
+        this.$router.push('/dashboard')
         } else {
         Swal.fire({
             title: 'Oops!',

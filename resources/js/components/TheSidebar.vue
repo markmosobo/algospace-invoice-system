@@ -12,12 +12,22 @@
         </router-link>
       </li>
 
+      <!-- Personal Accounts -->
+      <li v-show="userRole === 'personal'" class="nav-item">
+        <router-link to="/personal-accounts" custom v-slot="{ href, navigate }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-wallet2"></i>
+            <span>Accounts</span>
+          </a>
+        </router-link>
+      </li>
+
       <!-- Personal Transactions -->
       <li v-show="userRole === 'personal'" class="nav-item">
         <router-link to="/personal-transactions" custom v-slot="{ href, navigate }">
           <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
             <i class="bi bi-wallet2"></i>
-            <span>My Transactions</span>
+            <span>Transactions</span>
           </a>
         </router-link>
       </li>
@@ -109,7 +119,168 @@
         </ul>
       </li>
 
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#farm-config-nav">
+          <i class="bi bi-sliders"></i>
+          <span>Configurations</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="farm-config-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/farms" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Farms
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/farm-ventures" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Farm Ventures
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>      
 
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#prod-config-nav">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Crop & Production</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="prod-config-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/crops" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-tree"></i> Crops
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/harvests" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-basket"></i> Harvests
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>
+
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#seedling-config-nav">
+          <i class="bi bi-diagram-3"></i>
+          <span>Seedling & Nursery</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="seedling-config-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/seedlings" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-tree"></i> Seedlings
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/seedling-sales" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-cart"></i> Seedling Sales
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>      
+
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#inputs-config-nav">
+          <i class="bi bi-wallet2"></i> <!-- Represents finances/expenses -->
+          <span>Expenses & Inputs</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="inputs-config-nav" class="nav-content collapse">
+          <!-- Farm Expenses -->
+          <li>
+            <router-link to="/farm-expenses" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-cash-stack"></i> Farm Expenses
+              </a>
+            </router-link>
+          </li>
+
+          <!-- Farm Inputs -->
+          <li>
+            <router-link to="/farm-inputs" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-box-seam"></i> Farm Inputs
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>  
+
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#income-config-nav">
+          <i class="bi bi-wallet2"></i> <!-- Represents finances/expenses -->
+          <span>Sales & Income</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="income-config-nav" class="nav-content collapse">
+          <!-- Farm Sales -->
+          <li>
+            <router-link to="/farm-sales" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-cash-stack"></i> Farm Sales
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>  
+
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#labour-config-nav">
+          <i class="bi bi-people"></i> <!-- Represents workforce/team -->
+          <span>Labour & Workforce</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="labour-config-nav" class="nav-content collapse">
+          <!-- Farm Workers -->
+          <li>
+            <router-link to="/farm-workers" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-person-badge"></i> Farm Workers
+              </a>
+            </router-link>
+          </li>
+
+          <!-- Worker Tasks -->
+          <li>
+            <router-link to="/worker-tasks" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-list-task"></i> Worker Tasks
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>      
+      
+      <li v-show="userRole === 'farm'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#assets-config-nav">
+          <i class="bi bi-tools"></i> <!-- Represents tools/equipment -->
+          <span>Assets & Equipment</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="assets-config-nav" class="nav-content collapse">
+          <!-- Farm Assets -->
+          <li>
+            <router-link to="/farm-assets" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-box-seam"></i> Farm Assets
+              </a>
+            </router-link>
+          </li>
+        </ul>
+      </li>     
+      
       <!-- Inventory -->
       <li v-show="userRole === 'office'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">

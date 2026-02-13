@@ -58,7 +58,7 @@
                           <tr>
                             <th scope="col"> Name</th>
                             <th scope="col">Balance</th>
-                            <th scope="col">Currency</th>
+                            <th scope="col">Type</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -75,8 +75,8 @@
                         <tbody v-else>
                           <tr v-for="account in personalAccounts" :key="account.id">
                             <td>{{account.name}}</td>
-                            <td>{{account.balance ?? "N/A"}}</td>
-                            <td>{{account.currency ?? "N/A"}}</td>
+                            <td>KES {{account.balance ?? "N/A"}}</td>
+                            <td>{{account.sub_type ?? "N/A"}}</td>
 
                            
                             <td>
@@ -94,14 +94,7 @@
                           </tr>
                         </tbody>
                       </table>
-
-                        <div v-if="personalAccounts" class="mt-2">
-                          <strong>
-                            Grand Total: {{ accountTotal }}
-                            Liquid: {{ liquidTotal }}
-                            Savings & Shares: {{ savingsTotal }}
-                          </strong>
-                        </div>    
+                     
                     </div>
     
                   </div>
@@ -140,6 +133,22 @@
                             <small class="text-muted">Account Name</small>
                             <div class="fw-semibold">
                               {{ selectedAccount.name }}
+                            </div>
+                          </div>
+
+                          <!-- Account Number -->
+                          <div class="col-md-6">
+                            <small class="text-muted">Account Number</small>
+                            <div class="fw-semibold">
+                              {{ selectedAccount.account_number || '-' }}
+                            </div>
+                          </div>
+
+                          <!-- Sub Type -->
+                          <div class="col-md-6">
+                            <small class="text-muted">Sub Type</small>
+                            <div class="fw-semibold">
+                              {{ selectedAccount.sub_type || '-' }}
                             </div>
                           </div>
 
@@ -199,7 +208,8 @@
                   </div>
                 </div>
 
-                <!-- Add Account Modal -->
+
+                <!-- Add Account Modal --> 
                 <div
                   class="modal fade"
                   id="AddAccountModal"
@@ -242,6 +252,32 @@
                               id="name"
                               placeholder="e.g. Cash, Mpesa, Bank Account"
                               required
+                            >
+                          </div>
+
+                          <!-- Account Number -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Account Number
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="data.account_number"
+                              placeholder="e.g. 060060876556150"
+                            >
+                          </div>
+
+                          <!-- Sub Type / Category -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Sub Type <span class="text-muted">(e.g. Shop Sales, Farm Sales)</span>
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="data.sub_type"
+                              placeholder="Optional: categorize this account"
                             >
                           </div>
 
@@ -298,6 +334,7 @@
                   </div>
                 </div>
 
+
                 <!-- EDIT Account MODAL -->
                 <div
                   class="modal fade"
@@ -340,6 +377,32 @@
                               id="name_edit"
                               v-model="form.name"
                               required
+                            >
+                          </div>
+
+                          <!-- Account Number -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Account Number
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="form.account_number"
+                              placeholder="e.g. 060060876556150"
+                            >
+                          </div>
+
+                          <!-- Sub Type / Category -->
+                          <div class="col-md-6">
+                            <label class="form-label">
+                              Sub Type <span class="text-muted">(e.g. Shop Sales, Coffee Funds)</span>
+                            </label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="form.sub_type"
+                              placeholder="Optional: categorize this account"
                             >
                           </div>
 
@@ -394,6 +457,7 @@
                 </div>
 
 
+
                     
 
             </div>
@@ -425,6 +489,7 @@
         return {
             personalAccounts: [],
             accountTotal: null,
+            semiLiquidTotal: null,
             liquidTotal: null,
             savingsTotal: null,
             selectedAccount: {},
@@ -435,6 +500,8 @@
             data: {        // ADD account
               id: null,
               name: '',
+              account_number: '',
+              sub_type: '',
               balance: 0,
               currency: 'KES'
             },
@@ -442,6 +509,8 @@
             form: {
               id: null,
               name: '',
+              account_number: '',
+              sub_type: '',              
               balance: 0,
               currency: 'KES'
             }
@@ -470,6 +539,8 @@
         this.form = {
             id: account.id,
             name: account.name,
+            account_number: account.account_number,
+            sub_type: account.sub_type,
             balance: account.balance,
             currency: account.currency,
         };
@@ -638,6 +709,7 @@
               this.personalAccounts = response.data.personalAccounts;
               this.accountTotal = response.data.accountTotal;
               this.liquidTotal = response.data.liquidTotal;
+              this.semiLiquidTotal = response.data.semiLiquidTotal;
               this.savingsTotal = response.data.savingsTotal;
               console.log(response)
 

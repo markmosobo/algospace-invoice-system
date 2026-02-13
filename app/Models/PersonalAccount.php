@@ -8,6 +8,8 @@ class PersonalAccount extends Model
 {
     protected $fillable = [
         'name',
+        'account_number',
+        'sub_type',
         'balance',
         'currency'
     ];    

@@ -15,8 +15,21 @@ class PersonalAccountController extends Controller
     {
         $personalAccounts = PersonalAccount::all();
         $accountTotal = PersonalAccount::sum('balance');
-        $liquidTotal = PersonalAccount::where('name','POCHI MPESA')->orWhere('name','CASH')->sum('balance');
-        $savingsTotal = PersonalAccount::where('name','CARITAS NRB SAVINGS/ JIKAZE SHARES')->orWhere('name','POSTBANK SAVINGS - 029')->sum('balance');
+        $liquidTotal = PersonalAccount::where('name','POCHI MPESA')
+        ->orWhere('name','CASH')
+        ->orWhere('name','PERSONAL MPESA')
+        ->orWhere('name','I&M BANK')
+        ->sum('balance');
+        $semiLiquidTotal = PersonalAccount::where('name','POSTBANK')
+        ->orWhere('name','EQUITY BANK ACCOUNT')
+        ->orWhere('name','JAR SAVINGS')
+        ->orWhere('name','MUM/MARK JAR')
+        ->sum('balance');
+        $savingsTotal = PersonalAccount::where('name','CARITAS JIKAZE NRB SAVINGS')
+        ->orWhere('name','STAWISHA SACCO - FARM')
+        ->orWhere('name','STAWISHA SACCO - SHOP')
+        ->orWhere('name','I&M ALGOSPACE LIMITED')
+        ->sum('balance');
 
         //record system log
         SystemLog::create([
@@ -29,6 +42,7 @@ class PersonalAccountController extends Controller
             'personalAccounts' => $personalAccounts,
             'accountTotal' => $accountTotal,
             'liquidTotal' => $liquidTotal,
+            'semiLiquidTotal' => $semiLiquidTotal,
             'savingsTotal' => $savingsTotal
         ]);
 
@@ -50,6 +64,7 @@ class PersonalAccountController extends Controller
         // Create the personal account
         $personalAccount = PersonalAccount::create([
             'name' => $request->name,
+            'sub_type' => $request->sub_type,
             'balance' => $request->balance,
             'currency' => $request->currency,
         ]);
@@ -105,6 +120,9 @@ class PersonalAccountController extends Controller
         // Update fields if provided
         if ($request->has('name')) {
             $personalAccount->name = $request->name;
+        }
+        if ($request->has('sub_type')) {
+            $personalAccount->sub_type = $request->sub_type;
         }
         if ($request->has('balance')) {
             $personalAccount->balance = $request->balance;

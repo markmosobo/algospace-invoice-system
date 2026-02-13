@@ -69,13 +69,13 @@ class PaymentController extends Controller
 
             if ($request->method === 'mpesa') {
                 $account = PersonalAccount::lockForUpdate()
-                    ->whereIn('name', ['POCHI MPESA - 0112514440'])
+                    ->whereIn('name', ['POCHI MPESA'])
                     ->firstOrFail();
             }
 
             if ($request->method === 'bank') {
                 $account = PersonalAccount::lockForUpdate()
-                    ->where('name', 'I&M BANK- 0600 6087 5561 50')
+                    ->where('name', 'I&M BANK')
                     ->firstOrFail();
             }
 

@@ -10,17 +10,27 @@
             >
               <div class="d-flex justify-content-center py-4">
                 <router-link to="/" class="logo d-flex align-items-center w-auto">
-                  <img src="@/assets/img/algospacelogo.png" alt="">
 
                   <span class="d-none d-lg-block" style="color: white;">ALGOSPACE CYBER</span>
                 </router-link>
               </div>
               <!-- End Logo -->
 
-              <div class="card mb-3">
+              <div class="card mb-3 w-100 shadow-sm">
                 <div class="card-body">
-                  <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4" style="color: purple;">
+
+                  <!-- Welcome Section with Centered Logo -->
+                  <div class="text-center pt-4 pb-3">
+
+                    <!-- Logo: professional size, centered -->
+                    <img 
+                      src="@/assets/img/algospacelogo.png" 
+                      alt="AlgoSpace Cyber Logo" 
+                      class="login-logo mb-3"
+                    />
+
+                    <!-- Welcome text -->
+                    <h5 class="card-title fs-4" style="color: purple;">
                       Welcome to AlgoSpace
                     </h5>
                     <p class="text-center small">
@@ -28,61 +38,7 @@
                     </p>
                   </div>
 
-                  <form @submit.prevent="login_user" class="row g-3 needs-validation" novalidate>
-                    <!-- <div class="col-12">
-                      <label for="yourUsername" class="form-label">Email</label>
-                      <input
-                        type="text"
-                        name="email"
-                        class="form-control"
-                        id="yourUsername"
-                        v-model="form.email"
-                        required
-                      />
-                      <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
-                    </div>
-
-                    <div class="col-12 password-container">
-                      <label for="yourPassword" class="form-label">Password</label>
-                      <div class="input-group">
-                        <input
-                          :type="isPasswordVisible ? 'text' : 'password'"
-                          name="password"
-                          class="form-control"
-                          id="yourPassword"
-                          v-model="form.password"
-                          required
-                        />
-                        <span class="input-group-text" @click="togglePasswordVisibility" style="cursor: pointer;">
-                          <i :class="isPasswordVisible ? 'fa fa-eye' : 'fa fa-eye-slash'"></i>
-                        </span>
-                      </div>
-                      <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
-                    </div>
-
-                    <div class="col-12">
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          name="remember"
-                          value="true"
-                          id="rememberMe"
-                        />
-                        <label class="form-check-label" for="rememberMe">Remember me</label>
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <button class="btn btn-success rounded-pill w-100" type="submit" :disabled="loading">
-                        <span v-if="loading">
-                          <i class="fa fa-spinner fa-spin"></i> Logging in...
-                        </span>
-                        <span v-else>Login</span>
-                      </button>
-                    </div> -->
-
-                  <!-- Auto-Login Quick Buttons -->
+                  <!-- Quick Login Buttons -->
                   <div class="mt-4 text-center">
                     <p class="small mb-2" style="color: purple;">Quick Sign-In</p>
                     <div class="d-grid gap-2">
@@ -93,18 +49,6 @@
                     </div>
                   </div>
 
-
-                    <!-- <div class="col-12">
-                      <p class="small mb-0">
-                        Forgot your password?
-                        <router-link to="/resetpassword" style="color: orange;">Reset Password</router-link>
-                      </p>
-                      <p class="small mb-0">
-                        Don't have an account?
-                        <router-link to="/register" style="color: orange;">Create Account</router-link>
-                      </p>
-                    </div> -->
-                  </form>
                 </div>
               </div>
 
@@ -275,7 +219,7 @@ main {
 
 /* Full background image */
 .background-image {
-  background-image: url('@/assets/img/cyber.jpg');
+  background-image: url('@/assets/img/algospace-cyber.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -309,5 +253,11 @@ main {
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
-
+.login-logo {
+  max-width: 120px;      /* professional standard size */
+  height: auto;          /* maintain aspect ratio */
+  display: block;        /* ensures centered alignment */
+  margin-left: auto;
+  margin-right: auto;
+}
 </style>

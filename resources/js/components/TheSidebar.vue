@@ -32,6 +32,16 @@
         </router-link>
       </li>
 
+      <!-- Ledger Reports -->
+      <li v-show="userRole === 'personal'" class="nav-item">
+        <router-link to="/ledger-report" custom v-slot="{ href, navigate }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Profit & Tithe</span>
+          </a>
+        </router-link>
+      </li>
+
     <li v-show="userRole === 'office'" class="nav-item">
       <router-link to="/quick-sale" custom v-slot="{ href, navigate, isActive }">
         <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">

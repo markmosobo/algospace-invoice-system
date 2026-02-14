@@ -8,6 +8,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\InvoicePreviewController;
+use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
@@ -81,5 +82,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Logout user
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('ledger/profit-loss', [LedgerController::class, 'profitLoss']);
+    Route::post('ledger/tithe/pay', [LedgerController::class, 'payTithe']);
+    Route::get('ledger/tithe', [LedgerController::class, 'titheAmount']);
+    Route::get('personal-accounts/tithe-options', [PersonalAccountController::class, 'titheOptions']);
 
 });

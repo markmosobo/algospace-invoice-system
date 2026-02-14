@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\SystemLog;
 use App\Models\PersonalAccount;
+use App\Services\LedgerService;
 use App\Models\PersonalTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'invoice_id'   => 'required|exists:invoices,id',
-            'amount'       => 'required|numeric|min:1',
+            'amount'       => 'required|numeric|min:0',
             'payment_date' => 'required|date',
             'method'       => 'required|in:cash,mpesa,bank,card,other',
             'mpesa_code'   => 'nullable|required_if:method,mpesa|string|max:20',
@@ -109,6 +110,23 @@ class PaymentController extends Controller
                     'source'     => 'payment',
                     'created_at' => now(),
                 ]);
+
+                    // ===============================
+                    // LEDGER ENTRY
+                    // ===============================
+                    $revenueAccount = PersonalAccount::where('name', 'SALES REVENUE')->first();
+
+                    if (!$revenueAccount) {
+                        throw new \Exception('SALES REVENUE account is not configured');
+                    }
+                    if ($request->amount > 0) {
+                        LedgerService::recordSale(
+                            $account, // DEBIT → asset increased
+                            $revenueAccount, // CREDIT → income earned
+                            $request->amount,
+                            'Invoice #' . $invoice->id
+                        );
+                    }
             }
 
             /* ===============================

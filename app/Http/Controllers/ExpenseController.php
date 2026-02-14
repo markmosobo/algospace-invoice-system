@@ -11,6 +11,7 @@ use App\Models\ProviderService;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\LedgerService;
 
 class ExpenseController extends Controller
 {
@@ -141,9 +142,27 @@ public function store(Request $request)
                 throw new \Exception('Insufficient account balance');
             }
 
+            // Deduct cash/bank/mpesa
             $account->balance -= $amount;
             $account->save();
+
+            // ===============================
+            // LEDGER ENTRY (EXPENSE)
+            // ===============================
+            $expenseAccount = PersonalAccount::where('name', 'GENERAL EXPENSES')->first();
+
+            if (!$expenseAccount) {
+                throw new \Exception('GENERAL EXPENSES account is not configured');
+            }
+
+            LedgerService::recordExpense(
+                $expenseAccount,   // debit
+                $account,          // credit (cash/mpesa/bank)
+                $amount,
+                $request->description ?? 'Expense #' . $expense->id
+            );
         }
+
 
         /* ===============================
            SYSTEM LOG

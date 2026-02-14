@@ -170,4 +170,17 @@ class PersonalAccountController extends Controller
             'message' => 'Personal account deleted successfully'
         ]);
     }
+        public function titheOptions()
+        {
+            // Get only cash/mpesa/bank accounts under shop_working_capital with balance > 0
+            $accounts = PersonalAccount::where('category', 'shop_working_capital')
+                ->whereIn('account_type', ['cash', 'mpesa', 'bank'])
+                ->where('balance', '>', 0)
+                ->get(['id','name','balance','account_type','category']);
+
+            return response()->json([
+                'personalAccounts' => $accounts
+            ]);
+        }
+
 }

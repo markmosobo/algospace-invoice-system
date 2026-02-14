@@ -241,7 +241,6 @@ export default {
 
         personal: [
           { title: 'Accounts', value: this.stats.personalAccounts, icon: 'bi-building', color: 'success' },
-          { title: 'Grand Total', value: this.stats.grandTotal, icon: 'bi-cash-stack', color: 'primary' }, // <-- new
           { title: 'Categories', value: this.stats.personalCategories, icon: 'bi-house-door', color: 'warning' },
           { title: 'Transactions', value: this.stats.personalTransactions, icon: 'bi-box-arrow-right', color: 'danger' },
         ],

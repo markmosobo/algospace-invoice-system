@@ -23,6 +23,7 @@ import PersonalCategory from '../views/personal/PersonalCategory.vue';
 import PersonalTransactions from '../views/personal/PersonalTransactions.vue';
 import Diary from '../views/Diary.vue';
 import Login2 from '../views/Login2.vue';
+import LedgerReport from '../views/LedgerReport.vue';
 
 const routes = [
   // Public routes
@@ -47,6 +48,7 @@ const routes = [
   { path: '/services', name: 'services', component: Services, meta: { requiresAuth: true } },
   { path: '/provider-services', name: 'provider-services', component: ProviderServices, meta: { requiresAuth: true } },
   { path: '/reports', name: 'reports', component: Reports, meta: { requiresAuth: true } },
+  { path: '/ledger-report', name: 'ledger-report', component: LedgerReport, meta: { requiresAuth: true } },
 
   //personal routes
   { path: '/personal-accounts', name: 'personal-accounts', component: PersonalAccounts, meta: { requiresAuth: true } },

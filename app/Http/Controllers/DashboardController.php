@@ -21,21 +21,6 @@ class DashboardController extends Controller
     public function stats()
     {
         $user = Auth::user();
-        $accountTotal = PersonalAccount::sum('balance');
-        $liquidTotal = PersonalAccount::where('name','POCHI MPESA')
-        ->orWhere('name','CASH')
-        ->orWhere('name','PERSONAL MPESA')
-        ->orWhere('name','I&M BANK')
-        ->sum('balance');
-        $semiLiquidTotal = PersonalAccount::where('name','POSTBANK')
-        ->orWhere('name','EQUITY BANK ACCOUNT')
-        ->orWhere('name','JAR SAVINGS')
-        ->orWhere('name','MUM/MARK JAR')
-        ->sum('balance');
-        $savingsTotal = PersonalAccount::where('name','CARITAS JIKAZE NRB SAVINGS')
-        ->orWhere('name','')
-        ->orWhere('name','I&M ALGOSPACE LIMITED')
-        ->sum('balance');
         
         // ✅ Log once
         SystemLog::create([
@@ -85,10 +70,20 @@ class DashboardController extends Controller
                         'personalCategories'        => PersonalCategory::count(),
                         'personalTransactions'        => PersonalTransaction::count(),
                         'grandTotal'                  => PersonalAccount::sum('balance'),
-                        'accountTotal'                => $accountTotal,
-                        'liquidTotal'                 => $liquidTotal,
-                        'semiLiquidTotal'             => $semiLiquidTotal,
-                        'savingsTotal'                => $savingsTotal  
+                        'accountTotal'                => PersonalAccount::sum('balance'),
+                        'liquidTotal'                 => PersonalAccount::where('name','POCHI MPESA')
+                                                        ->orWhere('name','CASH')
+                                                        ->orWhere('name','PERSONAL MPESA')
+                                                        ->orWhere('name','I&M BANK')
+                                                        ->sum('balance'),
+                        'semiLiquidTotal'             => PersonalAccount::where('name','EQUITY BANK ACCOUNT')
+                                                        ->orWhere('name','POSTBANK')
+                                                        ->orWhere('name','I&M ALGOSPACE LIMITED')
+                                                        ->sum('balance'),
+                        'savingsTotal'                => PersonalAccount::where('name','CARITAS JIKAZE NRB SAVINGS')
+                                                        ->orWhere('name','JAR SAVINGS')
+                                                        ->orWhere('name','MUM/MARK JAR')                                                        ->orWhere('name','POSTBANK')
+                                                        ->sum('balance')  
                                 ]
                 ]);
 

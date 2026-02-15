@@ -7,6 +7,24 @@
   <div v-if="userRole === 'personal'" class="col-12 mb-4">
     <div class="p-3 rounded bg-light border shadow-sm">
 
+      <!-- Date Filters -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <input type="date" v-model="filters.start_date" class="form-control form-control-sm">
+        </div>
+
+        <div class="col-md-4">
+          <input type="date" v-model="filters.end_date" class="form-control form-control-sm">
+        </div>
+
+        <div class="col-md-4">
+          <button class="btn btn-sm btn-primary w-100" @click="fetchReport">
+            Apply Filter
+          </button>
+        </div>
+      </div>
+
+
       <!-- Primary total: Account Worth -->
       <div class="text-center mb-3">
         <div class="text-muted small">Total Worth</div>
@@ -67,23 +85,36 @@
       </div>
 
       <!-- Tithe Section -->
-      <div class="row g-2 text-center mb-3">
+      <div
+        v-if="!report.tithe_paid && report.tithe > 0"
+        class="row g-2 text-center mb-3"
+      >
         <div class="col-12 col-md-6 mx-auto">
           <div class="p-2 rounded bg-info bg-opacity-10 border">
             <div class="small text-muted">
               <i class="bi bi-heart me-1"></i>
               Tithe Due
             </div>
-            <div class="fw-semibold text-info">KES {{ report.tithe }}</div>
-            <div class="small text-muted fst-italic">10% of profit before owner draws</div>
+
+            <div class="fw-semibold text-info">
+              KES {{ report.tithe }}
+            </div>
+
+            <div class="small text-muted fst-italic">
+              10% of profit before owner draws
+            </div>
 
             <div class="mt-2">
-              <select v-model="selectedAccount" class="form-select form-select-sm mb-2">
+              <select v-model="selectedAccount"
+                      class="form-select form-select-sm mb-2">
                 <option disabled value="">Select payment account</option>
-                <option v-for="acc in personalAccounts" :key="acc.id" :value="acc.id">
+                <option v-for="acc in personalAccounts"
+                        :key="acc.id"
+                        :value="acc.id">
                   {{ acc.name }} (KES {{ acc.balance }})
                 </option>
               </select>
+
               <button class="btn btn-sm btn-info" @click="payTithe">
                 Pay Tithe
               </button>
@@ -91,6 +122,47 @@
           </div>
         </div>
       </div>
+
+      <!-- Owner Draw Section -->
+      <div
+        v-if="report.tithe_paid && report.profit > 0"
+        class="row g-2 text-center mb-3"
+      >
+        <div class="col-12 col-md-6 mx-auto">
+          <div class="p-2 rounded bg-warning bg-opacity-10 border">
+            <div class="small text-muted">
+              <i class="bi bi-person-fill me-1"></i>
+              Owner Draw
+            </div>
+
+            <div class="fw-semibold text-warning">
+              Withdraw Owner Draw (30% of profit after tithe: KES {{ report.profit_after_tithe * 0.3 }})
+            </div>
+
+            <div class="small text-muted fst-italic">
+              Withdraw profit after tithe
+            </div>
+
+            <div class="mt-2">
+              <select v-model="selectedAccount"
+                      class="form-select form-select-sm mb-2">
+                <option disabled value="">Select payout account</option>
+                <option v-for="acc in personalAccounts"
+                        :key="acc.id"
+                        :value="acc.id">
+                  {{ acc.name }} (KES {{ acc.balance }})
+                </option>
+              </select>
+
+              <button class="btn btn-sm btn-warning" @click="payOwnerDraw">
+                Withdraw Profit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
 
     </div>
   </div>
@@ -122,6 +194,11 @@ export default {
   data() {
     return {
       currentYear: '',
+      filters: {
+        start_date: null,
+        end_date: null
+      },
+      accountTotal: 0,
       personalAccounts: [],
       selectedAccount: null,
       accountTotal: 0,     // total worth
@@ -155,10 +232,28 @@ export default {
   },
 
   methods: {
+async payOwnerDraw() {
+  if (!this.selectedAccount) return alert('Select account');
+
+  const res = await axios.post('/api/ledger/owner-draw', {
+    payment_account_id: this.selectedAccount,
+    from: this.filters.start_date,
+    to: this.filters.end_date
+  });
+
+  alert('Owner draw successful: KES ' + res.data.amount);
+  this.fetchReport();
+},
+
+
     async fetchReport() {
-      const res = await axios.get('/api/ledger/profit-loss');
+      const res = await axios.get('/api/ledger/profit-loss', {
+        params: this.filters
+      });
+
       this.report = res.data;
-      this.personalAccounts = res.data.personalAccounts
+      this.accountTotal = res.data.accountTotal;
+      this.personalAccounts = res.data.personalAccounts;
     },
     async payTithe() {
       if (!this.selectedAccount) return alert('Select an account');

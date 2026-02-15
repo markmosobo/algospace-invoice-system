@@ -5,9 +5,27 @@ namespace App\Services;
 use App\Models\LedgerEntry;
 use App\Models\PersonalAccount;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LedgerService
 {
+    /* =========================
+       CASH / BANK SETTLEMENT
+    ========================= */
+    public static function settlePayment(
+        PersonalAccount $paymentAccount,
+        float $amount
+    ) {
+        $paymentAccount->refresh();
+
+        if ($paymentAccount->balance < $amount) {
+            throw new \Exception('Insufficient balance for payment');
+        }
+
+        $paymentAccount->balance -= $amount;
+        $paymentAccount->save();
+    }
+        
     // =========================
     // Sales
     // =========================
@@ -43,17 +61,22 @@ class LedgerService
     // =========================
     // Owner Draws
     // =========================
-    public static function recordOwnerDraw($paymentAccount, $amount, $description)
-    {
-        $shopCapital = PersonalAccount::where('category','shop_working_capital')->first();
+    public static function recordOwnerDraw(
+        PersonalAccount $paymentAccount,
+        float $amount,
+        string $description
+    ) {
+        $ownerDrawAccount = PersonalAccount::where('name', 'OWNER DRAW')
+            ->firstOrFail();
+
         return LedgerEntry::create([
             'entry_date' => now(),
-            'debit_account_id' => $paymentAccount->id,
-            'credit_account_id' => $shopCapital->id,
+            'debit_account_id'  => $ownerDrawAccount->id,
+            'credit_account_id' => $paymentAccount->id,
             'amount' => $amount,
             'entry_type' => 'owner_draw',
             'description' => $description,
-            'created_by' => Auth::id(),
+            'created_by' => auth()->id(),
         ]);
     }
 
@@ -102,26 +125,42 @@ class LedgerService
         ]);
     }
     
-    public static function recordTithe(PersonalAccount $paymentAccount, $from = null, $to = null, $percentage = 0.1)
-    {
-        $titheAmount = \App\Services\LedgerReportService::getTitheAmount($from, $to, $percentage);
+    public static function recordTithe(
+        PersonalAccount $paymentAccount,
+        $from = null,
+        $to = null,
+        $percentage = 0.1
+    ) {
+        $titheAmount = LedgerReportService::getTitheAmount($from, $to, $percentage);
 
         if ($titheAmount <= 0) {
-            return null; // nothing to record
+            return null;
         }
 
-        // Get the tithe ledger account
-        $titheAccount = PersonalAccount::where('name', 'TITHE ACCOUNT')->first();
-        if (!$titheAccount) {
-            throw new \Exception('Tithe account not found. Please create it first.');
-        }
+        $titheAccount = PersonalAccount::where('name', 'TITHE ACCOUNT')->firstOrFail();
 
-        // Make ledger entry
-        return self::recordExpense(
-            $titheAccount,       // debit tithe account
-            $paymentAccount,     // credit cash/bank/mpesa
+        DB::transaction(function () use (
+            $paymentAccount,
+            $titheAccount,
             $titheAmount,
-            'Tithe payment from ' . ($from ?? 'start') . ' to ' . ($to ?? now()->toDateString())
-        );
+            $from,
+            $to
+        ) {
+
+            // ✅ 1. Deduct cash/mpesa/bank
+            self::settlePayment($paymentAccount, $titheAmount);
+
+            // ✅ 2. Record ledger (truth)
+            self::recordExpense(
+                $titheAccount,
+                $paymentAccount,
+                $titheAmount,
+                'Tithe payment from ' .
+                ($from ?? 'start') .
+                ' to ' .
+                ($to ?? now()->toDateString())
+            );
+        });
     }
+
 }

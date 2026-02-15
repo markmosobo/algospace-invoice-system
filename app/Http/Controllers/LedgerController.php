@@ -11,8 +11,8 @@ class LedgerController extends Controller
 {
     public function profitLoss(Request $request)
     {
-        $from = $request->from;
-        $to   = $request->to;
+        $from = $request->start_date;;
+        $to   = $request->end_date;
 
         return response()->json(LedgerReportService::getProfitLoss($from, $to));
     }

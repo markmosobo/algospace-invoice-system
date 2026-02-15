@@ -10,6 +10,7 @@ use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\InvoicePreviewController;
 use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\ListController;
+use App\Http\Controllers\OwnerDrawController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
 use App\Http\Controllers\PersonalCategoryController;
@@ -87,5 +88,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('ledger/tithe/pay', [LedgerController::class, 'payTithe']);
     Route::get('ledger/tithe', [LedgerController::class, 'titheAmount']);
     Route::get('personal-accounts/tithe-options', [PersonalAccountController::class, 'titheOptions']);
+
+    Route::post('/ledger/owner-draw', [OwnerDrawController::class, 'store']);
 
 });

@@ -5,6 +5,8 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FarmController;
+use App\Http\Controllers\FarmVentureController;
 use App\Http\Controllers\FirstFruitsController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
@@ -57,6 +59,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('provider-services', ProviderServiceController::class);
     Route::apiResource('service-providers', ServiceProviderController::class);
     Route::apiResource('expenses', ExpenseController::class);
+
+    Route::apiResource('farms', FarmController::class);
+    Route::apiResource('farm-ventures', FarmVentureController::class);
+
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/quick-sales', [ListController::class, 'quickSales']);

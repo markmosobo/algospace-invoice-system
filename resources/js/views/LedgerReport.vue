@@ -93,6 +93,46 @@
             <!-- LEFT COLUMN -->
             <div class="col-md-6">
 
+              <!-- TITHE -->
+              <div v-if="!report.tithe_paid && report.tithe > 0"
+                  class="p-3 rounded bg-info bg-opacity-10 border mb-3">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-heart me-1"></i> Tithe Due
+                </div>
+                <div class="mb-2 text-info">
+                  KES {{ report.tithe }}
+                </div>
+
+                <select v-model="selectedAccount"
+                        class="form-select form-select-sm mb-2">
+                  <option disabled value="">Pay from account</option>
+                  <option v-for="acc in personalAccounts"
+                          :key="acc.id"
+                          :value="acc.id">
+                    {{ acc.name }} (KES {{ acc.balance }})
+                  </option>
+                </select>
+
+                <button class="btn btn-sm btn-info w-100"
+                        @click="payTithe">
+                  Pay Tithe
+                </button>
+              </div>
+              <!-- TITHE PAID -->
+              <div v-if="report.tithe_paid"
+                  class="p-3 rounded bg-info bg-opacity-10 border mb-3">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-check-circle me-1 text-success"></i> Tithe Paid
+                </div>
+
+                <div class="mb-2 text-success">
+                  KES {{ report.tithe }}
+                </div>
+
+                <div class="small text-muted">
+                  Thank you for fulfilling your tithe
+                </div>
+              </div>
 
 
               <!-- FIRST FRUITS -->
@@ -237,31 +277,7 @@
               </div>
             </div>
 
-              <!-- TITHE -->
-              <div v-if="!report.tithe_paid && report.tithe > 0"
-                  class="p-3 rounded bg-info bg-opacity-10 border mb-3">
-                <div class="fw-semibold mb-1">
-                  <i class="bi bi-heart me-1"></i> Tithe Due
-                </div>
-                <div class="mb-2 text-info">
-                  KES {{ report.tithe }}
-                </div>
 
-                <select v-model="selectedAccount"
-                        class="form-select form-select-sm mb-2">
-                  <option disabled value="">Pay from account</option>
-                  <option v-for="acc in personalAccounts"
-                          :key="acc.id"
-                          :value="acc.id">
-                    {{ acc.name }} (KES {{ acc.balance }})
-                  </option>
-                </select>
-
-                <button class="btn btn-sm btn-info w-100"
-                        @click="payTithe">
-                  Pay Tithe
-                </button>
-              </div>
               
             <!-- OWNER DRAW -->
             <div class="col-md-6"

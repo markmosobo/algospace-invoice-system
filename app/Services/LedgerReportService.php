@@ -62,6 +62,16 @@ class LedgerReportService
             ->where('balance', '>', 0)
             ->get(['id','name','balance','account_type','category']);
 
+        $loanInTotal = LedgerEntry::where('entry_type', 'loan_in')
+            ->sum('amount');
+
+        $loanOutTotal = LedgerEntry::where('entry_type', 'loan_out')
+            ->sum('amount');
+
+        $loanBalance = $loanInTotal - $loanOutTotal;
+
+            
+
         return [
             'revenue' => $revenue,
             'expenses' => $expenses,
@@ -72,6 +82,7 @@ class LedgerReportService
             'tithe_paid' => $tithePaid,
             'personalAccounts' => $accounts,
             'accountTotal' => PersonalAccount::sum('balance'),
+            'loan_balance' => $loanBalance
         ];
     }
 
@@ -135,6 +146,21 @@ class LedgerReportService
     {
         $report = self::getProfitLoss($from, $to);
         return $report['tithe'];
+    }
+
+    public static function getFirstFruitsAmount($from = null, $to = null)
+    {
+        // Calculate total profit between dates
+        $query = LedgerEntry::query()
+            ->where('entry_type', 'sale');
+
+        if ($from) $query->whereDate('entry_date', '>=', $from);
+        if ($to) $query->whereDate('entry_date', '<=', $to);
+
+        $revenue = $query->sum('amount');
+
+        // First Fruits = 10% of revenue for example
+        return $revenue * 0.1;
     }
     
 }

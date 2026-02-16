@@ -98,28 +98,33 @@ class LedgerService
         ]);
     }
 
-    public static function receiveLoan($paymentAccount, $amount, $description)
+    // Loan In
+    public static function recordLoan(PersonalAccount $account, float $amount, string $description)
     {
-        $loanPayable = PersonalAccount::where('name', 'LOAN PAYABLE')->first();
+        $loanReceivable = PersonalAccount::where('name', 'LOAN RECEIVABLE')->firstOrFail();
+
         return LedgerEntry::create([
             'entry_date' => now(),
-            'debit_account_id' => $paymentAccount->id,
-            'credit_account_id' => $loanPayable->id,
+            'debit_account_id' => $account->id,
+            'credit_account_id' => $loanReceivable->id,
             'amount' => $amount,
-            'entry_type' => 'loan',
+            'entry_type' => 'loan_in',
             'description' => $description,
             'created_by' => Auth::id(),
         ]);
     }
 
-    public static function repayLoan($fromAccount, $toLoanAccount, $amount, $description)
+    // Loan Out (repayment)
+    public static function recordLoanRepayment(PersonalAccount $account, float $amount, string $description)
     {
+        $loanPayable = PersonalAccount::where('name', 'LOAN PAYABLE')->firstOrFail();
+
         return LedgerEntry::create([
             'entry_date' => now(),
-            'debit_account_id' => $toLoanAccount->id,
-            'credit_account_id' => $fromAccount->id,
+            'debit_account_id' => $loanPayable->id,
+            'credit_account_id' => $account->id,
             'amount' => $amount,
-            'entry_type' => 'loan_repayment',
+            'entry_type' => 'loan_out',
             'description' => $description,
             'created_by' => Auth::id(),
         ]);
@@ -162,5 +167,80 @@ class LedgerService
             );
         });
     }
+
+        /* =========================
+       FIRST FRUITS
+    ========================= */
+public static function recordFirstFruits(
+    PersonalAccount $paymentAccount,
+    float $amount,               // <-- use the amount passed
+    string $description = 'First Fruits'
+) {
+    if ($amount <= 0) return null;
+
+    $firstFruitsAccount = PersonalAccount::where('name', 'FIRST FRUITS ACCOUNT')->firstOrFail();
+
+    DB::transaction(function () use ($paymentAccount, $firstFruitsAccount, $amount, $description) {
+        // Deduct from payment account
+        self::settlePayment($paymentAccount, $amount);
+
+        // Record ledger entry
+        self::recordExpense(
+            $firstFruitsAccount,
+            $paymentAccount,
+            $amount,
+            $description,
+            'first_fruits'
+        );
+    });
+}
+
+
+    /* =========================
+       CAPITAL INJECTION
+    ========================= */
+    public static function recordCapitalInjection(PersonalAccount $account, float $amount, string $description = 'Capital injection')
+    {
+        $capitalAccount = PersonalAccount::where('name', 'CAPITAL ACCOUNT')->firstOrFail();
+
+        DB::transaction(function () use ($account, $capitalAccount, $amount, $description) {
+
+            LedgerEntry::create([
+                'entry_date' => now(),
+                'debit_account_id' => $account->id,
+                'credit_account_id' => $capitalAccount->id,
+                'amount' => $amount,
+                'entry_type' => 'capital_injection',
+                'description' => $description,
+                'created_by' => Auth::id(),
+            ]);
+        });
+    }
+
+    /* =========================
+       INTER-ACCOUNT TRANSFER
+    ========================= */
+    public static function transferFunds(PersonalAccount $from, PersonalAccount $to, float $amount, string $description = 'Inter-account transfer')
+    {
+        if ($from->id === $to->id) {
+            throw new \Exception('Cannot transfer to the same account');
+        }
+
+        DB::transaction(function () use ($from, $to, $amount, $description) {
+            self::settlePayment($from, $amount); // only deduct from 'from' account
+            $to->increment('balance', $amount);  // only add to 'to' account
+
+            LedgerEntry::create([
+                'entry_date' => now(),
+                'debit_account_id' => $to->id,
+                'credit_account_id' => $from->id,
+                'amount' => $amount,
+                'entry_type' => 'transfer',
+                'description' => $description,
+                'created_by' => Auth::id(),
+            ]);
+        });
+    }
+
 
 }

@@ -5,11 +5,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FirstFruitsController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\InvoicePreviewController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\LedgerReportController;
 use App\Http\Controllers\ListController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\OwnerDrawController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
@@ -23,7 +26,9 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SystemLogController;
+use App\Http\Controllers\TransferController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CapitalInjectionController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -91,4 +96,13 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/ledger/owner-draw', [OwnerDrawController::class, 'store']);
 
+    Route::post('/ledger/loan/in', [LoanController::class, 'loanIn']);
+    Route::post('/ledger/loan/out', [LoanController::class, 'repay']);
+
+    Route::post('/ledger/transfer', [TransferController::class, 'transfer']);
+
+    Route::get('/ledger/report', [LedgerReportController::class, 'report']);
+    Route::post('/ledger/first-fruits', [FirstFruitsController::class, 'pay']);
+
+    Route::post('/ledger/capital-injection', [CapitalInjectionController::class, 'store']);   
 });

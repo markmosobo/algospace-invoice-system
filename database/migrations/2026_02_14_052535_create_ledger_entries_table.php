@@ -31,11 +31,12 @@ return new class extends Migration
             $table->enum('entry_type', [
                 'sale',
                 'expense',
+                'first_fruits',
                 'transfer',
                 'owner_draw',
                 'capital_injection',
-                'loan',
-                'loan_repayment'
+                'loan_in',
+                'loan_out'
             ]);
 
             $table->string('reference')->nullable();

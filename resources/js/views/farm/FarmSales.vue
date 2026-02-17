@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Farm Sales <span>| Transactions that have generated revenue from the farm</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addSale()"
                                 >
-                                  Add Customer
+                                  Add Farm Sale
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,15 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="FarmSalesTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Venture Name</th>
+                            <th scope="col">Product Name</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Buyer</th>
+                            <th scope="col">Sale Date</th>
+                            <th scope="col">Total Amount</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,11 +76,13 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
-
+                          <tr v-for="item in farmsales" :key="item.id">
+                            <td>{{item.venture.venture_name}}</td>
+                            <td>{{item.product_name ?? "N/A"}}</td>
+                            <td>{{item.quantity ?? "N/A"}} {{item.unit ?? "N/A"}}</td>
+                            <td>{{item.buyer ?? "N/A"}}</td>
+                            <td>{{item.sale_date ?? "N/A"}}</td>
+                            <td>{{item.total_amount ?? "N/A"}}</td>
                            
                             <td>
                               <div class="btn-group" role="group">
@@ -85,9 +90,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewSale(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editSale(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteSale(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,36 +105,52 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+              <!-- View Sale Modal -->
+              <div class="modal fade" id="viewSaleModal" tabindex="-1" aria-labelledby="viewSaleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
+                      <h5 class="modal-title">View Farm Sale</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedSale">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
+                        <div class="col-md-6" v-if="selectedSale.venture_id">
+                          <strong>Venture Name:</strong> <br> {{ selectedSale.venture.venture_name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
+                        <div class="col-md-6" v-if="selectedSale.product_name">
+                          <strong>Product Name:</strong> <br> {{ selectedSale.product_name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
+                        <div class="col-md-6" v-if="selectedSale.quantity">
+                          <strong>Quantity:</strong> <br> {{ selectedSale.quantity }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
+                        <div class="col-md-6" v-if="selectedSale.unit">
+                          <strong>Unit:</strong> <br> {{ selectedSale.unit }}
                         </div>
+
+                        <div class="col-md-6" v-if="selectedSale.price_per_unit">
+                          <strong>Price per Unit:</strong> <br> {{ selectedSale.price_per_unit }}
+                        </div> 
+                        
+                        <div class="col-md-6" v-if="selectedSale.buyer">
+                          <strong>Buyer:</strong> <br> {{ selectedSale.buyer }}
+                        </div> 
+                        
+                        <div class="col-md-6" v-if="selectedSale.sale_date">
+                          <strong>Sale Date:</strong> <br> {{ selectedSale.sale_date }}
+                        </div>
+                        
+                        <div class="col-md-6" v-if="selectedSale.total_amount">
+                          <strong>Total Amount:</strong> <br> {{ selectedSale.total_amount }}
+                        </div>                        
 
                       </div>
                     </div>
@@ -143,13 +164,13 @@
               </div>
 
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- Add Sale Modal -->
+                <div class="modal fade" id="AddSaleModal" tabindex="-1" aria-labelledby="AddSaleModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title" id="AddSaleModalLabel">Add Farm sale</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
@@ -159,34 +180,58 @@
                           <!-- Hidden ID -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- First & Last Name -->
+                          <!-- Farm Venture -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture" v-model="data.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Product Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" id="product_name" class="form-control" v-model="data.product_name" required>
+                          </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity" class="form-control" v-model="data.quantity">
+                          </div>
+
+                          <!-- Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Unit</label>
+                            <input type="text" id="unit" placeholder="e.g bag, kgs" class="form-control" v-model="data.unit">
+                          </div>
+
+                          <!-- Price per unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Price per Unit</label>
+                            <input type="number" id="price_per_unit" class="form-control" v-model="data.price_per_unit">
+                          </div>
+
+                          <!-- Buyer -->
+                          <div class="col-md-6">
+                            <label class="form-label">Buyer</label>
+                            <input type="text" id="buyer" class="form-control" v-model="data.buyer">
+                          </div>   
+                          
+                          <!-- Sale Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Sale Date</label>
+                            <input type="date" id="sale_date" class="form-control" v-model="data.sale_date">
+                          </div>
+
+                          <!-- Total amount -->
+                          <div class="col-md-6">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" id="total_amount" class="form-control" v-model="data.total_amount" readonly>
+                          </div>                          
 
                         </form>
                       </div>
@@ -204,47 +249,74 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT Sale MODAL -->
+                <div class="modal fade" id="EditSaleModal" tabindex="-1" aria-labelledby="EditSaleModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Farm Sale</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
-                        <form class="row g-3">
+                        <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
+                          <!-- Hidden ID -->
+                          <input type="hidden" v-model="form.id" />
 
-                          <!-- Email -->
+                          <!-- Farm Venture -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture_edit" v-model="form.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Product Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" id="product_name" class="form-control" v-model="form.product_name" required>
+                          </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity" class="form-control" v-model="form.quantity">
+                          </div>
+
+                          <!-- Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Unit</label>
+                            <input type="text" id="unit" placeholder="e.g bag, kgs" class="form-control" v-model="form.unit">
+                          </div>
+
+                          <!-- Price per unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Price per Unit</label>
+                            <input type="number" id="price_per_unit" class="form-control" v-model="form.price_per_unit">
+                          </div>
+
+                          <!-- Buyer -->
+                          <div class="col-md-6">
+                            <label class="form-label">Buyer</label>
+                            <input type="text" id="buyer" class="form-control" v-model="form.buyer">
+                          </div>   
+                          
+                          <!-- Sale Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Sale Date</label>
+                            <input type="date" id="sale_date" class="form-control" v-model="form.sale_date">
+                          </div>
+
+                          <!-- Total amount -->
+                          <div class="col-md-6">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" id="total_amount" class="form-control" v-model="form.total_amount" readonly>
+                          </div>                          
 
                         </form>
                       </div>
@@ -274,7 +346,6 @@
     import "jquery/dist/jquery.min.js";
     import "datatables.net-dt/js/dataTables.dataTables";
     import "datatables.net-dt/css/jquery.dataTables.min.css";
-    import DefaultProfile from '@/assets/img/default-profile.png'
     import $ from "jquery";
     
     const toast = Swal.mixin({
@@ -289,49 +360,63 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            farmsales: [],
+            farmventures: [],
+            selectedSale: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
+            data: {        // ADD sale
             id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            venture_id: "",
+            product_name: "",
+            quantity: "",
+            unit: "",
+            price_per_unit: "",
+            buyer: "",
+            sale_date: "",
+            total_amount: ""
             },
 
-            form: {        // EDIT customer
+            form: {        // EDIT sale
             id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            venture_id: "",
+            product_name: "",
+            quantity: "",
+            unit: "",
+            price_per_unit: "",
+            buyer: "",
+            sale_date: "",
+            total_amount: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewSale(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedSale)
+          this.selectedSale = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewSaleModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editSale(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            venture_id: item.venture_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit: item.unit,
+            price_per_unit: item.price_per_unit,
+            buyer: item.buyer,
+            sale_date: item.sale_date,
+            total_amount: item.total_amount,
+
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditSaleModal')
         );
         modal.show();
         },
@@ -339,11 +424,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.venture_id) {
+            document.getElementById('venture_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('venture_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +439,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/farm-sales/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Farm sale updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditSaleModal')
             );
             modal.hide();
 
@@ -369,7 +454,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update sale',
             'error'
             );
         } finally {
@@ -377,10 +462,10 @@
         }
         },
 
-        addCustomer()
+        addSale()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddSaleModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +492,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.venture_id) {
+            document.getElementById('venture').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('venture').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +507,26 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/farm-sales', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Farm sale added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddSaleModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              venture_id: "",
+              product_name: "",
+              quantity: "",
+              unit: "",
+              price_per_unit: "",
+              buyer: "",
+              sale_date: "",
+              total_amount: ""
             };
 
             this.loadLists();
@@ -456,7 +545,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteSale(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +557,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/farm-sales/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Farm sale has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +579,18 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/farm-sales')
             .then((response) => {
-              this.customers = response.data;
+              this.farmsales = response.data.farmsales;
+              this.farmventures = response.data.farmventures;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#FarmSalesTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching sales list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

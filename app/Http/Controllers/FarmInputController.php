@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FarmExpense;
+use App\Models\FarmInput;
 use App\Models\FarmVenture;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
-class FarmExpenseController extends Controller
+class FarmInputController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -15,18 +15,18 @@ class FarmExpenseController extends Controller
     public function index()
     {
         $farmventures = FarmVenture::with('farm')->get();
-        $farmexpenses = FarmExpense::with('venture')->get();
+        $farminputs = FarmInput::with('venture')->get();
 
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved farm expenses'
+            'description' => auth('api')->user()->name.' retrieved farm inputs'
         ]); 
 
         return response()->json([
             'farmventures' => $farmventures,
-            'farmexpenses' => $farmexpenses
-        ]);         
+            'farminputs' => $farminputs
+        ]);        
     }
 
     /**
@@ -35,23 +35,23 @@ class FarmExpenseController extends Controller
     public function store(Request $request)
     {
         // Create expense using mass assignment
-        $farmexpense = FarmExpense::create($request->only([
+        $farminput = FarmInput::create($request->only([
             'venture_id',
-            'expense_category',
-            'description',
-            'amount',
+            'input_name',
+            'input_type',
+            'quantity',
             'expense_date',
-            'paid_by',
-            'receipt_no'
+            'unit',
+            'date_applied'
         ]));
 
         // Record system log
         SystemLog::create([
             'user_id'     => auth('api')->user()->id,
-            'description' => auth('api')->user()->name . ' created farm expense #' . $farmexpense->id,
+            'description' => auth('api')->user()->name . ' created farm input #' . $farminput->id,
         ]);
 
-        return response()->json($farmexpense, 201); // return 201 Created        
+        return response()->json($farminput, 201); // return 201 Created         
     }
 
     /**
@@ -59,24 +59,24 @@ class FarmExpenseController extends Controller
      */
     public function show(string $id)
     {
-        $farmexpense = FarmExpense::find($id);
-        return response()->json($farmexpense);         
+        $farminput = FarmInput::find($id);
+        return response()->json($farminput);        
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, FarmExpense $farmexpense)
+    public function update(Request $request, FarmInput $farminput)
     {
-        $farmexpense->update($request->only([
-            'venture_id','expense_category','description','amount','expense_date',
-            'receipt_no','paid_by'
+        $farminput->update($request->only([
+            'venture_id','input_name','input_type','quantity','unit',
+            'date_applied'
         ]));
 
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for farm expense #'.$farmexpense->id
+            'description' => auth('api')->user()->name.' updated details for farm input #'.$farminput->id
         ]);         
 
         return response()->json(['message' => 'Updated']);        
@@ -87,13 +87,13 @@ class FarmExpenseController extends Controller
      */
     public function destroy(string $id)
     {
-        FarmExpense::destroy($id);
+        FarmInput::destroy($id);
 
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted farm expense #'.$id
+            'description' => auth('api')->user()->name.' deleted farm input #'.$id
         ]);         
-        return response()->json(['message' => 'Deleted']);         
+        return response()->json(['message' => 'Deleted']);        
     }
 }

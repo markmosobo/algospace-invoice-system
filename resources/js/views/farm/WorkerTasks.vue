@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Farm Worker Tasks <span>| Farm activities assigned </span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addWorkerTask()"
                                 >
-                                  Add Customer
+                                  Add Farm Work Task
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,14 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="WorkerTasksTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Worker Name</th>
+                            <th scope="col">Venture Name</th>
+                            <th scope="col">Task</th>
+                            <th scope="col">Work Date</th>
+                            <th scope="col">Amount Paid</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,10 +75,12 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
+                          <tr v-for="workertask in workertasks" :key="workertask.id">
+                            <td>{{workertask.worker.name}}</td>
+                            <td>{{workertask.venture.name ?? "N/A"}}</td>
+                            <td>{{workertask.task ?? "N/A"}}</td>
+                            <td>{{workertask.work_date ?? "N/A"}}</td>
+                            <td>{{workertask.amount_paid ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +89,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewWorkerTask(workertask)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editWorkerTask(workertask)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteWorkerTask(workertask.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,36 +104,40 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+              <!-- View workertask Modal -->
+              <div class="modal fade" id="viewworkertaskModal" tabindex="-1" aria-labelledby="viewworkertaskModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
+                      <h5 class="modal-title">View workertask Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedWorkerTask">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
+                        <div class="col-md-6" v-if="selectedWorkerTask.worker_id">
+                          <strong>Worker Name:</strong> <br> {{ selectedWorkerTask.worker.name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
+                        <div class="col-md-6" v-if="selectedWorkerTask.venture_id">
+                          <strong>Venture Name:</strong> <br> {{ selectedWorkerTask.venture.venture_name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
+                        <div class="col-md-6" v-if="selectedWorkerTask.task">
+                          <strong>Task:</strong> <br> {{ selectedWorkerTask.task }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
+                        <div class="col-md-6" v-if="selectedWorkerTask.work_date">
+                          <strong>Work Date:</strong> <br> {{ selectedWorkerTask.work_date }}
                         </div>
+
+                        <div class="col-md-6" v-if="selectedWorkerTask.amount_paid">
+                          <strong>Amount Paid:</strong> <br> {{ selectedWorkerTask.amount_paid }}
+                        </div>                        
 
                       </div>
                     </div>
@@ -143,49 +151,59 @@
               </div>
 
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- Add workertask Modal -->
+                <div class="modal fade" id="AddWorkerTaskModal" tabindex="-1" aria-labelledby="AddWorkerTaskModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title" id="AddWorkerTaskModalLabel">Add Farm Worker Task</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
-                        <form class="row g-3 needs-validation" novalidate>
-
-                          <!-- Hidden ID -->
-                          <input type="hidden" v-model="data.id" />
+                        <form class="row g-3">
 
                           <!-- First & Last Name -->
-                          <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
+                          <div class="col-md-12">
+                            <label class="form-label">Farm Worker*</label>
+                            <select class="form-select" id="venture" v-model="data.worker" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="worker in farmworkers" :key="worker.id" :value="worker.id">
+                                {{ worker.name }} 
+                              </option>
+                            </select>
                           </div>
 
                           <!-- Email -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture" v-model="data.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
                             </select>
                           </div>
+
+                          <!-- Task -->
+                          <div class="col-md-6">
+                            <label class="form-label">Task</label>
+                            <input type="text" class="form-control" v-model="data.task">
+                          </div>
+
+                          <!-- Work Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Work Date</label>
+                            <input type="text" class="form-control" v-model="data.work_date">
+                          </div>
+                          
+                          <!-- Task -->
+                          <div class="col-md-6">
+                            <label class="form-label">Amount Paid</label>
+                            <input type="number" class="form-control" v-model="data.amount_paid">
+                          </div>                          
+
 
 
                         </form>
@@ -204,13 +222,13 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT WorkerTask MODAL -->
+                <div class="modal fade" id="editWorkerTaskModal" tabindex="-1" aria-labelledby="editWorkerTaskModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Farm Worker Task</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
@@ -219,31 +237,44 @@
 
                           <!-- First & Last Name -->
                           <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
+                            <label class="form-label">Farm Worker*</label>
+                            <select class="form-select" id="venture" v-model="form.worker" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="worker in farmworkers" :key="worker.id" :value="worker.id">
+                                {{ worker.name }} 
+                              </option>
+                            </select>
                           </div>
 
                           <!-- Email -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture" v-model="form.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
                             </select>
                           </div>
+
+                          <!-- Task -->
+                          <div class="col-md-6">
+                            <label class="form-label">Task</label>
+                            <input type="text" class="form-control" v-model="form.task">
+                          </div>
+
+                          <!-- Work Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Work Date</label>
+                            <input type="text" class="form-control" v-model="form.work_date">
+                          </div>
+                          
+                          <!-- Task -->
+                          <div class="col-md-6">
+                            <label class="form-label">Amount Paid</label>
+                            <input type="number" class="form-control" v-model="form.amount_paid">
+                          </div>                          
+
 
 
                         </form>
@@ -289,49 +320,51 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            workertasks: [],
+            selectedWorkerTask: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
+            data: {        // ADD workertask
             id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            worker_id: "",
+            venture_id: "",
+            task: "",
+            work_date: "",
+            amount_paid: ""
             },
 
-            form: {        // EDIT customer
+            form: {        // EDIT workertask
             id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            worker_id: "",
+            venture_id: "",
+            task: "",
+            work_date: "",
+            amount_paid: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewWorkerTask(workertask)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedWorkerTask)
+          this.selectedWorkerTask = workertask;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewWorkerTaskModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editWorkerTask(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: workertask.id,
+            worker_id: workertask.worker_id,
+            email: workertask.email,
+            phone: workertask.phone,
+            gender: workertask.gender
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editWorkerTaskModal')
         );
         modal.show();
         },
@@ -354,12 +387,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/workertasks/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'workertask updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('editWorkerTaskModal')
             );
             modal.hide();
 
@@ -369,7 +402,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update farm worker task',
             'error'
             );
         } finally {
@@ -377,10 +410,10 @@
         }
         },
 
-        addCustomer()
+        addWorkerTask()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddWorkerTaskModal'));
           modal.show();
         },
         async submit() {
@@ -422,22 +455,23 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/worker-tasks', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Farm worker task added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddWorkerTaskModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              worker_id: "",
+              venture_id: "",
+              task: "",
+              work_date: "",
+              amount_paid: ""
             };
 
             this.loadLists();
@@ -456,7 +490,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteWorkerTask(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +502,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/worker-tasks/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Farm worker task has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +524,18 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/worker-tasks')
             .then((response) => {
-              this.customers = response.data;
+              this.workertasks = response.data.farmworkertasks;
+              this.farmventures = response.data.farmventures;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#WorkerTasksTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching worker tasks list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

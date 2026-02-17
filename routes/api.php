@@ -8,7 +8,11 @@ use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\FarmExpenseController;
+use App\Http\Controllers\FarmInputController;
+use App\Http\Controllers\FarmSaleController;
 use App\Http\Controllers\FarmVentureController;
+use App\Http\Controllers\FarmWorkerController;
+use App\Http\Controllers\FarmWorkerTaskController;
 use App\Http\Controllers\FirstFruitsController;
 use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\InvoiceController;
@@ -72,6 +76,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('seedlings', SeedlingController::class);
     Route::apiResource('seedling-sales', SeedlingSaleController::class);
     Route::apiResource('farm-expenses', FarmExpenseController::class);
+    Route::apiResource('farm-inputs', FarmInputController::class);
+    Route::apiResource('farm-sales', FarmSaleController::class);
+    Route::apiResource('farm-workers', FarmWorkerController::class);
+    Route::apiResource('worker-tasks', FarmWorkerTaskController::class);
 
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);

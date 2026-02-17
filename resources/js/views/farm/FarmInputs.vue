@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Farm Inputs <span>| Inputs bought for farm operations</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addFarmInput()"
                                 >
-                                  Add Customer
+                                  Add Farm Input
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,12 +53,14 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="FarmInputsTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Venture Name</th>
+                            <th scope="col">Input Name</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Date Applied</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -73,10 +75,12 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
+                          <tr v-for="item in farminputs" :key="item.id">
+                            <td>{{item.venture.venture_name}}</td>
+                            <td>{{item.input_name ?? "N/A"}}</td>
+                            <td>{{item.input_type ?? "N/A"}}</td>
+                            <td>{{item.quantity ?? "N/A"}} {{ item.unit }}</td>
+                            <td>{{item.date_applied ?? "N/A"}}</td>
 
                            
                             <td>
@@ -85,9 +89,9 @@
                                   Action
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
+                                  <a @click="viewCustomer(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a @click="editFarmInput(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="deleteFarmInput(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
                             </td>
@@ -100,36 +104,44 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+              <!-- View Farm Input Modal -->
+              <div class="modal fade" id="viewFarmInputModal" tabindex="-1" aria-labelledby="viewFarmInputModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
+                      <h5 class="modal-title">View Farm Input Details</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedFarmInput">
 
                       <div class="row g-3">
 
                         <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
+                        <div class="col-md-6" v-if="selectedFarmInput.venture_id">
+                          <strong>Venture Name:</strong> <br> {{ selectedFarmInput.venture.venture_name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
+                        <div class="col-md-6" v-if="selectedFarmInput.input_name">
+                          <strong>Input Name:</strong> <br> {{ selectedFarmInput.input_name }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
+                        <div class="col-md-6" v-if="selectedFarmInput.input_type">
+                          <strong>Input Type:</strong> <br> {{ selectedFarmInput.input_type }}
                         </div>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
+                        <div class="col-md-6" v-if="selectedFarmInput.quantity">
+                          <strong>Quantity:</strong> <br> {{ selectedFarmInput.quantity }}
                         </div>
+
+                        <div class="col-md-6" v-if="selectedFarmInput.unit">
+                          <strong>Unit:</strong> <br> {{ selectedFarmInput.unit }}
+                        </div>
+
+                        <div class="col-md-6" v-if="selectedFarmInput.date_applied">
+                          <strong>Date Applied:</strong> <br> {{ selectedFarmInput.date_applied }}
+                        </div>                        
 
                       </div>
                     </div>
@@ -143,13 +155,13 @@
               </div>
 
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- Add Farm Input Modal -->
+                <div class="modal fade" id="AddFarmInputModal" tabindex="-1" aria-labelledby="AddFarmInputModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title" id="AddFarmInputModalLabel">Add Farm Input</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
@@ -159,32 +171,50 @@
                           <!-- Hidden ID -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- First & Last Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture" v-model="data.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
+                            </select>
                           </div>
 
-                          <!-- Email -->
+                          <!-- Name -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
+                            <label class="form-label">Input Name</label>
+                            <input type="text" id="input_name" class="form-control" v-model="data.input_name" required>
                           </div>
 
                           <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
+                            <label class="form-label">Input Type</label>
+                            <select class="form-select" v-model="data.input_type">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
+                              <option value="fertilizer">Fertilizer</option>
+                              <option value="seed">Seed</option>
+                              <option value="chemical">Chemical</option>
+                              <option value="feed">Feed</option>
                               <option value="other">Other</option>
                             </select>
+                          </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity" class="form-control" v-model="data.quantity">
+                          </div>
+
+                          <!-- Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Unit</label>
+                            <input type="text" id="unit" placeholder="e.g bag, kgs" class="form-control" v-model="data.unit">
+                          </div>                          
+
+                          <!-- Date applied -->
+                          <div class="col-md-6">
+                            <label class="form-label">Date applied</label>
+                            <input type="date" id="date_applied" class="form-control" v-model="data.date_applied">
                           </div>
 
 
@@ -204,45 +234,66 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- Edit Farm Input Modal -->
+                <div class="modal fade" id="EditFarmInputModal" tabindex="-1" aria-labelledby="EditFarmInputModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Farm Input</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
-                        <form class="row g-3">
+                        <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
+                          <!-- Hidden ID -->
+                          <input type="hidden" v-model="form.id" />
 
                           <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture_edit" v-model="form.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
+                            </select>
+                          </div>
+
+                          <!-- Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Input Name</label>
+                            <input type="text" id="input_name_edit" class="form-control" v-model="form.input_name" required>
+                          </div>
+
+                          <div class="col-md-6">
+                            <label class="form-label">Input Type</label>
+                            <select class="form-select" v-model="form.input_type">
                               <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
+                              <option value="fertilizer">Fertilizer</option>
+                              <option value="seed">Seed</option>
+                              <option value="chemical">Chemical</option>
+                              <option value="feed">Feed</option>
                               <option value="other">Other</option>
                             </select>
+                          </div>
+
+                          <!-- Quantity -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" id="quantity" class="form-control" v-model="form.quantity">
+                          </div>
+
+                          <!-- Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Unit</label>
+                            <input type="text" id="unit" placeholder="e.g bag, kgs" class="form-control" v-model="form.unit">
+                          </div>                          
+
+                          <!-- Date applied -->
+                          <div class="col-md-6">
+                            <label class="form-label">Date applied</label>
+                            <input type="date" id="date_applied" class="form-control" v-model="form.date_applied">
                           </div>
 
 
@@ -289,49 +340,57 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            farminputs: [],
+            farmventures: [],
+            selectedFarmInput: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {        // ADD farm input
+              id: "",
+              venture_id: "",
+              input_name: "",
+              input_type: "",
+              quantity: "",
+              unit: "",
+              date_applied: ""
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {        // EDIT farm input
+              id: "",
+              venture_id: "",
+              input_name: "",
+              input_type: "",
+              quantity: "",
+              unit: "",
+              date_applied: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewCustomer(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedFarmInput)
+          this.selectedFarmInput = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewFarmInputModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editFarmInput(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            venture_id: item.venture_id,
+            input_name: item.input_name,
+            input_type: item.input_type,
+            quantity: item.quantity,
+            unit: item.unit,
+            date_applied: item.date_applied,
+
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditFarmInputModal')
         );
         modal.show();
         },
@@ -339,11 +398,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.venture_id) {
+            document.getElementById('venture_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('venture_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +413,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/farm-inputs/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Farm input updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditFarmInputModal')
             );
             modal.hide();
 
@@ -369,7 +428,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update farm input',
             'error'
             );
         } finally {
@@ -377,10 +436,10 @@
         }
         },
 
-        addCustomer()
+        addFarmInput()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddFarmInputModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +466,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.venture_id) {
+            document.getElementById('venture').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('venture').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +481,24 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/farm-inputs', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Farm input added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddFarmInputModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              venture_id: "",
+              input_name: "",
+              input_type: "",
+              quantity: "",
+              unit: "",
+              date_applied: ""
             };
 
             this.loadLists();
@@ -456,7 +517,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteFarmInput(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +529,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/farm-inputs/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Farm input has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,13 +551,14 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/farm-inputs')
             .then((response) => {
-              this.customers = response.data;
+              this.farminputs = response.data.farminputs;
+              this.farmventures = response.data.farmventures;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#FarmInputsTable").DataTable();
               }, 10);
             })
             .catch((error) => {

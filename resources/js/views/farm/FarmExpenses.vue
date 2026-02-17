@@ -208,6 +208,7 @@
                               <option value="fertilizer">Fertilizer</option>
                               <option value="labor">Labor</option>
                               <option value="transport">Transport</option>
+                              <option value="pesticide">Pesticide</option>
                               <option value="equipment">Equipment</option>
                               <option value="utilities">Utilities</option>
                               <option value="other">Other</option>
@@ -281,47 +282,93 @@
 
 
 
-                <!-- EDIT Customer MODAL -->
+                <!-- EDIT Expense MODAL -->
                 <div class="modal fade" id="EditExpenseModal" tabindex="-1" aria-labelledby="EditExpenseModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Farm Expense</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
                       <div class="modal-body">
-                        <form class="row g-3">
+                        <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
+                          <!-- Hidden ID (for edit) -->
+                          <input type="hidden" v-model="form.id" />
 
                           <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
+                            <label class="form-label">Farm Venture*</label>
+                            <select class="form-select" id="venture_edit" v-model="form.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }} 
+                              </option>
+                            </select>
+                          </div>
+
+                          <!-- Expense Category -->
+                          <div class="col-md-6">
+                            <label class="form-label">Expense Category *</label>
+                            <select class="form-select" v-model="form.expense_category" required>
+                              <option value="">Select category</option>
+                              <option value="seeds">Seeds</option>
+                              <option value="fertilizer">Fertilizer</option>
+                              <option value="labor">Labor</option>
+                              <option value="transport">Transport</option>
+                              <option value="pesticide">Pesticide</option>
+                              <option value="equipment">Equipment</option>
+                              <option value="utilities">Utilities</option>
                               <option value="other">Other</option>
                             </select>
                           </div>
 
+                          <!-- Amount -->
+                          <div class="col-md-6">
+                            <label class="form-label">Amount (KES) *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              class="form-control"
+                              v-model="form.amount"
+                              required
+                            >
+                          </div>
+
+                          <!-- Expense Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Expense Date *</label>
+                            <input
+                              type="date"
+                              class="form-control"
+                              v-model="form.expense_date"
+                              required
+                            >
+                          </div>
+
+                          <!-- Paid By -->
+                          <div class="col-md-6">
+                            <label class="form-label">Paid By</label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              v-model="form.paid_by"
+                              placeholder="e.g. Cash, M-Pesa, Bank"
+                            >
+                          </div>
+
+                          <!-- Description -->
+                          <div class="col-md-12">
+                            <label class="form-label">Description</label>
+                            <textarea
+                              class="form-control"
+                              rows="3"
+                              v-model="form.description"
+                              placeholder="Optional notes about this expense"
+                            ></textarea>
+                          </div>
 
                         </form>
                       </div>

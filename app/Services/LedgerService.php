@@ -242,5 +242,31 @@ public static function recordFirstFruits(
         });
     }
 
+    public static function recordOwnerRedeposit(
+        PersonalAccount $account,
+        float $amount,
+        string $note = 'Owner funds redeposited'
+    ) {
+        $equityAccount = PersonalAccount::where('name', 'OWNER EQUITY')->firstOrFail();
+
+        DB::transaction(function () use ($account, $equityAccount, $amount, $note) {
+
+            // ✅ Increase the asset (savings / bank / cash)
+            $account->increment('balance', $amount);
+
+            // ✅ Record ledger entry
+            LedgerEntry::create([
+                'entry_date'        => now(),
+                'debit_account_id'  => $account->id,        // Asset ↑
+                'credit_account_id' => $equityAccount->id,  // Equity ↑
+                'amount'            => $amount,
+                'entry_type'        => 'owner_redeposit',
+                'description'       => $note,
+                'created_by'        => auth()->id(),
+            ]);
+        });
+    }
+
+
 
 }

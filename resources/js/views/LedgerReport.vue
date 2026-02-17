@@ -136,7 +136,7 @@
 
 
               <!-- FIRST FRUITS -->
-              <div class="p-3 rounded bg-secondary bg-opacity-10 border">
+              <div class="p-3 rounded bg-secondary bg-opacity-10 border mb-3">
                 <div class="fw-semibold mb-1">
                   <i class="bi bi-gift me-1"></i> First Fruits
                 </div>
@@ -164,6 +164,53 @@
                 </button>
               </div>
 
+              <!-- FUNDS IN -->
+              <div class="p-3 rounded bg-success bg-opacity-10 border">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-box-arrow-in-down me-1"></i> Funds In
+                </div>
+
+                <!-- Amount -->
+                <input type="number"
+                      v-model.number="fundsIn.amount"
+                      class="form-control form-control-sm mb-2"
+                      placeholder="Amount">
+
+                <!-- Destination Account -->
+                <select v-model="fundsIn.account_id"
+                        class="form-select form-select-sm mb-2">
+                  <option disabled value="">Deposit to account</option>
+                  <option v-for="acc in personalAccounts"
+                          :key="acc.id"
+                          :value="acc.id">
+                    {{ acc.name }} (KES {{ acc.balance }})
+                  </option>
+                </select>
+
+                <!-- Source Type -->
+                <select v-model="fundsIn.source"
+                        class="form-select form-select-sm mb-3">
+                  <option disabled value="">Source of funds</option>
+                  <option value="capital">New Capital</option>
+                  <option value="owner_return">Owner Funds Returned</option>
+                </select>
+
+                <!-- Helper text -->
+                <div class="small text-muted mb-2">
+                  <span v-if="fundsIn.source === 'capital'">
+                    Adds new capital into the business.
+                  </span>
+                  <span v-else-if="fundsIn.source === 'owner_return'">
+                    Money previously withdrawn and now saved back.
+                  </span>
+                </div>
+
+                <button class="btn btn-sm btn-success w-100"
+                        :disabled="!fundsIn.amount || !fundsIn.account_id || !fundsIn.source"
+                        @click="submitFundsIn">
+                  Deposit Funds
+                </button>
+              </div>
 
             </div>
 
@@ -332,7 +379,8 @@ const toast = Swal.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  timer: 3000
+  timer: 3000,
+  timerProgressBar: true
 });
 
 export default {
@@ -376,7 +424,12 @@ export default {
         from: null,
         to: null,
         amount: null
-      },         
+      },   
+      fundsIn: {
+        amount: null,
+        account_id: null,
+        source: null, // capital | owner_return
+      },      
       user: {},
       currentUser: {},
       userRole: null,
@@ -398,24 +451,54 @@ export default {
 
   methods: {
     async payOwnerDraw() {
-      if (!this.selectedAccount) return alert('Select account');
+      // Validate account selection
+      if (!this.selectedAccount) {
+        toast.fire({
+          icon: 'warning',
+          title: 'Please select a payment account'
+        });
+        return;
+      }
 
-      const res = await axios.post('/api/ledger/owner-draw', {
-        payment_account_id: this.selectedAccount,
-        from: this.filters.start_date,
-        to: this.filters.end_date
-      });
+      try {
+        const res = await axios.post('/api/ledger/owner-draw', {
+          payment_account_id: this.selectedAccount,
+          from: this.filters.start_date,
+          to: this.filters.end_date
+        });
 
-      alert('Owner draw successful: KES ' + res.data.amount);
-      this.fetchReport();
+        toast.fire({
+          icon: 'success',
+          title: `Owner draw successful: KES ${res.data.amount}`
+        });
+
+        this.fetchReport();
+
+      } catch (error) {
+        toast.fire({
+          icon: 'error',
+          title: error.response?.data?.message || 'Owner draw failed'
+        });
+      }
     },
     // =========================
     // First Fruits
     // =========================
     async payFirstFruits() {
-      if (!this.selectedAccount) return alert('Select account');
+      if (!this.selectedAccount) {
+        toast.fire({
+          icon: 'warning',
+          title: 'Please select a payment account'
+        });
+        return;
+      }
+
       if (!this.firstFruitsAmount || this.firstFruitsAmount <= 0) {
-        return alert('Enter a valid amount');
+        toast.fire({
+          icon: 'warning',
+          title: 'Enter a valid amount'
+        });
+        return;
       }
 
       try {
@@ -424,21 +507,34 @@ export default {
           amount: this.firstFruitsAmount
         });
 
-        alert('First Fruits paid: KES ' + this.firstFruitsAmount);
+        toast.fire({
+          icon: 'success',
+          title: `First Fruits paid: KES ${this.firstFruitsAmount}`
+        });
+
         this.selectedAccount = null;
         this.firstFruitsAmount = null;
         this.fetchReport();
+
       } catch (err) {
-        alert(err.response?.data?.message || err.message);
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Payment failed'
+        });
       }
     },
+
 
     // =========================
     // Capital Injection
     // =========================
     async injectCapital() {
       if (!this.capital.amount || !this.capital.account_id) {
-        return alert('Enter amount and select account');
+        toast.fire({
+          icon: 'warning',
+          title: 'Enter amount and select account'
+        });
+        return;
       }
 
       try {
@@ -447,18 +543,31 @@ export default {
           account_id: this.capital.account_id
         });
 
-        alert('Capital injected successfully');
+        toast.fire({
+          icon: 'success',
+          title: 'Capital injected successfully'
+        });
+
         this.capital.amount = null;
         this.capital.account_id = null;
         this.fetchReport();
+
       } catch (err) {
-        alert(err.response?.data?.message || err.message);
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Capital injection failed'
+        });
       }
     },
 
+
     async loanIn() {
       if (!this.loanAmount || !this.selectedLoanAccount) {
-        return alert('Select account and enter amount');
+        toast.fire({
+          icon: 'warning',
+          title: 'Select account and enter amount'
+        });
+        return;
       }
 
       try {
@@ -467,18 +576,31 @@ export default {
           amount: this.loanAmount
         });
 
-        alert('Loan received successfully');
+        toast.fire({
+          icon: 'success',
+          title: 'Loan received successfully'
+        });
+
         this.loanAmount = null;
         this.selectedLoanAccount = null;
         this.fetchReport();
+
       } catch (err) {
-        alert(err.response?.data?.message || err.message);
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Loan receipt failed'
+        });
       }
     },
 
+
     async loanOut() {
       if (!this.loanAmount || !this.selectedLoanAccount) {
-        return alert('Select account and enter amount');
+        toast.fire({
+          icon: 'warning',
+          title: 'Select account and enter amount'
+        });
+        return;
       }
 
       try {
@@ -487,12 +609,47 @@ export default {
           amount: this.loanAmount
         });
 
-        alert('Loan repayment successful');
+        toast.fire({
+          icon: 'success',
+          title: 'Loan repayment successful'
+        });
+
         this.loanAmount = null;
         this.selectedLoanAccount = null;
         this.fetchReport();
+
       } catch (err) {
-        alert(err.response?.data?.message || err.message);
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Loan repayment failed'
+        });
+      }
+    },
+
+
+    async submitFundsIn() {
+      try {
+        await axios.post('/api/ledger/funds-in', this.fundsIn);
+
+        toast.fire({
+          icon: 'success',
+          title: 'Funds deposited successfully'
+        });
+
+        // Reset form
+        this.fundsIn = {
+          amount: null,
+          account_id: null,
+          source: null,
+        };
+
+        this.fetchReport();
+
+      } catch (err) {
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Deposit failed'
+        });
       }
     },
 
@@ -502,11 +659,19 @@ export default {
     // =========================
     async transferFunds() {
       if (!this.transfer.from || !this.transfer.to || !this.transfer.amount) {
-        return alert('Select from, to, and amount');
+        toast.fire({
+          icon: 'warning',
+          title: 'Select from, to, and amount'
+        });
+        return;
       }
 
       if (this.transfer.from === this.transfer.to) {
-        return alert('Cannot transfer to same account');
+        toast.fire({
+          icon: 'warning',
+          title: 'Cannot transfer to the same account'
+        });
+        return;
       }
 
       try {
@@ -516,34 +681,76 @@ export default {
           amount: this.transfer.amount
         });
 
-        alert('Transfer successful');
+        toast.fire({
+          icon: 'success',
+          title: 'Transfer successful'
+        });
+
         this.transfer.from = null;
         this.transfer.to = null;
         this.transfer.amount = null;
         this.fetchReport();
+
       } catch (err) {
-        alert(err.response?.data?.message || err.message);
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Transfer failed'
+        });
       }
     },
+
     async fetchReport() {
-      const res = await axios.get('/api/ledger/profit-loss', {
-        params: this.filters
-      });
+      try {
+        const res = await axios.get('/api/ledger/profit-loss', {
+          params: this.filters
+        });
 
-      this.report = res.data;
-      this.accountTotal = res.data.accountTotal;
-      this.personalAccounts = res.data.personalAccounts;
+        this.report = res.data;
+        this.accountTotal = res.data.accountTotal;
+        this.personalAccounts = res.data.personalAccounts;
+
+        // toast.fire({
+        //   icon: 'success',
+        //   title: 'Report loaded successfully'
+        // });
+
+      } catch (err) {
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Failed to load report'
+        });
+      }
     },
+
     async payTithe() {
-      if (!this.selectedAccount) return alert('Select an account');
+      if (!this.selectedAccount) {
+        toast.fire({
+          icon: 'warning',
+          title: 'Select an account'
+        });
+        return;
+      }
 
-      const res = await axios.post('/api/ledger/tithe/pay', {
-        payment_account_id: this.selectedAccount
-      });
+      try {
+        const res = await axios.post('/api/ledger/tithe/pay', {
+          payment_account_id: this.selectedAccount
+        });
 
-      alert(res.data.message);
-      this.fetchReport();       // refresh profit/tithe
+        toast.fire({
+          icon: 'success',
+          title: res.data.message
+        });
+
+        this.fetchReport(); // refresh profit/tithe
+
+      } catch (err) {
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Tithe payment failed'
+        });
+      }
     },
+
     navigateTo(location) {
       this.$router.push(location);
     },

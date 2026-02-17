@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Seedling Sales <span>| Track every little sprout sold</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addSeedlingSale()"
                                 >
-                                  Add Customer
+                                  Add Seedling Sale
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,15 +53,19 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="SeedlingSalesTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Seedling</th>
+                            <th scope="col">Buyer Name</th>
+                            <th scope="col">Quantity Sold</th>
+                            <th scope="col">Price per Unit (KES)</th>
+                            <th scope="col">Total Amount (KES)</th>
+                            <th scope="col">Sale Date</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
+
                         <!-- Spinner shown while data is initializing -->
                         <tbody v-if="initializing">
                           <tr>
@@ -72,121 +76,180 @@
                             </td>
                           </tr>
                         </tbody>
-                        <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
 
-                           
+                        <tbody v-else>
+                          <tr v-for="sale in seedlingSales" :key="sale.id">
+                            
+                            <!-- Seedling Name / Type -->
+                            <td>
+                              {{ sale.seedling.species_name }} ({{ sale.seedling.seedling_type }})
+                            </td>
+
+                            <!-- Buyer Name -->
+                            <td>{{ sale.buyer_name }}</td>
+
+                            <!-- Quantity Sold -->
+                            <td>{{ sale.quantity_sold }}</td>
+
+                            <!-- Price per Unit -->
+                            <td>{{ sale.price_per_unit }}</td>
+
+                            <!-- Total Amount -->
+                            <td>{{ sale.total_amount }}</td>
+
+                            <!-- Sale Date -->
+                            <td>{{ sale.sale_date }}</td>
+
+                            <!-- Actions -->
                             <td>
                               <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <button id="btnGroupDrop1" type="button"
+                                        style="background-color: darkgreen; border-color: darkgreen;"
+                                        class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                                        data-toggle="dropdown" data-bs-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false">
                                   Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                  <a @click="viewSeedlingSale(sale)" class="dropdown-item" href="#">
+                                    <i class="ri-eye-fill mr-2"></i>View
+                                  </a> 
+                                  <a @click="editSeedlingSale(sale)" class="dropdown-item" href="#">
+                                    <i class="ri-pencil-fill mr-2"></i>Edit
+                                  </a>
+                                  <a @click="deleteSeedlingSale(sale.id)" class="dropdown-item" href="#">
+                                    <i class="ri-delete-bin-line mr-2"></i>Delete
+                                  </a>
+                                </div>
                               </div>
                             </td>
+                            
                           </tr>
                         </tbody>
                       </table>
+
     
                     </div>
     
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedCustomer">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- View Seedling Sale Modal -->
+                <div class="modal fade" id="viewSeedlingSaleModal" tabindex="-1" aria-labelledby="viewSeedlingSaleModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
+                      <!-- Header -->
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title">View Seedling Sale Details</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
+                      <!-- Body -->
+                      <div class="modal-body" v-if="selectedSeedlingSale">
+                        <div class="row g-3">
+
+                          <!-- Seedling -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.seedling">
+                            <strong>Seedling:</strong> <br>
+                            {{ selectedSeedlingSale.seedling.species_name }} ({{ selectedSeedlingSale.seedling.seedling_type }})
+                          </div>
+
+                          <!-- Buyer Name -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.buyer_name">
+                            <strong>Buyer Name:</strong> <br> {{ selectedSeedlingSale.buyer_name }}
+                          </div>
+
+                          <!-- Quantity Sold -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.quantity_sold !== null">
+                            <strong>Quantity Sold:</strong> <br> {{ selectedSeedlingSale.quantity_sold }}
+                          </div>
+
+                          <!-- Price per Unit -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.price_per_unit !== null">
+                            <strong>Price per Unit:</strong> <br> KES {{ selectedSeedlingSale.price_per_unit }}
+                          </div>
+
+                          <!-- Sale Date -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.sale_date">
+                            <strong>Sale Date:</strong> <br> {{ selectedSeedlingSale.sale_date }}
+                          </div>
+
+                          <!-- Total Amount -->
+                          <div class="col-md-6" v-if="selectedSeedlingSale.total_amount !== null">
+                            <strong>Total Amount:</strong> <br> KES {{ selectedSeedlingSale.total_amount }}
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- Footer -->
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Seedling Sale Modal -->
+                <div class="modal fade" id="AddSeedlingSaleModal" tabindex="-1" aria-labelledby="AddSeedlingSaleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+
+                      <!-- Header -->
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="AddSeedlingSaleModalLabel">Add Seedling Sale</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <!-- Body -->
                       <div class="modal-body">
                         <form class="row g-3 needs-validation" novalidate>
 
                           <!-- Hidden ID -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- First & Last Name -->
+                          <!-- Seedling Selection -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Seedling*</label>
+                            <select class="form-select" id="seedling" v-model="data.seedling_id" required>
+                              <option value="">Select Seedling</option>
+                              <option v-for="seedling in seedlings" :key="seedling.id" :value="seedling.id">
+                                {{ seedling.species_name }} ({{ seedling.seedling_type }})
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Buyer Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Buyer Name*</label>
+                            <input type="text" class="form-control" v-model="data.buyer_name" required>
+                          </div>
+
+                          <!-- Quantity Sold -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity Sold*</label>
+                            <input type="number" min="1" class="form-control" v-model="data.quantity_sold" required>
+                          </div>
+
+                          <!-- Price per Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Price per Unit*</label>
+                            <input type="number" min="0" step="0.01" class="form-control" v-model="data.price_per_unit" required>
+                          </div>
+
+                          <!-- Sale Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Sale Date*</label>
+                            <input type="date" class="form-control" v-model="data.sale_date" required>
+                          </div>
+
+                          <!-- Total Amount (optional, auto-calculated) -->
+                          <div class="col-md-6">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" class="form-control" :value="data.quantity_sold * data.price_per_unit" readonly>
+                          </div>
 
                         </form>
                       </div>
@@ -203,48 +266,63 @@
                   </div>
                 </div>
 
-
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT Seedling Sale MODAL -->
+                <div class="modal fade" id="EditSeedlingSaleModal" tabindex="-1" aria-labelledby="EditSeedlingSaleModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Seedling Sale</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
+                      <!-- Body -->
                       <div class="modal-body">
-                        <form class="row g-3">
+                        <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
+                          <!-- Hidden ID -->
+                          <input type="hidden" v-model="form.id" />
 
-                          <!-- Email -->
+                          <!-- Seedling Selection -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Seedling*</label>
+                            <select class="form-select" id="seedling_edit" v-model="form.seedling_id" required>
+                              <option value="">Select Seedling</option>
+                              <option v-for="seedling in seedlings" :key="seedling.id" :value="seedling.id">
+                                {{ seedling.species_name }} ({{ seedling.seedling_type }})
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Buyer Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Buyer Name*</label>
+                            <input type="text" class="form-control" v-model="form.buyer_name" required>
+                          </div>
+
+                          <!-- Quantity Sold -->
+                          <div class="col-md-6">
+                            <label class="form-label">Quantity Sold*</label>
+                            <input type="number" min="1" class="form-control" v-model="form.quantity_sold" required>
+                          </div>
+
+                          <!-- Price per Unit -->
+                          <div class="col-md-6">
+                            <label class="form-label">Price per Unit*</label>
+                            <input type="number" min="0" step="0.01" class="form-control" v-model="form.price_per_unit" required>
+                          </div>
+
+                          <!-- Sale Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Sale Date*</label>
+                            <input type="date" class="form-control" v-model="form.sale_date" required>
+                          </div>
+
+                          <!-- Total Amount (optional, auto-calculated) -->
+                          <div class="col-md-6">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" class="form-control" :value="form.quantity_sold * form.price_per_unit" readonly>
+                          </div>
 
                         </form>
                       </div>
@@ -289,49 +367,57 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            seedlingSales: [],
+            seedlings: [],
+            selectedSeedlingSale: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {        // ADD sale
+              id: "",
+              seedling_id: "",
+              buyer_name: "",
+              quantity_sold: "",
+              price_per_unit: "",
+              sale_date: "",
+              total_amount: ""
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {        // EDIT sale
+              id: "",
+              seedling_id: "",
+              buyer_name: "",
+              quantity_sold: "",
+              price_per_unit: "",
+              sale_date: "",
+              total_amount: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewSeedlingSale(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedSeedlingSale)
+          this.selectedSeedlingSale = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewSeedlingSaleModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editSeedlingSale(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            seedling_id: item.seedling_id,
+            buyer_name: item.buyer_name,
+            quantity_sold: item.quantity_sold,
+            price_per_unit: item.price_per_unit,
+            sale_date: item.sale_date,
+            total_amount: item.total_amount
+
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditSeedlingSaleModal')
         );
         modal.show();
         },
@@ -339,11 +425,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.seedling_id) {
+            document.getElementById('seedling_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('seedling_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +440,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/seedling-sales/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Seedling sale updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditSeedlingSaleModal')
             );
             modal.hide();
 
@@ -369,7 +455,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update sale',
             'error'
             );
         } finally {
@@ -377,10 +463,10 @@
         }
         },
 
-        addCustomer()
+        addSeedlingSale()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddSeedlingSaleModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +493,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.seedling_id) {
+            document.getElementById('seedling').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('seedling').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +508,24 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/seedling-sales', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Seedling sale added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddSeedlingSaleModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              seedling_id: "",
+              buyer_name: "",
+              quantity_sold: "",
+              price_per_unit: "",
+              sale_date: "",
+              total_amount: ""
             };
 
             this.loadLists();
@@ -456,7 +544,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteSeedlingSale(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +556,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/seedling-sales/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Seedling sale has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +578,18 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/seedling-sales')
             .then((response) => {
-              this.customers = response.data;
+              this.seedlingSales = response.data.seedlingsales;
+              this.seedlings = response.data.seedlings;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#SeedlingSalesTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching sales list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

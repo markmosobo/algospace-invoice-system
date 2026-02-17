@@ -36,7 +36,8 @@ return new class extends Migration
                 'owner_draw',
                 'capital_injection',
                 'loan_in',
-                'loan_out'
+                'loan_out',
+                'owner_redeposit'
             ]);
 
             $table->string('reference')->nullable();

@@ -21,7 +21,7 @@
                     </div>
     
                     <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
+                      <h5 class="card-title">Crops <span>| Crops involved in farm ventures</span></h5>
                       <p class="card-text">
                         <div class="row">
                           <div class="col d-flex">
@@ -32,9 +32,9 @@
                                   :class="{ active: isActive }"
                                   class="btn btn-sm btn-primary rounded-pill"
                                   style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
+                                  @click="addCrop()"
                                 >
-                                  Add Customer
+                                  Add Crop
                                 </a>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
@@ -53,140 +53,210 @@
             
                       </p>
     
-                      <table id="CustomersTable" class="table table-borderless">
+                      <table id="CropsTable" class="table table-borderless">
                         <thead>
                           <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
-                            <th scope="col">Phone</th>
+                            <th scope="col">Crop Name</th>
+                            <th scope="col">Variety</th>
+                            <th scope="col">Venture</th>
+                            <th scope="col">Planting Date</th>
+                            <th scope="col">Expected Harvest</th>
+                            <th scope="col">Acreage (ha)</th>
+                            <th scope="col">Status</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
-                        <!-- Spinner shown while data is initializing -->
+
+                        <!-- Spinner while initializing -->
                         <tbody v-if="initializing">
                           <tr>
-                            <td colspan="7" class="text-center">
+                            <td colspan="8" class="text-center">
                               <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                               </div>
                             </td>
                           </tr>
                         </tbody>
-                        <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
 
-                           
+                        <!-- Crop rows -->
+                        <tbody v-else>
+                          <tr v-for="item in crops" :key="item.id">
+                            <td>{{ item.crop_name }}</td>
+                            <td>{{ item.variety || 'N/A' }}</td>
+                            <td>{{ item.venture_name || 'N/A' }}</td>
+                            <td>{{ item.planting_date || 'N/A' }}</td>
+                            <td>{{ item.expected_harvest_date || 'N/A' }}</td>
+                            <td>{{ item.acreage != null ? item.acreage : 'N/A' }}</td>
+                            <td>
+                              <span 
+                                class="badge" 
+                                :class="{
+                                  'bg-success': item.status === 'active',
+                                  'bg-warning text-dark': item.status === 'dormant',
+                                  'bg-secondary': item.status === 'inactive'
+                                }">
+                                {{ item.status || 'N/A' }}
+                              </span>
+                            </td>
+
                             <td>
                               <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <button 
+                                  id="btnGroupDrop1" 
+                                  type="button" 
+                                  class="btn btn-sm btn-success rounded-pill dropdown-toggle" 
+                                  data-bs-toggle="dropdown" 
+                                  aria-expanded="false">
                                   Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                  <li><a class="dropdown-item" @click="viewCrop(item)" href="#"><i class="ri-eye-fill mr-2"></i>View</a></li>
+                                  <li><a class="dropdown-item" @click="editCrop(item)" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a></li>
+                                  <li><a class="dropdown-item" @click="deleteCrop(item.id)" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a></li>
+                                </ul>
                               </div>
                             </td>
                           </tr>
                         </tbody>
                       </table>
+
     
                     </div>
     
                   </div>
                 </div><!-- End Top Selling -->
 
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedCustomer">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
+                <!-- View Crop Modal -->
+                <div class="modal fade" id="viewCropModal" tabindex="-1" aria-labelledby="viewCropModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
+                      <!-- Header -->
                       <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
+                        <h5 class="modal-title">View Crop Details</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
+                      <!-- Body -->
+                      <div class="modal-body" v-if="selectedCrop">
+                        <div class="row g-3">
+
+                          <!-- Venture -->
+                          <div class="col-md-6" v-if="selectedCrop.venture_name">
+                            <strong>Venture:</strong> <br> {{ selectedCrop.venture_name }}
+                          </div>
+
+                          <!-- Crop Name -->
+                          <div class="col-md-6" v-if="selectedCrop.crop_name">
+                            <strong>Crop Name:</strong> <br> {{ selectedCrop.crop_name }}
+                          </div>
+
+                          <!-- Variety -->
+                          <div class="col-md-6" v-if="selectedCrop.variety">
+                            <strong>Variety:</strong> <br> {{ selectedCrop.variety }}
+                          </div>
+
+                          <!-- Planting Date -->
+                          <div class="col-md-6" v-if="selectedCrop.planting_date">
+                            <strong>Planting Date:</strong> <br> {{ selectedCrop.planting_date }}
+                          </div>
+
+                          <!-- Expected Harvest Date -->
+                          <div class="col-md-6" v-if="selectedCrop.expected_harvest_date">
+                            <strong>Expected Harvest Date:</strong> <br> {{ selectedCrop.expected_harvest_date }}
+                          </div>
+
+                          <!-- Acreage -->
+                          <div class="col-md-6" v-if="selectedCrop.acreage">
+                            <strong>Acreage (ha):</strong> <br> {{ selectedCrop.acreage }}
+                          </div>
+
+                          <!-- Status -->
+                          <div class="col-md-6" v-if="selectedCrop.status">
+                            <strong>Status:</strong> <br> {{ selectedCrop.status }}
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- Footer -->
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Crop Modal -->
+                <div class="modal fade" id="AddCropModal" tabindex="-1" aria-labelledby="AddCropModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+
+                      <!-- Header -->
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="AddCropModalLabel">Add Crop</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <!-- Body -->
                       <div class="modal-body">
                         <form class="row g-3 needs-validation" novalidate>
 
                           <!-- Hidden ID -->
                           <input type="hidden" v-model="data.id" />
 
-                          <!-- First & Last Name -->
+                          <!-- Venture -->
                           <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Venture*</label>
+                            <select class="form-select" v-model="data.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }}
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Crop Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Crop Name*</label>
+                            <input type="text" id="crop_name" class="form-control" v-model="data.crop_name" required>
+                          </div>
+
+                          <!-- Variety -->
+                          <div class="col-md-6">
+                            <label class="form-label">Variety</label>
+                            <input type="text" class="form-control" v-model="data.variety">
+                          </div>
+
+                          <!-- Planting Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Planting Date</label>
+                            <input type="date" class="form-control" v-model="data.planting_date">
+                          </div>
+
+                          <!-- Expected Harvest Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Expected Harvest Date</label>
+                            <input type="date" class="form-control" v-model="data.expected_harvest_date">
+                          </div>
+
+                          <!-- Acreage -->
+                          <div class="col-md-6">
+                            <label class="form-label">Acreage (ha)</label>
+                            <input type="number" min="0" step="0.01" class="form-control" v-model="data.acreage">
+                          </div>
+
+                          <!-- Status -->
+                          <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" v-model="data.status">
+                              <option value="">Select</option>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="dormant">Dormant</option>
+                            </select>
+                          </div>
 
                         </form>
                       </div>
@@ -203,48 +273,74 @@
                   </div>
                 </div>
 
-
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
+                <!-- EDIT Crop MODAL -->
+                <div class="modal fade" id="EditCropModal" tabindex="-1" aria-labelledby="EditCropModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
 
                       <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
+                        <h5 class="modal-title">Edit Crop</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
 
+                      <!-- Body -->
                       <div class="modal-body">
-                        <form class="row g-3">
+                        <form class="row g-3 needs-validation" novalidate>
 
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
+                          <!-- Hidden ID -->
+                          <input type="hidden" v-model="form.id" />
 
-                          <!-- Email -->
+                          <!-- Venture -->
                           <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                            <label class="form-label">Venture*</label>
+                            <select class="form-select" v-model="form.venture_id" required>
+                              <option value="">Select Venture</option>
+                              <option v-for="venture in farmventures" :key="venture.id" :value="venture.id">
+                                {{ venture.venture_name }}
+                              </option>
                             </select>
                           </div>
 
+                          <!-- Crop Name -->
+                          <div class="col-md-6">
+                            <label class="form-label">Name*</label>
+                            <input type="text" id="crop_name_edit" class="form-control" v-model="form.crop_name" required>
+                          </div>
+
+                          <!-- Variety -->
+                          <div class="col-md-6">
+                            <label class="form-label">Variety</label>
+                            <input type="text" class="form-control" v-model="form.variety">
+                          </div>
+
+                          <!-- Planting Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Planting Date</label>
+                            <input type="date" class="form-control" v-model="form.planting_date">
+                          </div>
+
+                          <!-- Expected Harvest Date -->
+                          <div class="col-md-6">
+                            <label class="form-label">Expected Harvest Date</label>
+                            <input type="date" class="form-control" v-model="form.expected_harvest_date">
+                          </div>
+
+                          <!-- Acreage -->
+                          <div class="col-md-6">
+                            <label class="form-label">Acreage (ha)</label>
+                            <input type="number" min="0" step="0.01" class="form-control" v-model="form.acreage">
+                          </div>
+
+                          <!-- Status -->
+                          <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" v-model="form.status">
+                              <option value="">Select</option>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="dormant">Dormant</option>
+                            </select>
+                          </div>
 
                         </form>
                       </div>
@@ -281,7 +377,8 @@
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
-        timer: 3000
+        timer: 3000,
+        timerProgressBar: true
     });
     
     window.toast = toast;
@@ -289,49 +386,59 @@
     export default {
       data() {
         return {
-            customers: [],
-            selectedCustomer: {},
+            crops: [],
+            farmventures: [],
+            selectedCrop: {},
             errors: {},
             initializing: true,
             submitting: false,
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            data: {        // ADD crop
+              id: "",
+              crop_name: "",
+              variety: "",
+              planting_date: "",
+              expected_harvest_date: "",
+              acreage: "",
+              status: "active",
+              venture_id: ""
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {        // EDIT crop
+              id: "",
+              crop_name: "",
+              variety: "",
+              planting_date: "",
+              expected_harvest_date: "",
+              acreage: "",
+              status: "",
+              venture_id: ""
             }
         }
       },      
       methods: {                
-        viewCustomer(customer)
+        viewCrop(item)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
+          console.log(this.selectedCrop)
+          this.selectedCrop = item;
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('viewCropModal'));
           modal.show();
         },
-        editCustomer(customer) {
+        editCrop(item) {
         this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            id: item.id,
+            crop_name: item.crop_name,
+            variety: item.variety,
+            planting_date: item.planting_date,
+            expected_harvest_date: item.expected_harvest_date,
+            acreage: item.acreage,
+            status: item.status,
+            venture_id: item.venture_id
         };
 
         const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditCropModal')
         );
         modal.show();
         },
@@ -339,11 +446,11 @@
         validateEditForm() {
         let isValid = true;
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
+        if (!this.form.crop_name) {
+            document.getElementById('crop_name_edit').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
+            document.getElementById('crop_name_edit').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -354,12 +461,12 @@
         this.submitting = true;
 
         try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+            await axios.put(`/api/crops/${this.form.id}`, this.form);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            toast.fire('Success!', 'Crop updated successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
+            document.getElementById('EditCropModal')
             );
             modal.hide();
 
@@ -369,7 +476,7 @@
             console.error(error);
             toast.fire(
             'Error!',
-            error.response?.data?.message || 'Failed to update customer',
+            error.response?.data?.message || 'Failed to update crop',
             'error'
             );
         } finally {
@@ -377,10 +484,10 @@
         }
         },
 
-        addCustomer()
+        addCrop()
         {
           // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
+          const modal = new bootstrap.Modal(document.getElementById('AddCropModal'));
           modal.show();
         },
         async submit() {
@@ -407,11 +514,11 @@
         validateForm() {
         let isValid = true;
 
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
+        if (!this.data.crop_name) {
+            document.getElementById('crop_name').classList.add('is-invalid');
             isValid = false;
         } else {
-            document.getElementById('name').classList.remove('is-invalid');
+            document.getElementById('crop_name').classList.remove('is-invalid');
         }
 
         return isValid;
@@ -422,22 +529,25 @@
         this.submitting = true;
 
         try {
-            await axios.post('/api/customers', this.data);
+            await axios.post('/api/crops', this.data);
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            toast.fire('Success!', 'Crop added successfully', 'success');
 
             const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
+            document.getElementById('AddCropModal')
             );
             modal.hide();
 
             // Reset form
             this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+              id: "",
+              crop_name: "",
+              variety: "",
+              planting_date: "",
+              expected_harvest_date: "",
+              acreage: "",
+              status: "",
+              venture_id: ""
             };
 
             this.loadLists();
@@ -456,7 +566,7 @@
         navigateTo(location){
             this.$router.push(location)
         },
-        deleteCustomer(id){
+        deleteCrop(id){
                 Swal.fire({
                   title: 'Are you sure?',
                   text: "You won't be able to revert this!",
@@ -468,10 +578,10 @@
                 }).then((result) => {
                   if (result.isConfirmed) { 
                   //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
+                  axios.delete('/api/crops/'+id).then(() => {
                   toast.fire(
                     'Deleted!',
-                    'Customer has been deleted.',
+                    'Crop has been deleted.',
                     'success'
                   )
                   this.loadLists();
@@ -490,17 +600,18 @@
         },
         loadLists() {
           this.initializing = true; // Start spinner
-          axios.get('/api/customers')
+          axios.get('/api/crops')
             .then((response) => {
-              this.customers = response.data;
+              this.crops = response.data.crops;
+              this.farmventures = response.data.farmventures;
               console.log(response)
 
               setTimeout(() => {
-                $("#CustomersTable").DataTable();
+                $("#CropsTable").DataTable();
               }, 10);
             })
             .catch((error) => {
-              console.error('Error fetching user list:', error);
+              console.error('Error fetching crops list:', error);
             })
             .finally(() => {
               this.initializing = false; // Stop spinner

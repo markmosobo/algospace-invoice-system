@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CropController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\FarmVentureController;
 use App\Http\Controllers\FirstFruitsController;
+use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\InvoicePreviewController;
@@ -23,6 +25,8 @@ use App\Http\Controllers\PersonalTransactionController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RestockController;
+use App\Http\Controllers\SeedlingController;
+use App\Http\Controllers\SeedlingSaleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SupplierController;
@@ -62,6 +66,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::apiResource('farms', FarmController::class);
     Route::apiResource('farm-ventures', FarmVentureController::class);
+    Route::apiResource('crops', CropController::class);
+    Route::apiResource('harvests', HarvestController::class);
+    Route::apiResource('seedlings', SeedlingController::class);
+    Route::apiResource('seedling-sales', SeedlingSaleController::class);
 
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
@@ -111,4 +119,5 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/ledger/first-fruits', [FirstFruitsController::class, 'pay']);
 
     Route::post('/ledger/capital-injection', [CapitalInjectionController::class, 'store']);   
+    Route::post('/ledger/funds-in', [CapitalInjectionController::class, 'fundsIn']);   
 });

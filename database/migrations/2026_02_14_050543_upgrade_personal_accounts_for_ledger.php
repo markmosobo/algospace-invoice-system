@@ -18,7 +18,8 @@ return new class extends Migration
                 'shop_working_capital',
                 'company_revenue',
                 'personal_wallet',
-                'dormant'
+                'dormant',
+                'equity'
             ])->after('sub_type');
 
             $table->enum('account_type', [
@@ -26,7 +27,8 @@ return new class extends Migration
                 'bank',
                 'mpesa',
                 'sacco',
-                'jar'
+                'jar',
+                'system'
             ])->after('category');
 
             $table->enum('owner', [

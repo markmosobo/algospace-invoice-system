@@ -74,7 +74,6 @@ const routes = [
   { path: '/farm-workers', name: 'farm-workers', component: FarmWorkers, meta: { requiresAuth: true } },
   { path: '/worker-tasks', name: 'worker-tasks', component: WorkerTasks, meta: { requiresAuth: true } },
   { path: '/farm-assets', name: 'farm-assets', component: FarmAssets, meta: { requiresAuth: true } },
-  { path: '/seedlings', name: 'seedling-sales', component: SeedlingSales, meta: { requiresAuth: true } },
 
   //personal routes
   { path: '/personal-accounts', name: 'personal-accounts', component: PersonalAccounts, meta: { requiresAuth: true } },

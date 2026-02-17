@@ -31,5 +31,32 @@ class CapitalInjectionController extends Controller
         });
 
         return response()->json(['message' => 'Capital injected']);
-    }    
+    } 
+    
+    public function fundsIn(Request $request)
+    {
+        $request->validate([
+            'account_id' => 'required|exists:personal_accounts,id',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        DB::transaction(function () use ($request) {
+
+            $account = PersonalAccount::lockForUpdate()
+                ->findOrFail($request->account_id);
+
+            $amount = $request->amount;
+
+            // $account->increment('balance', $amount);
+
+            LedgerService::recordOwnerRedeposit(
+                $account,
+                $amount,
+                'Owner funds returned to savings'
+            );
+        });
+
+        return response()->json(['message' => 'Owner funds redeposited']);
+    }
+
 }

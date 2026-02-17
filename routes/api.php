@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FarmController;
+use App\Http\Controllers\FarmExpenseController;
 use App\Http\Controllers\FarmVentureController;
 use App\Http\Controllers\FirstFruitsController;
 use App\Http\Controllers\HarvestController;
@@ -70,6 +71,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('harvests', HarvestController::class);
     Route::apiResource('seedlings', SeedlingController::class);
     Route::apiResource('seedling-sales', SeedlingSaleController::class);
+    Route::apiResource('farm-expenses', FarmExpenseController::class);
 
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);

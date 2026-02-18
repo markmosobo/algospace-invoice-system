@@ -173,6 +173,7 @@
                               <option value="Typing & Documents">Typing & Documents</option>
                               <option value="Online Applications">Online Applications</option>
                               <option value="Internet & Computer Use">Internet & Computer Use</option>
+                              <option value="Internet">Internet</option>
                               <option value="Other Services">Other Services</option>
                               <option value="Bundles">Bundles</option>
                             </select>
@@ -234,6 +235,7 @@
                               <option value="Printing & Copying">Printing & Copying</option>
                               <option value="Typing & Documents">Typing & Documents</option>
                               <option value="Online Applications">Online Applications</option>
+                              <option value="Internet">Internet</option>
                               <option value="Internet & Computer Use">Internet & Computer Use</option>
                               <option value="Other Services">Other Services</option>
                               <option value="Bundles">Bundles</option>

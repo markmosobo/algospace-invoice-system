@@ -58,7 +58,7 @@ class LedgerReportService
 
 
         $accounts = PersonalAccount::
-            whereIn('account_type', ['cash', 'mpesa', 'bank'])
+            whereIn('account_type', ['cash', 'mpesa', 'bank','sacco'])
             ->where('balance', '>', 0)
             ->get(['id','name','balance','account_type','category']);
 

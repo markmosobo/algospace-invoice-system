@@ -24,30 +24,25 @@
                       <h5 class="card-title">Quick Sales <span>| Sales at AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
-                          <div class="col d-flex">
-                   
-                   
-                                <a
-                                  :href="href"
-                                  :class="{ active: isActive }"
-                                  class="btn btn-sm btn-primary rounded-pill"
-                                  style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addQuickSale()"
-                                >
-                                  Add Quick Sale
-                                </a>
-                          </div>
-                          <div class="col-auto d-flex justify-content-end">
-                          <div class="btn-group" role="group">
-                              <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="ri-add-line"></i>
-                              </button>
-                              <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                     <a @click="navigateTo('/clients' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Clients</a>
-                                    <a @click="navigateTo('/savings' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Savings</a>
-                                    <a @click="navigateTo('/loans' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Loans</a>
-                                </div>
-                              </div>
+                            <div class="d-flex">
+                            <a
+                                :href="href"
+                                :class="{ active: isActive }"
+                                class="btn btn-sm btn-primary rounded-pill me-2"
+                                style="background-color: darkgreen; border-color: darkgreen;"
+                                @click="addQuickSale()"
+                            >
+                                Add Quick Sale
+                            </a>
+
+                            <button
+                                class="btn btn-sm btn-outline-success rounded-pill"
+                                data-bs-toggle="modal"
+                                data-bs-target="#walkInModal"
+                            >
+                                Log Walk-in
+                            </button>
+
                             </div>
                         </div>   
             
@@ -190,14 +185,21 @@
 
                         <!-- EXISTING CUSTOMER SELECT -->
                         <div v-if="customerForm.type === 'existing'" class="col-md-12">
-                            <label class="form-label">Select Customer</label>
-                            <select class="form-select" v-model="customerForm.customer_id">
-                            <option value="">-- Search & Select --</option>
-                            <option v-for="c in customers" :key="c.id" :value="c.id">
-                                {{ c.name }} ({{ c.phone || 'No Phone' }})
+                        <label class="form-label">Select Customer</label>
+                        <!-- Search box -->
+                        <input
+                            type="text"
+                            v-model="search"
+                            placeholder="Search & Select"
+                            class="form-control mb-1"
+                        />
+                        <select class="form-select" v-model="customerForm.customer_id" size="5">
+                            <option v-for="c in filteredCustomers" :key="c.id" :value="c.id">
+                            {{ c.name }} ({{ c.phone || 'No Phone' }})
                             </option>
-                            </select>
+                        </select>
                         </div>
+
 
                         <!-- NEW CUSTOMER FORM -->
                         <div v-if="customerForm.type === 'new'" class="row g-3">
@@ -228,12 +230,23 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                             <label class="form-label">Select Service</label>
-                            <select class="form-control" v-model="selectedService">
-                                <option v-for="s in services" :value="s.id">
+
+                            <!-- Search box -->
+                            <input
+                                type="text"
+                                v-model="serviceSearch"
+                                placeholder="Search & Select Service"
+                                class="form-control mb-1"
+                            />
+
+                            <!-- Dropdown -->
+                            <select class="form-control" v-model="selectedService" size="5">
+                                <option v-for="s in filteredServices" :key="s.id" :value="s.id">
                                 {{ s.name }} - KES {{ s.price }} / {{ s.unit }}
                                 </option>
                             </select>
                             </div>
+
 
                             <div class="col-md-3">
                             <label class="form-label">Quantity</label>
@@ -243,6 +256,12 @@
                             <div class="col-md-3">
                             <label class="form-label">Add</label>
                             <button class="btn btn-primary w-100" @click="addItem">Add</button>
+                            </div>
+
+                            <!-- PHYSICAL VISIT CHECKBOX -->
+                            <div class="col-md-12 mt-2">
+                                <input type="checkbox" v-model="physicalVisit">
+                                <label>Customer was physically present</label>
                             </div>
                         </div>
 
@@ -287,8 +306,8 @@
 
                         <!-- Invoice Preview Button -->
                         <div class="mt-3" v-if="invoiceForm.items.length > 0">
-                        <button class="btn btn-info mb-2" @click="previewInvoice">
-                            Generate Preview
+                        <button class="btn btn-info mb-2" @click="previewInvoice" :disabled="isGenerating">
+                            {{ isGenerating ? 'Generating...' : 'Preview Invoice' }} 
                         </button>
 
                         <!-- PDF Preview iframe -->
@@ -512,6 +531,59 @@
                 </div>
                 </div>
 
+                <div class="modal fade" id="walkInModal" tabindex="-1">
+                <div class="modal-dialog modal-sm modal-dialog-centered">
+                    <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Log Walk-in</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <label class="form-label">Did they ask about a service?</label>
+
+                        <!-- Search box -->
+                        <input
+                            type="text"
+                            v-model="serviceSearch"
+                            placeholder="Search service..."
+                            class="form-control mb-1"
+                        />
+
+                        <select
+                            class="form-select"
+                            v-model="walkInService"
+                            size="5"
+                        >
+                            <!-- DEFAULT -->
+                            <option :value="null">
+                                No specific service
+                            </option>
+
+                            <option
+                                v-for="s in filteredServices"
+                                :key="s.id"
+                                :value="s.id"
+                            >
+                                {{ s.name }}
+                            </option>
+                        </select>
+
+
+                        <button
+                        class="btn btn-success w-100"
+                        @click="confirmWalkIn"
+                        >
+                        Log Visitor
+                        </button>
+
+                    </div>
+
+                    </div>
+                </div>
+                </div>
 
                     
 
@@ -543,6 +615,10 @@ export default {
     return {
       customers: [],
       services: [],
+      search: "",
+      serviceSearch: "",
+      isGenerating: false,
+      walkInService: null,
       quickSales: [],
       initializing: true,
       selectedService: null,
@@ -593,33 +669,47 @@ export default {
         this.customerForm.email = c.email;
         this.customerForm.phone = c.phone;
         }
+    },
+    selectedService(newId) {
+        const service = this.services.find(s => s.id === newId);
+        if (service) {
+            this.physicalVisit = service.category !== 'Internet';
+        }
     }
    },
 
   methods: {
-    previewInvoice() {
-        if (!this.invoiceForm.items.length) {
-            toast.fire({ icon: 'warning', title: 'Add at least one item to preview' });
-            return;
-        }
+    async previewInvoice() {
+    if (!this.invoiceForm.items.length) {
+        toast.fire({ icon: 'warning', title: 'Add at least one item to preview' });
+        return;
+    }
 
-        axios.post('/api/invoices/preview', {
-            customer: this.customerForm,
-            items: this.invoiceForm.items,
-            due_date: this.invoiceForm.due_date
-        }).then(res => {
-            this.previewPdf   = res.data.pdf_url;   // HTML iframe
-            this.printUrl     = res.data.print_url;
-            this.invoiceNo    = res.data.invoice_no;
-            this.pdfFileUrl   = res.data.pdf_file_url; // NEW: real PDF for sharing
-            toast.fire({ icon: 'success', title: 'Preview generated!' });
-        }).catch(err => {
-            console.error(err);
-            toast.fire({ icon: 'error', title: 'Failed to generate preview' });
+    if (this.isGenerating) return; // prevent double clicks
+    this.isGenerating = true;
+
+    try {
+        const res = await axios.post('/api/invoices/preview', {
+        customer: this.customerForm,
+        items: this.invoiceForm.items,
+        due_date: this.invoiceForm.due_date
         });
+
+        this.previewPdf = res.data.pdf_url;      // HTML iframe
+        this.printUrl = res.data.print_url;
+        this.invoiceNo = res.data.invoice_no;
+        this.pdfFileUrl = res.data.pdf_file_url; // real PDF for sharing
+
+        toast.fire({ icon: 'success', title: 'Preview generated!' });
+    } catch (err) {
+        console.error(err);
+        toast.fire({ icon: 'error', title: 'Failed to generate preview' });
+    } finally {
+        this.isGenerating = false; // reset flag
+    }
     },
 
-        // Format date as dd/mm/yyyy
+    // Format date as dd/mm/yyyy
     formatDate(date) {
         if (!date) return "N/A";
         const d = new Date(date);
@@ -717,6 +807,35 @@ export default {
         printWindow.print();
     },
 
+    async confirmWalkIn() {
+        try {
+            await axios.post('/api/foot-traffic', {
+                customer_id: null,
+                service_id: this.walkInService || null,
+                invoice_id: null
+            });
+
+            toast.fire({
+                icon: 'success',
+                title: this.walkInService
+                    ? 'Service visitor logged'
+                    : 'Walk-in visitor logged'
+            });
+
+            this.walkInService = null;
+
+            // Close modal
+            const modalEl = document.getElementById('walkInModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+
+        } catch (err) {
+            console.error(err);
+            toast.fire({
+                icon: 'error',
+                title: 'Failed to log visitor'
+            });
+        }
+    },
 
     async viewSale(sale) {
         try {
@@ -772,57 +891,82 @@ export default {
     prevStep() { this.step--; },
 
     async submitWizard() {
-    try {
-        let customerId = this.customerForm.customer_id;
+        try {
+            let customerId = this.customerForm.customer_id;
 
-        if (!customerId) {
-        const res = await axios.post('/api/customers', {
-            name: this.customerForm.name,
-            email: this.customerForm.email,
-            phone: this.customerForm.phone
-        });
-        customerId = res.data.id;
+            // Step 1: If user hasn't selected an existing customer, try to match by phone, email, or name
+            if (!customerId) {
+                const existing = this.customers.find(c => 
+                    (c.phone && c.phone === this.customerForm.phone) ||
+                    (c.email && c.email === this.customerForm.email) ||
+                    (!this.customerForm.phone && !this.customerForm.email && c.name.toLowerCase() === this.customerForm.name.toLowerCase())
+                );
+
+                if (existing) {
+                    customerId = existing.id; // Use existing customer ID
+                } else {
+                    // Step 2: If not found, create a new customer
+                    const res = await axios.post('/api/customers', {
+                        name: this.customerForm.name,
+                        email: this.customerForm.email,
+                        phone: this.customerForm.phone
+                    });
+                    customerId = res.data.id; // New customer ID
+                }
+            }
+
+            // Step 3: Create invoice
+            const invoice = await axios.post('/api/invoices', {
+                customer_id: customerId,
+                due_date: this.invoiceForm.due_date,
+                total_amount: this.invoiceForm.total_amount,
+                items: this.invoiceForm.items
+            });
+
+            // Step 4: Log payment
+            this.paymentForm.mpesa_code =
+                this.paymentForm.method === 'mpesa'
+                    ? String(this.paymentForm.mpesa_code || "")
+                    : "";
+
+            await axios.post('/api/payments', {
+                invoice_id: invoice.data.invoice.id,
+                amount: this.paymentForm.amount,
+                payment_date: this.paymentForm.payment_date,
+                method: this.paymentForm.method,
+                mpesa_code: this.paymentForm.mpesa_code,
+                comment: this.paymentForm.comment
+            });
+
+            // Step 5: Log foot traffic ONLY if physical
+            if (this.physicalVisit) {
+                await axios.post('/api/foot-traffic', {
+                    customer_id: customerId,
+                    invoice_id: invoice.data.invoice.id,
+                    service_id: this.selectedServiceId || null,
+                    physical_visit: true
+                });
+            }
+
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
+            modal.hide();
+
+            toast.fire({
+                icon: 'success',
+                title: 'Quick sale created successfully & visitor logged'
+            });
+
+            // Reload lists
+            this.loadLists();
+
+        } catch (err) {
+            console.error(err);
+            toast.fire({
+                icon: 'error',
+                title: 'Failed to create quick sale'
+            });
         }
-
-        const invoice = await axios.post('/api/invoices', {
-        customer_id: customerId,
-        due_date: this.invoiceForm.due_date,
-        total_amount: this.invoiceForm.total_amount,
-        items: this.invoiceForm.items
-        });
-
-        this.paymentForm.mpesa_code =
-        this.paymentForm.method === 'mpesa'
-            ? String(this.paymentForm.mpesa_code || "")
-            : "";
-
-        await axios.post('/api/payments', {
-        invoice_id: invoice.data.invoice.id,
-        amount: this.paymentForm.amount,
-        payment_date: this.paymentForm.payment_date,
-        method: this.paymentForm.method,
-        mpesa_code: this.paymentForm.mpesa_code,
-        comment: this.paymentForm.comment
-        });
-
-        // 🔥 CLOSE THE EXISTING MODAL
-        const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
-        modal.hide();
-
-        toast.fire({
-        icon: 'success',
-        title: 'Quick sale created successfully'
-        });
-
-        this.loadLists();
-
-    } catch (err) {
-        console.error(err);
-        toast.fire({
-        icon: 'error',
-        title: 'Failed to create quick sale'
-        });
-    }
     },
 
     resetWizard() {
@@ -994,7 +1138,27 @@ export default {
     },
 
   },
-
+  computed: {
+    filteredCustomers() {
+      if (!this.search) return this.customers;
+      const s = this.search.toLowerCase();
+      return this.customers.filter(
+        c =>
+          c.name.toLowerCase().includes(s) ||
+          (c.phone && c.phone.includes(s))
+      );
+    },
+    filteredServices() {
+        if (!this.serviceSearch) return this.services;
+        const s = this.serviceSearch.toLowerCase();
+        return this.services.filter(
+        service =>
+            service.name.toLowerCase().includes(s) ||
+            String(service.price).includes(s) ||
+            (service.unit && service.unit.toLowerCase().includes(s))
+        );
+    },
+  },
   components: {
     Master,
   },
@@ -1005,6 +1169,12 @@ export default {
 }
 </script>
 
-    
+<style>
+/* Optional: adjust select height */
+select.form-select {
+  max-height: 150px;
+  overflow-y: auto;
+}
+</style>    
     
     

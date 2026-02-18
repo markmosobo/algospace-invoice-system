@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FarmAssetController;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\FarmExpenseController;
 use App\Http\Controllers\FarmInputController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\FarmVentureController;
 use App\Http\Controllers\FarmWorkerController;
 use App\Http\Controllers\FarmWorkerTaskController;
 use App\Http\Controllers\FirstFruitsController;
+use App\Http\Controllers\FootTrafficController;
 use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
@@ -80,6 +82,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('farm-sales', FarmSaleController::class);
     Route::apiResource('farm-workers', FarmWorkerController::class);
     Route::apiResource('worker-tasks', FarmWorkerTaskController::class);
+    Route::apiResource('farm-assets', FarmAssetController::class);
 
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
@@ -130,4 +133,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/ledger/capital-injection', [CapitalInjectionController::class, 'store']);   
     Route::post('/ledger/funds-in', [CapitalInjectionController::class, 'fundsIn']);   
-});
+
+    Route::post('/foot-traffic', [FootTrafficController::class, 'store']);
+    Route::get('/foot-traffic', [FootTrafficController::class, 'index']);
+    });

@@ -33,7 +33,7 @@
             <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
               <div class="small text-muted">Total Worth</div>
               <div class="fs-4 fw-bold text-primary">
-                KES {{ accountTotal }}
+                KES {{ formatKES(accountTotal) }}
               </div>
             </div>
           </div>
@@ -47,7 +47,7 @@
                   <i class="bi bi-cash-coin me-1"></i> Revenue
                 </div>
                 <div class="fw-semibold text-success">
-                  KES {{ report.revenue }}
+                  KES {{ formatKES(report.revenue) }}
                 </div>
               </div>
             </div>
@@ -58,7 +58,7 @@
                   <i class="bi bi-wallet2 me-1"></i> Expenses
                 </div>
                 <div class="fw-semibold text-danger">
-                  KES {{ report.expenses }}
+                  KES {{ formatKES(report.expenses) }}
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@
                   <i class="bi bi-person-fill me-1"></i> Owner Draws
                 </div>
                 <div class="fw-semibold text-warning">
-                  KES {{ report.owner_draws }}
+                  KES {{ formatKES(report.owner_draws) }}
                 </div>
               </div>
             </div>
@@ -80,7 +80,7 @@
                   <i class="bi bi-bar-chart-line me-1"></i> Profit
                 </div>
                 <div class="fw-semibold text-primary">
-                  KES {{ report.profit }}
+                  KES {{ formatKES(report.profit) }}
                 </div>
               </div>
             </div>
@@ -212,6 +212,7 @@
                 </button>
               </div>
 
+
             </div>
 
             <!-- RIGHT COLUMN -->
@@ -281,6 +282,56 @@
                   Transfer
                 </button>
               </div>
+
+              <!-- FUNDS OUT -->
+              <div class="p-3 rounded bg-danger bg-opacity-10 border mb-3">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-box-arrow-up me-1"></i> Funds Out
+                </div>
+
+                <!-- Amount -->
+                <input type="number"
+                      v-model.number="fundsOut.amount"
+                      class="form-control form-control-sm mb-2"
+                      placeholder="Amount">
+
+                <!-- Pay From Account -->
+                <select v-model="fundsOut.account_id"
+                        class="form-select form-select-sm mb-2">
+                  <option disabled value="">Pay from account</option>
+                  <option v-for="acc in personalAccounts"
+                          :key="acc.id"
+                          :value="acc.id">
+                    {{ acc.name }} (KES {{ acc.balance }})
+                  </option>
+                </select>
+
+                <!-- Category -->
+                <select v-model="fundsOut.category"
+                        class="form-select form-select-sm mb-2">
+                  <option disabled value="">Expense category</option>
+                  <option value="operations">Operations</option>
+                  <option value="utilities">Utilities</option>
+                  <option value="church">Church / Giving</option>
+                  <option value="debt">Debt / Payables</option>
+                  <option value="farming">Farming</option>
+                  <option value="family">Family Support</option>
+                  <option value="personal">Personal</option>
+                </select>
+
+                <!-- Description -->
+                <input type="text"
+                      v-model="fundsOut.description"
+                      class="form-control form-control-sm mb-3"
+                      placeholder="Description (e.g. Pay for service)">
+
+                <button class="btn btn-sm btn-danger w-100"
+                        :disabled="!fundsOut.amount || !fundsOut.account_id || !fundsOut.category"
+                        @click="submitFundsOut">
+                  Pay Expense
+                </button>
+              </div>
+
             </div>
           </div>
 
@@ -429,7 +480,13 @@ export default {
         amount: null,
         account_id: null,
         source: null, // capital | owner_return
-      },      
+      }, 
+      fundsOut: {
+        amount: null,
+        account_id: null,
+        category: null,
+        description: null,
+      },     
       user: {},
       currentUser: {},
       userRole: null,
@@ -450,6 +507,13 @@ export default {
   },
 
   methods: {
+    formatKES(value) {
+      const number = Number(value || 0);
+      return number.toLocaleString('en-KE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    },
     async payOwnerDraw() {
       // Validate account selection
       if (!this.selectedAccount) {
@@ -652,7 +716,39 @@ export default {
         });
       }
     },
+    async submitFundsOut() {
+      if (!this.fundsOut.amount || !this.fundsOut.account_id || !this.fundsOut.category) {
+        toast.fire({
+          icon: 'warning',
+          title: 'Fill all required fields'
+        });
+        return;
+      }
 
+      try {
+        await axios.post('/api/ledger/funds-out', this.fundsOut);
+
+        toast.fire({
+          icon: 'success',
+          title: 'Expense recorded successfully'
+        });
+
+        this.fundsOut = {
+          amount: null,
+          account_id: null,
+          category: null,
+          description: null,
+        };
+
+        this.fetchReport();
+
+      } catch (err) {
+        toast.fire({
+          icon: 'error',
+          title: err.response?.data?.message || 'Payment failed'
+        });
+      }
+    },
 
     // =========================
     // Inter Account Transfer

@@ -133,6 +133,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/ledger/capital-injection', [CapitalInjectionController::class, 'store']);   
     Route::post('/ledger/funds-in', [CapitalInjectionController::class, 'fundsIn']);   
+    Route::post('/ledger/funds-out', [LedgerReportController::class, 'fundsOut']);   
 
     Route::post('/foot-traffic', [FootTrafficController::class, 'store']);
     Route::get('/foot-traffic', [FootTrafficController::class, 'index']);

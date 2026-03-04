@@ -420,12 +420,14 @@
               transaction_date: new Date().toISOString().slice(0, 10),
             },
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
+            form: {        // EDIT transaction
+              account_id: null,
+              category_id: null,
+              type: "expense",
+              amount: null,
+              payment_method: null,
+              description: "",
+              transaction_date: new Date().toISOString().slice(0, 10),
             }
         }
       },      

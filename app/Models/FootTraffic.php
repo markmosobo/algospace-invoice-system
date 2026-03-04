@@ -3,8 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Customer;
+use App\Models\Service;
+use App\Models\Invoice;
 
 class FootTraffic extends Model
 {
-    //
+    protected $fillable = ['customer_id', 'service_id', 'invoice_id', 'arrival_time'];
+
+    public function customer() {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function service() {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function invoice() {
+        return $this->belongsTo(Invoice::class);
+    }    
 }

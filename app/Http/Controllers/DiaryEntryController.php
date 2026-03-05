@@ -201,7 +201,8 @@ class DiaryEntryController extends Controller
                     'id' => $r->id,
                     'title' => $r->title,
                     'remind_at' => $rRemind,
-                    'time' => $rRemind->format('H:i'),
+                    'date' => $rRemind->format('d/m/Y'), // <-- this shows the date
+                    'time' => $rRemind->format('H:i'),   // <-- optional, still keep time if needed
                     'status' => $status
                 ];
             })

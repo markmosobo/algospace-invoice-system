@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\LoyaltyCard;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 
@@ -13,9 +14,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::get();
-
-        //record system log
+        $customers = Customer::with('visits','loyaltyCard')->withCount('visits')->get();        //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' retrieved customers'
@@ -47,10 +46,28 @@ class CustomerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        $customer = Customer::find($id);
-        return response()->json($customer);
+        // Fetch customer
+        $customer = Customer::findOrFail($id);
+
+        // Fetch loyalty card if it exists
+        $loyaltyCard = LoyaltyCard::where('customer_id', $customer->id)->first();
+
+        return response()->json([
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'phone' => $customer->phone,
+            'email' => $customer->email,
+            'created_at' => $customer->created_at,
+            'updated_at' => $customer->updated_at,
+
+            // Loyalty card info
+            'cardIssued' => $loyaltyCard ? true : false,
+            'visits' => $loyaltyCard ? $loyaltyCard->visits : 0,
+            'card_serial' => $loyaltyCard ? $loyaltyCard->serial : null,
+            'status' => $loyaltyCard ? $loyaltyCard->status : null,
+        ]);
     }
 
     /**

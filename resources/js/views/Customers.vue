@@ -57,8 +57,9 @@
                         <thead>
                           <tr>
                             <th scope="col">Full Name</th>
-                            <th scope="col">Email Address</th>
                             <th scope="col">Phone</th>
+                            <th scope="col">Visits</th>
+                            <th scope="col">Loyalty Card</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -75,10 +76,13 @@
                         <tbody v-else>
                           <tr v-for="customer in customers" :key="customer.id">
                             <td>{{customer.name}}</td>
-                            <td>{{customer.email ?? "N/A"}}</td>
                             <td>{{customer.phone ?? "N/A"}}</td>
+                            <td>{{customer.visits_count}}</td>
+                            <td>
+                              <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
+                              <span v-else class="badge bg-secondary">None</span>
+                            </td>
 
-                           
                             <td>
                               <div class="btn-group" role="group">
                                   <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -86,6 +90,10 @@
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
                                   <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
+                                  <a v-if="customer.visits_count >= 5 && !customer.loyalty_card" 
+                                    @click="openLoyaltyModal(customer)" class="dropdown-item" href="#">
+                                    <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
+                                  </a>
                                   <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
                                   <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
@@ -99,6 +107,40 @@
     
                   </div>
                 </div><!-- End Top Selling -->
+
+              <div class="modal fade" id="LoyaltyCardModal" tabindex="-1" aria-labelledby="LoyaltyCardModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-md">
+                  <div class="modal-content">
+
+                    <div class="modal-header">
+                      <h5 class="modal-title">Loyalty Card Preview</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body" v-if="selectedCustomer">
+                      <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
+                      <p><strong>Card Serial:</strong> {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}</p>
+
+                      <div class="d-flex flex-wrap">
+                        <div v-for="n in 10" :key="n" class="p-2 m-1 border text-center" 
+                            :style="{ width: '30px', height: '30px', backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1', color: n <= selectedCustomer.visits_count ? 'white' : 'black' }">
+                          {{ n }}
+                        </div>
+                      </div>
+
+                      <p class="mt-2"><small>Each visit punches a box. Complete 10 visits for a reward!</small></p>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button class="btn btn-success" @click="confirmIssueCard(selectedCustomer)" style="background: darkgreen; border-color: darkgreen;">
+                        Issue Card
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
 
               <!-- View Customer Modal -->
               <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
@@ -312,7 +354,54 @@
             }
         }
       },      
-      methods: {                
+      methods: { 
+        openLoyaltyModal(customer) {
+          this.selectedCustomer = customer;
+          // optionally generate card serial
+          if (!this.selectedCustomer.card_serial) {
+            this.selectedCustomer.card_serial = 'CYB-' + String(customer.id).padStart(4, '0');
+          }
+          new bootstrap.Modal(document.getElementById('LoyaltyCardModal')).show();
+        },
+        confirmIssueCard(customer) {
+            // Call API to create a loyalty card record
+            axios.post('/api/loyalty-cards', { customer_id: customer.id, serial: customer.card_serial })
+                .then(res => {
+                    customer.loyalty_card = res.data;
+
+                    // SweetAlert success popup with emoji
+                    Swal.fire({
+                        icon: 'success',
+                        title: '🎉 Loyalty Card Issued!',
+                        text: `Card for ${customer.name} has been successfully issued.`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    // Optional toast for extra subtle notification
+                    toast.fire({
+                        icon: 'success',
+                        title: `✨ ${customer.name}'s loyalty card is now active!`
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+
+                    // Error popup
+                    Swal.fire({
+                        icon: 'error',
+                        title: '❌ Failed to Issue Card',
+                        text: 'Something went wrong while issuing the loyalty card.'
+                    });
+                });
+
+            // Hide the modal after issuing
+            const modal = bootstrap.Modal.getInstance(document.getElementById('LoyaltyCardModal'));
+            modal.hide();
+        },
+        generateSerial(customer) {
+          return 'CYB-' + String(customer.id).padStart(4, '0');
+        },               
         viewCustomer(customer)
         {
           console.log(this.selectedCustomer)

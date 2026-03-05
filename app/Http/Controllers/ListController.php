@@ -33,7 +33,7 @@ class ListController extends Controller
 
 
         // Load customers for wizard dropdown
-        $customers = Customer::select('id', 'name','phone')->get();
+        $customers = Customer::with('visits','loyaltyCard')->withCount('visits')->get();        //record system log
         $services = Service::get();
 
         //record system log

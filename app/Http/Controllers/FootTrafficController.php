@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FootTraffic;
+use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
 
 class FootTrafficController extends Controller
@@ -18,7 +19,19 @@ class FootTrafficController extends Controller
 
         $footTraffic = FootTraffic::create($data);
 
-        return response()->json($footTraffic, 201);
+        // Check if customer has an active loyalty card
+        $card = LoyaltyCard::where('customer_id', $request->customer_id)
+                        ->where('status', 'active')
+                        ->first();
+
+        if ($card) {
+            $card->addVisit(); // Increment the loyalty card visits
+        }
+
+        return response()->json([
+            'foot_traffic' => $footTraffic,
+            'loyalty_card' => $card // null if card doesn't exist yet
+        ], 201);
     }
 
     // List traffic (optional for dashboard)

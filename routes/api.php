@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomRewardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\LedgerReportController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\LoyaltyCardController;
 use App\Http\Controllers\OwnerDrawController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
@@ -90,6 +92,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/restock-product', [SupplyController::class, 'restock']);
 
     Route::put('/customers/{customer}', [CustomerController::class, 'update']);
+    Route::post('/customers/reward', [CustomRewardController::class, 'store']);
 
     Route::delete('/sales/{id}', [PaymentController::class, 'destroySale']);
     Route::put('/sales/{id}', [PaymentController::class, 'updateSale']);
@@ -137,4 +140,6 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/foot-traffic', [FootTrafficController::class, 'store']);
     Route::get('/foot-traffic', [FootTrafficController::class, 'index']);
+
+    Route::post('/loyalty-cards', [LoyaltyCardController::class, 'store']);
     });

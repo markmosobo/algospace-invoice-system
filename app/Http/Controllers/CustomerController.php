@@ -14,7 +14,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::with('visits','loyaltyCard')->withCount('visits')->get();        //record system log
+        $customers = Customer::with('visits','loyaltyCards')->withCount('visits')->get();        //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
             'description' => auth('api')->user()->name.' retrieved customers'

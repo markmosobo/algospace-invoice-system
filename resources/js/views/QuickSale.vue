@@ -900,7 +900,9 @@ async submitWizard() {
     try {
         let customerId = this.customerForm.customer_id;
 
+        // =========================
         // Step 1: Find existing customer by phone/email/name
+        // =========================
         if (!customerId) {
             const existing = this.customers.find(c => 
                 (c.phone && c.phone === this.customerForm.phone) ||
@@ -911,7 +913,7 @@ async submitWizard() {
             if (existing) {
                 customerId = existing.id;
             } else {
-                // Step 2: Create new customer
+                // Create new customer
                 const res = await axios.post('/api/customers', {
                     name: this.customerForm.name,
                     email: this.customerForm.email,
@@ -921,7 +923,9 @@ async submitWizard() {
             }
         }
 
-        // Step 3: Create invoice
+        // =========================
+        // Step 2: Create invoice
+        // =========================
         const invoice = await axios.post('/api/invoices', {
             customer_id: customerId,
             due_date: this.invoiceForm.due_date,
@@ -929,7 +933,9 @@ async submitWizard() {
             items: this.invoiceForm.items
         });
 
-        // Step 4: Log payment
+        // =========================
+        // Step 3: Log payment
+        // =========================
         this.paymentForm.mpesa_code = this.paymentForm.method === 'mpesa' ? String(this.paymentForm.mpesa_code || "") : "";
 
         await axios.post('/api/payments', {
@@ -941,56 +947,65 @@ async submitWizard() {
             comment: this.paymentForm.comment
         });
 
-        // Step 5: Log foot traffic and handle rewards
-        if (this.physicalVisit) {
-            await axios.post('/api/foot-traffic', {
+        // =========================
+        // Step 4: Log foot traffic & handle loyalty cards
+        // =========================
+if (this.physicalVisit) {
+    // 1️⃣ Log the physical visit
+    await axios.post('/api/foot-traffic', {
+        customer_id: customerId,
+        invoice_id: invoice.data.invoice.id,
+        service_id: this.selectedServiceId || null,
+        physical_visit: true
+    });
+
+    // 2️⃣ Fetch active loyalty card
+    const cardRes = await axios.get(`/api/customers/${customerId}/loyalty-card`);
+    const card = cardRes.data;
+
+    if (card) {
+        // 3️⃣ Increment visits
+        let visits = card.visits + 1;
+        let status = visits >= 10 ? 'completed' : 'active';
+
+        // 4️⃣ Update loyalty card visits and status
+        await axios.put(`/api/loyalty-cards/${card.id}`, { visits, status });
+
+        // 5️⃣ Handle reward if card completed
+        if (status === 'completed') {
+            await axios.post('/api/rewards', {
                 customer_id: customerId,
-                invoice_id: invoice.data.invoice.id,
-                service_id: this.selectedServiceId || null,
-                physical_visit: true
+                reward_type: 'gift',
+                value: 0,
+                visits
             });
 
-            // Fetch updated customer info
-            const customerRes = await axios.get(`/api/customers/${customerId}`);
-            const customer = customerRes.data;
+            // 6️⃣ Reset customer card status so a new card can be issued
+            await axios.put(`/api/customers/${customerId}`, { cardIssued: null });
 
-            // Only process reward if a card exists
-            if (customer.cardIssued) {
-                let visits = customer.visits || 0;
-                visits += 1;
+            // 7️⃣ Optionally, create a new card automatically
+            await axios.post('/api/customers/' + customerId + '/loyalty-cards', {
+                serial: this.generateSerial(customerId),
+                visits: 0,
+                status: 'active'
+            });
 
-                if (visits >= 10) {
-                    // Reward cycle complete
-                    await axios.post('/api/customers/reward', {
-                        customer_id: customerId,
-                        reward_type: 'gift',
-                        value: 0,
-                        visits: visits
-                    });
-
-                    // Mark card completed
-                    // await axios.put(`/api/loyalty-cards/${cardId}`, {
-                    //     visits: 10,
-                    //     status: 'completed'
-                    // });
-
-                    toast.fire({
-                        icon: 'success',
-                        title: '🎉 Customer reached 10 visits! Reward issued.'
-                    });
-                } else {
-                    // Update visits count
-                    await axios.put(`/api/customers/${customerId}`, { visits });
-
-                    toast.fire({
-                        icon: 'info',
-                        title: `Visit logged: ${visits}/10`
-                    });
-                }
-            }
+            toast.fire({
+                icon: 'success',
+                title: '🎉 Customer reached 10 visits! Reward issued and new card created.'
+            });
+        } else {
+            toast.fire({
+                icon: 'info',
+                title: `Visit logged: ${visits}/10`
+            });
         }
+    }
+}
 
-        // Close the modal
+        // =========================
+        // Step 5: Close modal & reload lists
+        // =========================
         const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
         modal.hide();
 
@@ -999,7 +1014,7 @@ async submitWizard() {
             title: 'Quick sale created successfully & visitor logged'
         });
 
-        // Reload lists
+        // Reload data lists
         this.loadLists();
 
     } catch (err) {

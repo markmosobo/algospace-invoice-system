@@ -94,6 +94,11 @@
                                     @click="openLoyaltyModal(customer)" class="dropdown-item" href="#">
                                     <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
                                   </a>
+                                  <a v-if="customer.loyalty_card"
+                                      @click="viewLoyaltyCard(customer)" 
+                                      class="dropdown-item" href="#">
+                                      <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
+                                  </a>
                                   <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
                                   <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
@@ -108,39 +113,65 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-              <div class="modal fade" id="LoyaltyCardModal" tabindex="-1" aria-labelledby="LoyaltyCardModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-md">
-                  <div class="modal-content">
+                <div class="modal fade" id="LoyaltyCardModal" tabindex="-1">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
 
-                    <div class="modal-header">
-                      <h5 class="modal-title">Loyalty Card Preview</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
-                      <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
-                      <p><strong>Card Serial:</strong> {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}</p>
+      <div class="modal-body" v-if="selectedCustomer">
 
-                      <div class="d-flex flex-wrap">
-                        <div v-for="n in 10" :key="n" class="p-2 m-1 border text-center" 
-                            :style="{ width: '30px', height: '30px', backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1', color: n <= selectedCustomer.visits_count ? 'white' : 'black' }">
-                          {{ n }}
-                        </div>
-                      </div>
+        <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
 
-                      <p class="mt-2"><small>Each visit punches a box. Complete 10 visits for a reward!</small></p>
-                    </div>
+        <p>
+          <strong>Card Serial:</strong>
+          {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
+        </p>
 
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                      <button class="btn btn-success" @click="confirmIssueCard(selectedCustomer)" style="background: darkgreen; border-color: darkgreen;">
-                        Issue Card
-                      </button>
-                    </div>
+        <div class="d-flex flex-wrap">
+          <div
+            v-for="n in 10"
+            :key="n"
+            class="p-2 m-1 border text-center"
+            :style="{
+              width: '32px',
+              height: '32px',
+              backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
+              color: n <= selectedCustomer.visits_count ? 'white' : 'black'
+            }"
+          >
+            {{ n }}
+          </div>
+        </div>
 
-                  </div>
-                </div>
-              </div>
+        <p class="mt-2">
+          <small>Each visit punches a box. Complete 10 visits for a reward!</small>
+        </p>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+        <button
+          v-if="loyaltyMode === 'issue'"
+          class="btn btn-success"
+          @click="confirmIssueCard(selectedCustomer)"
+          style="background: darkgreen; border-color: darkgreen;"
+        >
+          Issue Card
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
 
               <!-- View Customer Modal -->
               <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
@@ -336,6 +367,7 @@
             errors: {},
             initializing: true,
             submitting: false,
+            showLoyaltyCardModal: false,
 
             data: {        // ADD customer
             id: "",
@@ -355,13 +387,20 @@
         }
       },      
       methods: { 
-        openLoyaltyModal(customer) {
-          this.selectedCustomer = customer;
-          // optionally generate card serial
-          if (!this.selectedCustomer.card_serial) {
-            this.selectedCustomer.card_serial = 'CYB-' + String(customer.id).padStart(4, '0');
-          }
-          new bootstrap.Modal(document.getElementById('LoyaltyCardModal')).show();
+        openLoyaltyModal(customer){
+            this.selectedCustomer = customer
+            this.loyaltyMode = 'issue'
+
+            let modal = new bootstrap.Modal(document.getElementById('LoyaltyCardModal'))
+            modal.show()
+        },
+
+        viewLoyaltyCard(customer){
+            this.selectedCustomer = customer
+            this.loyaltyMode = 'view'
+
+            let modal = new bootstrap.Modal(document.getElementById('LoyaltyCardModal'))
+            modal.show()
         },
         confirmIssueCard(customer) {
             // Call API to create a loyalty card record
@@ -401,7 +440,8 @@
         },
         generateSerial(customer) {
           return 'CYB-' + String(customer.id).padStart(4, '0');
-        },               
+        }, 
+              
         viewCustomer(customer)
         {
           console.log(this.selectedCustomer)

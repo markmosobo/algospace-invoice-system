@@ -29,8 +29,15 @@ class Customer extends Model
         return $this->hasMany(FootTraffic::class);
     }
 
-    public function loyaltyCard()
+    // Relationship to loyalty cards
+    public function loyaltyCards()
     {
-        return $this->hasOne(LoyaltyCard::class);
+        return $this->hasMany(LoyaltyCard::class);
+    }
+
+    // Convenience method to get the active card
+    public function activeCard()
+    {
+        return $this->loyaltyCards()->where('status', 'active')->first();
     }
 }

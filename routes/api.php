@@ -142,4 +142,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/foot-traffic', [FootTrafficController::class, 'index']);
 
     Route::post('/loyalty-cards', [LoyaltyCardController::class, 'store']);
+    Route::get('/customers/{customer}/loyalty-card', [LoyaltyCardController::class, 'active']);
+    Route::put('/loyalty-cards/{card}', [LoyaltyCardController::class, 'update']);
+    Route::post('/customers/{customer}/loyalty-card/log-visit', [LoyaltyCardController::class, 'logVisit']);
     });

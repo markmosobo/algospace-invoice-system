@@ -48,11 +48,13 @@ class CustomerController extends Controller
      */
     public function show($id)
     {
-        // Fetch customer
-        $customer = Customer::findOrFail($id);
+        // Fetch customer with total visits count
+        $customer = Customer::withCount('visits')->findOrFail($id);
 
-        // Fetch loyalty card if it exists
-        $loyaltyCard = LoyaltyCard::where('customer_id', $customer->id)->first();
+        // Fetch active loyalty card only
+        $activeCard = LoyaltyCard::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->first();
 
         return response()->json([
             'id' => $customer->id,
@@ -62,11 +64,14 @@ class CustomerController extends Controller
             'created_at' => $customer->created_at,
             'updated_at' => $customer->updated_at,
 
-            // Loyalty card info
-            'cardIssued' => $loyaltyCard ? true : false,
-            'visits' => $loyaltyCard ? $loyaltyCard->visits : 0,
-            'card_serial' => $loyaltyCard ? $loyaltyCard->serial : null,
-            'status' => $loyaltyCard ? $loyaltyCard->status : null,
+            // Visits
+            'total_visits' => $customer->visits_count,           // all visits ever
+            'loyalty_visits' => $activeCard ? $activeCard->visits : 0,  // only active card
+
+            // Active card info
+            'cardIssued' => $activeCard ? true : false,
+            'card_serial' => $activeCard ? $activeCard->serial : null,
+            'status' => $activeCard ? $activeCard->status : null,
         ]);
     }
 

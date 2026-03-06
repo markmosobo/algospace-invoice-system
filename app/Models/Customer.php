@@ -38,6 +38,6 @@ class Customer extends Model
     // Convenience method to get the active card
     public function activeCard()
     {
-        return $this->loyaltyCards()->where('status', 'active')->first();
+        return $this->hasOne(LoyaltyCard::class)->where('status', 'active');
     }
 }

@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\FootTraffic;
+use App\Models\Invoice;
+use App\Models\LedgerEntry;
 use App\Models\LoyaltyCard;
+use App\Models\Reward;
 use Illuminate\Http\Request;
 
 class FootTrafficController extends Controller
@@ -12,25 +16,82 @@ class FootTrafficController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'customer_id' => 'nullable|exists:customers,id',
+            'customer_id' => 'required|exists:customers,id',
             'service_id' => 'nullable|exists:services,id',
             'invoice_id' => 'nullable|exists:invoices,id'
         ]);
 
+        // 1️⃣ Log foot traffic
         $footTraffic = FootTraffic::create($data);
 
-        // Check if customer has an active loyalty card
-        $card = LoyaltyCard::where('customer_id', $request->customer_id)
+        // 2️⃣ Fetch customer with total visits
+        $customer = Customer::withCount('visits')->findOrFail($request->customer_id);
+        $totalVisits = $customer->visits_count;
+
+        // 3️⃣ Check for active loyalty card
+        $activeCard = LoyaltyCard::where('customer_id', $customer->id)
                         ->where('status', 'active')
                         ->first();
 
-        if ($card) {
-            $card->addVisit(); // Increment the loyalty card visits
+        $responseMessage = null;
+        $rewardCreated = false;
+
+        // 4️⃣ If no active card and total visits >= 5, create first loyalty card
+        if (!$activeCard && $totalVisits >= 5) {
+            $serial = 'CYB-' . str_pad($customer->id, 4, '0', STR_PAD_LEFT);
+            $activeCard = LoyaltyCard::create([
+                'customer_id' => $customer->id,
+                'serial' => $serial,
+                'visits' => 0,
+                'status' => 'active'
+            ]);
+
+            $responseMessage = "✨ First loyalty card issued!";
+        }
+
+        // 5️⃣ If active card exists, increment visits
+        if ($activeCard) {
+            $previousVisits = $activeCard->visits;
+            $activeCard->increment('visits');
+            $activeCard->refresh(); // make sure we have updated value
+
+            // 6️⃣ Handle 10th visit reward
+            if ($previousVisits < 10 && $activeCard->visits >= 10) {
+                $activeCard->status = 'completed';
+                $activeCard->save();
+
+                // Create reward based on latest invoice if provided
+                if ($request->invoice_id) {
+                    $invoice = Invoice::find($request->invoice_id);
+                    $rewardValue = $invoice ? $invoice->total_amount : 0;
+
+                    // 1️⃣ Create reward
+                    Reward::create([
+                        'customer_id' => $customer->id,
+                        'reward_type' => 'gift',
+                        'value' => $rewardValue,
+                        'visits' => $activeCard->visits
+                    ]);
+
+                    // 2️⃣ Record ledger entry
+                    LedgerEntry::create([
+                        'customer_id' => $customer->id,
+                        'value' => $rewardValue,
+                        'description' => "Reward for customer #{$customer->id}"
+                    ]);
+
+                    $rewardCreated = true;
+                    $responseMessage = "🎉 Customer reached 10 visits! Reward issued.";
+                }
+            }
         }
 
         return response()->json([
             'foot_traffic' => $footTraffic,
-            'loyalty_card' => $card // null if card doesn't exist yet
+            'total_visits' => $totalVisits,
+            'loyalty_card' => $activeCard,
+            'message' => $responseMessage,
+            'reward_created' => $rewardCreated
         ], 201);
     }
 

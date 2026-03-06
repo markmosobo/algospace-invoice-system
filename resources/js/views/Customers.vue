@@ -90,7 +90,7 @@
                                   </button>
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
                                   <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a v-if="customer.visits_count >= 5 && !customer.loyalty_card" 
+                                  <a v-if="customer.visits_count >= 1 && !customer.loyalty_card" 
                                     @click="openLoyaltyModal(customer)" class="dropdown-item" href="#">
                                     <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
                                   </a>
@@ -114,64 +114,64 @@
                 </div><!-- End Top Selling -->
 
                 <div class="modal fade" id="LoyaltyCardModal" tabindex="-1">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content">
+                  <div class="modal-dialog modal-md">
+                    <div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title">
-          {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+                      <div class="modal-header">
+                        <h5 class="modal-title">
+                          {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
 
-      <div class="modal-body" v-if="selectedCustomer">
+                      <div class="modal-body" v-if="selectedCustomer">
 
-        <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
+                        <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
 
-        <p>
-          <strong>Card Serial:</strong>
-          {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
-        </p>
+                        <p>
+                          <strong>Card Serial:</strong>
+                          {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
+                        </p>
 
-        <div class="d-flex flex-wrap">
-          <div
-            v-for="n in 10"
-            :key="n"
-            class="p-2 m-1 border text-center"
-            :style="{
-              width: '32px',
-              height: '32px',
-              backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
-              color: n <= selectedCustomer.visits_count ? 'white' : 'black'
-            }"
-          >
-            {{ n }}
-          </div>
-        </div>
+                        <div class="d-flex flex-wrap">
+                          <div
+                            v-for="n in 10"
+                            :key="n"
+                            class="p-2 m-1 border text-center"
+                            :style="{
+                              width: '32px',
+                              height: '32px',
+                              backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
+                              color: n <= selectedCustomer.visits_count ? 'white' : 'black'
+                            }"
+                          >
+                            {{ n }}
+                          </div>
+                        </div>
 
-        <p class="mt-2">
-          <small>Each visit punches a box. Complete 10 visits for a reward!</small>
-        </p>
+                        <p class="mt-2">
+                          <small>Each visit punches a box. Complete 10 visits for a reward!</small>
+                        </p>
 
-      </div>
+                      </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 
-        <button
-          v-if="loyaltyMode === 'issue'"
-          class="btn btn-success"
-          @click="confirmIssueCard(selectedCustomer)"
-          style="background: darkgreen; border-color: darkgreen;"
-        >
-          Issue Card
-        </button>
+                        <button
+                          v-if="loyaltyMode === 'issue'"
+                          class="btn btn-success"
+                          @click="confirmIssueCard(selectedCustomer)"
+                          style="background: darkgreen; border-color: darkgreen;"
+                        >
+                          Issue Card
+                        </button>
 
-      </div>
+                      </div>
 
-    </div>
-  </div>
-</div>
+                    </div>
+                  </div>
+                </div>
 
               <!-- View Customer Modal -->
               <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
@@ -404,9 +404,11 @@
         },
         confirmIssueCard(customer) {
             // Call API to create a loyalty card record
-            axios.post('/api/loyalty-cards', { customer_id: customer.id, serial: customer.card_serial })
+            axios.post('/api/loyalty-cards', { customer_id: customer.id, serial: this.generateSerial(customer) })
                 .then(res => {
                     customer.loyalty_card = res.data;
+                    customer.cardIssued = true;   // ⭐ important
+                    customer.visits = 0;
 
                     // SweetAlert success popup with emoji
                     Swal.fire({

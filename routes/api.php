@@ -145,4 +145,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/customers/{customer}/loyalty-card', [LoyaltyCardController::class, 'active']);
     Route::put('/loyalty-cards/{card}', [LoyaltyCardController::class, 'update']);
     Route::post('/customers/{customer}/loyalty-card/log-visit', [LoyaltyCardController::class, 'logVisit']);
+
+    Route::post('/rewards', [CustomRewardController::class, 'store']);
+    Route::post('/ledger/record-reward', [CustomRewardController::class, 'recordReward']);
     });

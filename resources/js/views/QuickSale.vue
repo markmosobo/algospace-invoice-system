@@ -194,15 +194,19 @@
                             class="form-control mb-1"
                         />
                         <select class="form-select" v-model="customerForm.customer_id" size="5">
-                            <option v-for="c in filteredCustomers" :key="c.id" :value="c.id">
-                            {{ c.name }} ({{ c.phone || 'No Phone' }}) —
-                            <span v-if="c.cardIssued">
-                                Card Active: {{ c.visits }}/10 Visit(s)
-                            </span>
-                            <span v-else>
-                                Visit(s): {{ c.visits }}
-                            </span>
-                            </option>
+                        <option v-for="c in filteredCustomers" :key="c.id" :value="c.id">
+
+                        {{ c.name }} ({{ c.phone || 'No Phone' }}) —
+
+                        <span v-if="c.active_card">
+                        🎟️ Card Active: {{ c.active_card.visits }}/10 Visit(s)
+                        </span>
+
+                        <span v-else>
+                        👣 Visits: {{ c.visits }}
+                        </span>
+
+                        </option>
                         </select>
                         </div>
 
@@ -896,136 +900,112 @@ export default {
     },
     prevStep() { this.step--; },
 
-async submitWizard() {
-    try {
-        let customerId = this.customerForm.customer_id;
+    async submitWizard() {
+        try {
+            let customerId = this.customerForm.customer_id;
 
-        // =========================
-        // Step 1: Find existing customer by phone/email/name
-        // =========================
-        if (!customerId) {
-            const existing = this.customers.find(c => 
-                (c.phone && c.phone === this.customerForm.phone) ||
-                (c.email && c.email === this.customerForm.email) ||
-                (!this.customerForm.phone && !this.customerForm.email && c.name.toLowerCase() === this.customerForm.name.toLowerCase())
-            );
+            // =========================
+            // Step 1: Find or create customer
+            // =========================
+            if (!customerId) {
+                const existing = this.customers.find(c => 
+                    (c.phone && c.phone === this.customerForm.phone) ||
+                    (c.email && c.email === this.customerForm.email) ||
+                    (!this.customerForm.phone && !this.customerForm.email && c.name.toLowerCase() === this.customerForm.name.toLowerCase())
+                );
 
-            if (existing) {
-                customerId = existing.id;
-            } else {
-                // Create new customer
-                const res = await axios.post('/api/customers', {
-                    name: this.customerForm.name,
-                    email: this.customerForm.email,
-                    phone: this.customerForm.phone
-                });
-                customerId = res.data.id;
+                if (existing) {
+                    customerId = existing.id;
+                } else {
+                    const res = await axios.post('/api/customers', {
+                        name: this.customerForm.name,
+                        email: this.customerForm.email,
+                        phone: this.customerForm.phone
+                    });
+                    customerId = res.data.id;
+                }
             }
-        }
 
-        // =========================
-        // Step 2: Create invoice
-        // =========================
-        const invoice = await axios.post('/api/invoices', {
-            customer_id: customerId,
-            due_date: this.invoiceForm.due_date,
-            total_amount: this.invoiceForm.total_amount,
-            items: this.invoiceForm.items
-        });
-
-        // =========================
-        // Step 3: Log payment
-        // =========================
-        this.paymentForm.mpesa_code = this.paymentForm.method === 'mpesa' ? String(this.paymentForm.mpesa_code || "") : "";
-
-        await axios.post('/api/payments', {
-            invoice_id: invoice.data.invoice.id,
-            amount: this.paymentForm.amount,
-            payment_date: this.paymentForm.payment_date,
-            method: this.paymentForm.method,
-            mpesa_code: this.paymentForm.mpesa_code,
-            comment: this.paymentForm.comment
-        });
-
-        // =========================
-        // Step 4: Log foot traffic & handle loyalty cards
-        // =========================
-if (this.physicalVisit) {
-    // 1️⃣ Log the physical visit
-    await axios.post('/api/foot-traffic', {
-        customer_id: customerId,
-        invoice_id: invoice.data.invoice.id,
-        service_id: this.selectedServiceId || null,
-        physical_visit: true
-    });
-
-    // 2️⃣ Fetch active loyalty card
-    const cardRes = await axios.get(`/api/customers/${customerId}/loyalty-card`);
-    const card = cardRes.data;
-
-    if (card) {
-        // 3️⃣ Increment visits
-        let visits = card.visits + 1;
-        let status = visits >= 10 ? 'completed' : 'active';
-
-        // 4️⃣ Update loyalty card visits and status
-        await axios.put(`/api/loyalty-cards/${card.id}`, { visits, status });
-
-        // 5️⃣ Handle reward if card completed
-        if (status === 'completed') {
-            await axios.post('/api/rewards', {
+            // =========================
+            // Step 2: Create invoice
+            // =========================
+            const invoice = await axios.post('/api/invoices', {
                 customer_id: customerId,
-                reward_type: 'gift',
-                value: 0,
-                visits
+                due_date: this.invoiceForm.due_date,
+                total_amount: this.invoiceForm.total_amount,
+                items: this.invoiceForm.items
             });
 
-            // 6️⃣ Reset customer card status so a new card can be issued
-            await axios.put(`/api/customers/${customerId}`, { cardIssued: null });
+            // =========================
+            // Step 3: Log payment
+            // =========================
+            this.paymentForm.mpesa_code = this.paymentForm.method === 'mpesa' 
+                ? String(this.paymentForm.mpesa_code || "") 
+                : "";
 
-            // 7️⃣ Optionally, create a new card automatically
-            await axios.post('/api/customers/' + customerId + '/loyalty-cards', {
-                serial: this.generateSerial(customerId),
-                visits: 0,
-                status: 'active'
+            await axios.post('/api/payments', {
+                invoice_id: invoice.data.invoice.id,
+                amount: this.paymentForm.amount,
+                payment_date: this.paymentForm.payment_date,
+                method: this.paymentForm.method,
+                mpesa_code: this.paymentForm.mpesa_code,
+                comment: this.paymentForm.comment
             });
+
+            // =========================
+            // Step 4: Log foot traffic & handle loyalty (backend)
+            // =========================
+            if (this.physicalVisit) {
+                const footRes = await axios.post('/api/foot-traffic', {
+                    customer_id: customerId,
+                    invoice_id: invoice.data.invoice.id,
+                    service_id: this.selectedServiceId || null,
+                    physical_visit: true
+                });
+
+                // Show backend message if any
+                if (footRes.data.message) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: footRes.data.message
+                    });
+                }
+
+                // Show current loyalty card status if exists
+                if (footRes.data.loyalty_card) {
+                    toast.fire({
+                        icon: 'info',
+                        title: `🎟️ Loyalty card visits: ${footRes.data.loyalty_card.visits}/10`
+                    });
+                }
+            }
+
+            // =========================
+            // Step 5: Close modal & reload lists
+            // =========================
+            const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
+            modal.hide();
 
             toast.fire({
                 icon: 'success',
-                title: '🎉 Customer reached 10 visits! Reward issued and new card created.'
+                title: 'Quick sale created successfully & visitor logged'
             });
-        } else {
+
+            this.loadLists();
+
+        } catch (err) {
+            console.error(err);
             toast.fire({
-                icon: 'info',
-                title: `Visit logged: ${visits}/10`
+                icon: 'error',
+                title: 'Failed to create quick sale'
             });
         }
-    }
-}
+    },
 
-        // =========================
-        // Step 5: Close modal & reload lists
-        // =========================
-        const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleWizardModal'));
-        modal.hide();
-
-        toast.fire({
-            icon: 'success',
-            title: 'Quick sale created successfully & visitor logged'
-        });
-
-        // Reload data lists
-        this.loadLists();
-
-    } catch (err) {
-        console.error(err);
-        toast.fire({
-            icon: 'error',
-            title: 'Failed to create quick sale'
-        });
-    }
-},
-
+    // Generate serial for loyalty card
+    generateSerial(customer) {
+        return 'CYB-' + String(customer.id).padStart(4, '0');
+    },
     resetWizard() {
         this.step = 1;
         this.customerForm = { name: '', email: '', phone: '' };
@@ -1197,31 +1177,35 @@ if (this.physicalVisit) {
   },
   computed: {
     filteredCustomers() {
-    const s = this.search ? this.search.toLowerCase() : '';
 
-    return this.customers
-        .filter(c =>
-        !s ||
-        c.name.toLowerCase().includes(s) ||
-        (c.phone && c.phone.includes(s))
-        )
-        .map(c => {
-        let visits = 0;
-        let cardIssued = false;
+        const s = this.search ? this.search.toLowerCase() : '';
 
-        if (c.loyalty_card) {
-            visits = c.loyalty_card.visits; // after card issued
-            cardIssued = true;
-        } else {
-            visits = c.visits_count || 0; // before card
-        }
+        return this.customers
+            .filter(c =>
+                !s ||
+                c.name.toLowerCase().includes(s) ||
+                (c.phone && c.phone.includes(s))
+            )
+            .map(c => {
 
-        return {
-            ...c,
-            visits,
-            cardIssued
-        };
-        });
+                let visits = 0;
+                let cardIssued = false;
+
+                // If active loyalty card exists
+                if (c.activeCard) {
+                    visits = c.activeCard.visits;
+                    cardIssued = true;
+                } else {
+                    visits = c.visits_count || 0;
+                }
+
+                return {
+                    ...c,
+                    visits,
+                    cardIssued
+                };
+            });
+
     },
     filteredServices() {
         if (!this.serviceSearch) return this.services;

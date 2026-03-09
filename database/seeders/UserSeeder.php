@@ -39,13 +39,20 @@ class UserSeeder extends Seeder
         // ]);
 
 
-        User::create([
-            'name'              => 'Musk Mode',
-            'email'             => 'marcus@algospace.co.ke',
-            'email_verified_at' => Carbon::now(),
-            'role'              => 'office',
-            'password'          => Hash::make('@Puvewt5n#!!!'),
-        ]);        
+        // User::create([
+        //     'name'              => 'Musk Mode',
+        //     'email'             => 'marcus@algospace.co.ke',
+        //     'email_verified_at' => Carbon::now(),
+        //     'role'              => 'office',
+        //     'password'          => Hash::make('@Puvewt5n#!!!'),
+        // ]);        
 
+        User::create([
+            'name'              => 'Partner Account',
+            'email'             => 'partner@algospace.co.ke',
+            'email_verified_at' => Carbon::now(),
+            'role'              => 'partner',
+            'password'          => Hash::make('@Puvewt5n#!!!'),
+        ]);
     }
 }

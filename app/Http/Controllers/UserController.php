@@ -25,6 +25,19 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    public function partners()
+    {
+        $partners = User::where('role', 'partner')->get();
+
+        //record system log
+        SystemLog::create([
+            'user_id' => auth('api')->user()->id,
+            'description' => auth('api')->user()->name.' retrieved partners'
+        ]);  
+
+        return response()->json($partners);
+    }    
+
     /**
      * Store a newly created resource in storage.
      */

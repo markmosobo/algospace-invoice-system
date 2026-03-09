@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\LedgerEntry;
 use App\Models\LoyaltyCard;
 use App\Models\Reward;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class FootTrafficController extends Controller
@@ -16,7 +17,7 @@ class FootTrafficController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => 'nullable|exists:customers,id',
             'service_id' => 'nullable|exists:services,id',
             'invoice_id' => 'nullable|exists:invoices,id'
         ]);
@@ -104,5 +105,47 @@ class FootTrafficController extends Controller
 
         return response()->json($traffic);
     }
+
+    public function storeAnon(Request $request)
+    {
+        FootTraffic::create([
+            'customer_id' => $request->customer_id,
+            'service_id' => $request->service_id,
+            'invoice_id' => $request->invoice_id
+        ]);
+        
+        return response()->json([
+            'message' => 'Foot traffic logged'
+        ]);
+    }
+
+    // Dashboard data: total count + breakdown
+    public function dashboard()
+    {
+        $today = Carbon::today();
+
+        $footTrafficList = FootTraffic::with(['customer', 'service'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Count by service
+        $serviceCounts = $footTrafficList->groupBy(function($ft){
+            return $ft->service ? $ft->service->name : 'General';
+        })->map(fn($group) => count($group));
+
+        return response()->json([
+            'total' => $footTrafficList->count(),
+            'footTrafficList' => $footTrafficList->map(function($ft){
+                return [
+                    'id' => $ft->id,
+                    'customer_name' => $ft->customer ? $ft->customer->name : null,
+                    'service_name' => $ft->service ? $ft->service->name : 'General',
+                    'time_in' => $ft->created_at,
+                    'invoice_id' => $ft->invoice_id
+                ];
+            }),
+            'serviceCounts' => $serviceCounts
+        ]);
+    }    
 }
 

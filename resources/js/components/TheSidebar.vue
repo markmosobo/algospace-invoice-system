@@ -328,6 +328,7 @@
           <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
           <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
           <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
+          <li><RouterLink to="/book-users" class="nav-link"><i class="bi bi-circle"></i> Book Users</RouterLink></li>
         </ul>
       </li>
 
@@ -341,6 +342,27 @@
         <ul id="invoice-nav" class="nav-content collapse">
           <li><RouterLink to="/pending-invoices" class="nav-link"><i class="bi bi-circle"></i> Pending</RouterLink></li>
           <li><RouterLink to="/invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
+        </ul>
+      </li>
+
+      <!-- Library Section -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#library-nav">
+          <i class="bi bi-book-half"></i>
+          <span>Library</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="library-nav" class="nav-content collapse">
+          <li>
+            <RouterLink to="/book-rentals" class="nav-link">
+              <i class="bi bi-circle"></i> Book Rentals
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/books" class="nav-link">
+              <i class="bi bi-circle"></i> Books Catalog
+            </RouterLink>
+          </li>
         </ul>
       </li>
 

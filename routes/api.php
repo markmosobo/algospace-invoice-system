@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomRewardController;
@@ -139,7 +141,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/ledger/funds-out', [LedgerReportController::class, 'fundsOut']);   
 
     Route::post('/foot-traffic', [FootTrafficController::class, 'store']);
+    Route::post('/anon-foot-traffic', [FootTrafficController::class, 'storeAnon']);
     Route::get('/foot-traffic', [FootTrafficController::class, 'index']);
+    Route::get('/foot-traffic-dashboard', [FootTrafficController::class, 'dashboard']);
 
     Route::post('/loyalty-cards', [LoyaltyCardController::class, 'store']);
     Route::get('/customers/{customer}/loyalty-card', [LoyaltyCardController::class, 'active']);
@@ -148,4 +152,21 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/rewards', [CustomRewardController::class, 'store']);
     Route::post('/ledger/record-reward', [CustomRewardController::class, 'recordReward']);
+
+    //books module
+    Route::prefix('books')->group(function () {
+        Route::get('/', [BookController::class, 'index']);
+        Route::get('/{book}', [BookController::class, 'show']);
+        Route::post('/', [BookController::class, 'store']);
+        Route::put('/{book}', [BookController::class, 'update']);
+        Route::delete('/{book}', [BookController::class, 'destroy']);
     });
+
+    Route::prefix('borrow')->group(function () {
+        Route::get('/', [BorrowController::class, 'index']);
+        Route::post('/', [BorrowController::class, 'borrow']);
+        Route::post('/return/{borrow}', [BorrowController::class, 'return']);
+    });
+
+    Route::get('/partners', [UserController::class, 'partners']);
+});

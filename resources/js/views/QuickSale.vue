@@ -22,9 +22,11 @@
     
                     <div class="card-body pb-0">
                       <h5 class="card-title">Quick Sales <span>| Sales at AlgoSpace Cyber</span></h5>
-                      <p class="card-text">
+                        <p class="card-text">
                         <div class="row">
-                            <div class="d-flex">
+                            <div class="d-flex align-items-center">
+
+                            <!-- Add Quick Sale -->
                             <a
                                 :href="href"
                                 :class="{ active: isActive }"
@@ -35,19 +37,27 @@
                                 Add Quick Sale
                             </a>
 
+                            <!-- Log Walk-in -->
                             <button
-                                class="btn btn-sm btn-outline-success rounded-pill"
+                                class="btn btn-sm btn-outline-success rounded-pill me-2"
                                 data-bs-toggle="modal"
                                 data-bs-target="#walkInModal"
                             >
                                 Log Walk-in
                             </button>
 
+                            <!-- Foot Traffic Button -->
+                            <button
+                                class="btn btn-sm btn-outline-info rounded-pill"
+                                @click="goToFootTraffic"
+                            >
+                                <i class="ri-user-line me-1"></i> {{ todayFootTraffic }} Visitors Today
+                            </button>
+
                             </div>
-                        </div>   
-            
-                      </p>
-    
+                        </div>
+                        </p>
+                            
                     <table id="SalesTable" class="table table-borderless">
                     <thead>
                         <tr>
@@ -625,6 +635,7 @@ export default {
     return {
       customers: [],
       services: [],
+      todayFootTraffic: 0,
       search: "",
       serviceSearch: "",
       isGenerating: false,
@@ -689,6 +700,9 @@ export default {
    },
 
   methods: {
+    goToFootTraffic() {
+        this.$router.push({ name: 'FootTraffic' });
+    },
     async previewInvoice() {
     if (!this.invoiceForm.items.length) {
         toast.fire({ icon: 'warning', title: 'Add at least one item to preview' });
@@ -819,7 +833,7 @@ export default {
 
     async confirmWalkIn() {
         try {
-            await axios.post('/api/foot-traffic', {
+            await axios.post('/api/anon-foot-traffic', {
                 customer_id: null,
                 service_id: this.walkInService || null,
                 invoice_id: null
@@ -837,6 +851,9 @@ export default {
             // Close modal
             const modalEl = document.getElementById('walkInModal');
             bootstrap.Modal.getInstance(modalEl).hide();
+
+            // **Refresh lists including foot traffic**
+            this.loadLists();
 
         } catch (err) {
             console.error(err);
@@ -1160,6 +1177,7 @@ export default {
             this.quickSales = response.data.quickSales;
             this.customers = response.data.customers;
             this.services = response.data.services;
+            this.todayFootTraffic = response.data.todayfoottraffic;
             console.log(response)
 
             setTimeout(() => {

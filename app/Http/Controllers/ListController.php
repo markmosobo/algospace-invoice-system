@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\DiaryEntry;
+use App\Models\FootTraffic;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ListController extends Controller
 {
@@ -37,6 +39,9 @@ class ListController extends Controller
         $customers = Customer::with(['activeCard','loyaltyCards'])
         ->withCount('visits')
         ->get();
+        // Get today's date
+        $todayDate = Carbon::today();
+        $todayfoottraffic = FootTraffic::latest()->whereDate('created_at', $todayDate)->count();
         $services = Service::get();
 
         //record system log
@@ -48,7 +53,8 @@ class ListController extends Controller
         return response()->json([
             'quickSales' => $sales,
             'customers' => $customers,
-            'services' => $services
+            'services' => $services,
+            'todayfoottraffic' => $todayfoottraffic
         ]);
     }
 

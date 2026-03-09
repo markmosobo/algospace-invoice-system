@@ -36,6 +36,10 @@ import FarmSales from '../views/farm/FarmSales.vue';
 import FarmWorkers from '../views/farm/FarmWorkers.vue';
 import WorkerTasks from '../views/farm/WorkerTasks.vue';
 import FarmAssets from '../views/farm/FarmAssets.vue';
+import FootTraffic from '@/views/FootTraffic.vue';
+import BookRentals from '@/views/BookRentals.vue';
+import BooksCatalog from '@/views/BooksCatalog.vue';
+import BookUsers from '@/views/BookUsers.vue';
 
 const routes = [
   // Public routes
@@ -82,6 +86,12 @@ const routes = [
 
   { path: '/diary', name: 'diary', component: Diary, meta: { requiresAuth: true } },
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
+
+  { path: '/foot-traffic', name: 'FootTraffic', component: FootTraffic, meta: { requiresAuth: true } },
+
+  { path: '/book-rentals', name: 'BookRentals', component: BookRentals, meta: { requiresAuth: true } },
+  { path: '/books', name: 'BooksCatalog', component: BooksCatalog, meta: { requiresAuth: true } },
+  { path: '/book-users', name: 'BookUsers', component: BookUsers, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

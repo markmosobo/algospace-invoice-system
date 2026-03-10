@@ -169,4 +169,10 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::get('/partners', [UserController::class, 'partners']);
+    Route::get('/borrowers', [UserController::class, 'borrowers']);
+    Route::post('/borrowers', [UserController::class, 'storeUser']);
+    Route::put('/borrowers/{id}', [UserController::class, 'updateUser']);
+    Route::post('/partners', [UserController::class, 'storeUser']);
+    Route::put('/partners/{id}', [UserController::class, 'updateUser']);
+
 });

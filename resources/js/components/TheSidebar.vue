@@ -328,7 +328,8 @@
           <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
           <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
           <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
-          <li><RouterLink to="/book-users" class="nav-link"><i class="bi bi-circle"></i> Book Users</RouterLink></li>
+          <li><RouterLink to="/partners" class="nav-link"><i class="bi bi-circle"></i> Partners</RouterLink></li>
+          <li><RouterLink to="/borrowers" class="nav-link"><i class="bi bi-circle"></i> Book Borrowers</RouterLink></li>
         </ul>
       </li>
 

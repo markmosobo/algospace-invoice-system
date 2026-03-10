@@ -39,7 +39,8 @@ import FarmAssets from '../views/farm/FarmAssets.vue';
 import FootTraffic from '@/views/FootTraffic.vue';
 import BookRentals from '@/views/BookRentals.vue';
 import BooksCatalog from '@/views/BooksCatalog.vue';
-import BookUsers from '@/views/BookUsers.vue';
+import BookBorrowers from '@/views/BookBorrowers.vue';
+import Partners from '@/views/Partners.vue';
 
 const routes = [
   // Public routes
@@ -91,7 +92,9 @@ const routes = [
 
   { path: '/book-rentals', name: 'BookRentals', component: BookRentals, meta: { requiresAuth: true } },
   { path: '/books', name: 'BooksCatalog', component: BooksCatalog, meta: { requiresAuth: true } },
-  { path: '/book-users', name: 'BookUsers', component: BookUsers, meta: { requiresAuth: true } },
+  { path: '/borrowers', name: 'BookBorrowers', component: BookBorrowers, meta: { requiresAuth: true } },
+
+  { path: '/partners', name: 'Partners', component: Partners, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

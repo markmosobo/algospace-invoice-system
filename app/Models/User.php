@@ -21,6 +21,15 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'role',
         'status',
+        'phone',
+        'dob',
+        'address',
+        'city',
+        'postal_code',
+        'membership_type',
+        'borrow_limit',
+        'profile_photo_file',
+        'profile_photo_url',
     ];
 
     /**
@@ -34,34 +43,30 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Attribute casting.
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'dob' => 'date',
+        'borrow_limit' => 'integer',
+    ];
 
     /* ======================
        JWT REQUIRED METHODS
        ====================== */
 
-    /**
-     * Get the identifier that will be stored in the JWT subject claim.
-     */
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
-    /**
-     * Return a key value array, containing any custom claims to be added to JWT.
-     */
     public function getJWTCustomClaims()
     {
         return [];
     }
 
+    /**
+     * Relationships
+     */
     public function borrowRecords()
     {
         return $this->hasMany(BorrowRecord::class);

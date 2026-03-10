@@ -1,658 +1,271 @@
 <template>
-    <Master>
-        <section class="section dashboard">
-          <div class="row">
-    
-                <!-- Top Selling -->
-                <div class="col-12">
-                  <div class="card top-selling overflow-auto">
-    
-                    <div class="filter">
-                    <!--                       <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li class="dropdown-header text-start">
-                          <h6>Filter</h6>
-                        </li>
-    
-                        <li><a class="dropdown-item" href="#">Today</a></li>
-                        <li><a class="dropdown-item" href="#">This Month</a></li>
-                        <li><a class="dropdown-item" href="#">This Year</a></li>
-                      </ul> -->
-                    </div>
-    
-                    <div class="card-body pb-0">
-                      <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
-                      <p class="card-text">
-                        <div class="row">
-                          <div class="col d-flex">
-                   
-                   
-                                <a
-                                  :href="href"
-                                  :class="{ active: isActive }"
-                                  class="btn btn-sm btn-primary rounded-pill"
-                                  style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addCustomer()"
-                                >
-                                  Add Customer
-                                </a>
-                          </div>
-                          <div class="col-auto d-flex justify-content-end">
-                          <div class="btn-group" role="group">
-                              <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="ri-add-line"></i>
-                              </button>
-                              <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                     <a @click="navigateTo('/clients' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Clients</a>
-                                    <a @click="navigateTo('/savings' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Savings</a>
-                                    <a @click="navigateTo('/loans' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Loans</a>
-                                </div>
-                              </div>
-                            </div>
-                        </div>   
-            
-                      </p>
-    
-                      <table id="CustomersTable" class="table table-borderless">
-                        <thead>
-                          <tr>
-                            <th scope="col">Full Name</th>
-                            <th scope="col">Phone</th>
-                            <th scope="col">Visits</th>
-                            <th scope="col">Loyalty Card</th>
-                            <th scope="col">Action</th>
-                          </tr>
-                        </thead>
-                        <!-- Spinner shown while data is initializing -->
-                        <tbody v-if="initializing">
-                          <tr>
-                            <td colspan="7" class="text-center">
-                              <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                        <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
-                            <td>{{customer.visits_count}}</td>
-                            <td>
-                              <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
-                              <span v-else class="badge bg-secondary">None</span>
-                            </td>
+  <Master>
+    <section class="section dashboard">
+      <div class="row">
 
-                            <td>
-                              <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a v-if="customer.visits_count >= 1 && !customer.loyalty_card" 
-                                    @click="openLoyaltyModal(customer)" class="dropdown-item" href="#">
-                                    <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
-                                  </a>
-                                  <a v-if="customer.loyalty_card"
-                                      @click="viewLoyaltyCard(customer)" 
-                                      class="dropdown-item" href="#">
-                                      <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
-                                  </a>
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-    
-                    </div>
-    
-                  </div>
-                </div><!-- End Top Selling -->
+        <!-- Borrow Records Table -->
+        <div class="col-12">
+          <div class="card overflow-auto">
 
-                <div class="modal fade" id="LoyaltyCardModal" tabindex="-1">
-                  <div class="modal-dialog modal-md">
-                    <div class="modal-content">
+            <div class="card-body pb-0">
+              <h5 class="card-title">Borrow Records <span>| Track Book Rentals</span></h5>
 
-                      <div class="modal-header">
-                        <h5 class="modal-title">
-                          {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-
-                      <div class="modal-body" v-if="selectedCustomer">
-
-                        <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
-
-                        <p>
-                          <strong>Card Serial:</strong>
-                          {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
-                        </p>
-
-                        <div class="d-flex flex-wrap">
-                          <div
-                            v-for="n in 10"
-                            :key="n"
-                            class="p-2 m-1 border text-center"
-                            :style="{
-                              width: '32px',
-                              height: '32px',
-                              backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
-                              color: n <= selectedCustomer.visits_count ? 'white' : 'black'
-                            }"
-                          >
-                            {{ n }}
-                          </div>
-                        </div>
-
-                        <p class="mt-2">
-                          <small>Each visit punches a box. Complete 10 visits for a reward!</small>
-                        </p>
-
-                      </div>
-
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
-                        <button
-                          v-if="loyaltyMode === 'issue'"
-                          class="btn btn-success"
-                          @click="confirmIssueCard(selectedCustomer)"
-                          style="background: darkgreen; border-color: darkgreen;"
-                        >
-                          Issue Card
-                        </button>
-
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-              <!-- View Customer Modal -->
-              <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-
-                    <div class="modal-header">
-                      <h5 class="modal-title">View Customer Details</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body" v-if="selectedCustomer">
-
-                      <div class="row g-3">
-
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
-
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-
-                  </div>
+              <div class="row mb-3">
+                <div class="col d-flex">
+                  <button class="btn btn-sm btn-primary rounded-pill"
+                          style="background-color: darkgreen; border-color: darkgreen;"
+                          @click="openBorrowModal">
+                    Borrow Book
+                  </button>
                 </div>
               </div>
 
+              <table id="BorrowTable" class="table table-borderless align-middle">
+                <thead>
+                  <tr>
+                    <th>Book</th>
+                    <th>User</th>
+                    <th>Borrow Date</th>
+                    <th>Expected Return</th>
+                    <th>Return Date</th>
+                    <th>Late Fee</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
 
-                <!-- Add Customer Modal -->
-                <div class="modal fade" id="AddCustomerModal" tabindex="-1" aria-labelledby="AddCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="AddCustomerModalLabel">Add Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Spinner while loading -->
+                <tbody v-if="initializing">
+                  <tr>
+                    <td colspan="8" class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                       </div>
+                    </td>
+                  </tr>
+                </tbody>
 
-                      <div class="modal-body">
-                        <form class="row g-3 needs-validation" novalidate>
-
-                          <!-- Hidden ID -->
-                          <input type="hidden" v-model="data.id" />
-
-                          <!-- First & Last Name -->
-                          <div class="col-md-6">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name" class="form-control" v-model="data.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="email" class="form-control" v-model="data.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control" v-model="data.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="data.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </select>
-                          </div>
-
-
-                        </form>
-                      </div>
-
-                      <!-- Footer -->
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
-                          Save
+                <tbody v-else>
+                  <tr v-for="record in borrowRecords" :key="record.id">
+                    <td>{{ record.book.title }}</td>
+                    <td>{{ record.user.name }}</td>
+                    <td>{{ record.borrow_date }}</td>
+                    <td>{{ record.expected_return_date || 'N/A' }}</td>
+                    <td>{{ record.return_date || 'N/A' }}</td>
+                    <td>{{ record.late_fee.toFixed(2) }}</td>
+                    <td>
+                      <span v-if="record.status==='borrowed'" class="badge bg-warning">Borrowed</span>
+                      <span v-else-if="record.status==='returned'" class="badge bg-success">Returned</span>
+                      <span v-else class="badge bg-danger">Overdue</span>
+                    </td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                                style="background-color: darkgreen; border-color: darkgreen;"
+                                data-bs-toggle="dropdown">
+                          Action
                         </button>
+                        <div class="dropdown-menu">
+                          <a @click.prevent="viewRecord(record)" class="dropdown-item">View</a>
+                          <a v-if="record.status==='borrowed'" 
+                             @click.prevent="returnBook(record)" class="dropdown-item">
+                             Return
+                          </a>
+                          <a @click.prevent="deleteRecord(record.id)" class="dropdown-item">Delete</a>
+                        </div>
                       </div>
-
-                    </div>
-                  </div>
-                </div>
-
-
-                <!-- EDIT Customer MODAL -->
-                <div class="modal fade" id="EditCustomerModal" tabindex="-1" aria-labelledby="EditCustomerModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-
-                      <div class="modal-header">
-                        <h5 class="modal-title">Edit Customer</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-
-                      <div class="modal-body">
-                        <form class="row g-3">
-
-                          <!-- First & Last Name -->
-                          <div class="col-md-12">
-                            <label class="form-label">Name*</label>
-                            <input type="text" id="name_edit" class="form-control" v-model="form.name" required>
-                          </div>
-
-                          <!-- Email -->
-                          <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mail_edit" class="form-control" v-model="form.email" required>
-                          </div>
-
-                          <!-- Phone -->
-                          <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="form.phone">
-                          </div>
-
-                          <div class="col-md-6">
-                            <label class="form-label">Gender</label>
-                            <select class="form-select" v-model="form.gender">
-                              <option value="">Select</option>
-                              <option value="male">Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
-                            </select>
-                          </div>
-
-
-                        </form>
-                      </div>
-
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" @click="submitChanges" style="background: darkgreen; border-color: darkgreen;">
-                          Save Changes
-                        </button>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                    
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
             </div>
-        </section>
-    </Master>
-    </template>
-    
-    <script>
-    import Master from "@/components/Master.vue";
-    import axios from "axios";
-    import Swal from 'sweetalert2';
-    import "jquery/dist/jquery.min.js";
-    import "datatables.net-dt/js/dataTables.dataTables";
-    import "datatables.net-dt/css/jquery.dataTables.min.css";
-    import DefaultProfile from '@/assets/img/default-profile.png'
-    import $ from "jquery";
-    
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000
-    });
-    
-    window.toast = toast;
-    
-    export default {
-      data() {
-        return {
-            customers: [],
-            selectedCustomer: {},
-            errors: {},
-            initializing: true,
-            submitting: false,
-            showLoyaltyCardModal: false,
+          </div>
+        </div>
 
-            data: {        // ADD customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
-            },
+        <!-- View Borrow Record Modal -->
+        <div class="modal fade" id="viewBorrowModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Borrow Record Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body" v-if="selectedRecord">
+                <p><strong>Book:</strong> {{ selectedRecord.book.title }}</p>
+                <p><strong>User:</strong> {{ selectedRecord.user.name }}</p>
+                <p><strong>Borrow Date:</strong> {{ selectedRecord.borrow_date }}</p>
+                <p><strong>Expected Return:</strong> {{ selectedRecord.expected_return_date || 'N/A' }}</p>
+                <p><strong>Return Date:</strong> {{ selectedRecord.return_date || 'N/A' }}</p>
+                <p><strong>Late Fee:</strong> {{ selectedRecord.late_fee.toFixed(2) }}</p>
+                <p><strong>Status:</strong> {{ selectedRecord.status }}</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            form: {        // EDIT customer
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
-            }
-        }
-      },      
-      methods: { 
-        openLoyaltyModal(customer){
-            this.selectedCustomer = customer
-            this.loyaltyMode = 'issue'
+        <!-- Borrow Book Modal -->
+        <div class="modal fade" id="BorrowBookModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
 
-            let modal = new bootstrap.Modal(document.getElementById('LoyaltyCardModal'))
-            modal.show()
-        },
+              <div class="modal-header">
+                <h5 class="modal-title">Borrow Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
 
-        viewLoyaltyCard(customer){
-            this.selectedCustomer = customer
-            this.loyaltyMode = 'view'
+              <div class="modal-body">
+                <form class="row g-3">
 
-            let modal = new bootstrap.Modal(document.getElementById('LoyaltyCardModal'))
-            modal.show()
-        },
-        confirmIssueCard(customer) {
-            // Call API to create a loyalty card record
-            axios.post('/api/loyalty-cards', { customer_id: customer.id, serial: this.generateSerial(customer) })
-                .then(res => {
-                    customer.loyalty_card = res.data;
-                    customer.cardIssued = true;   // ⭐ important
-                    customer.visits = 0;
+                  <div class="col-md-6">
+                    <label class="form-label">Select Book*</label>
+                    <select class="form-select" v-model="borrowData.book_id">
+                      <option value="">-- Choose a Book --</option>
+                      <option v-for="book in availableBooks" :key="book.id" :value="book.id">
+                        {{ book.title }} ({{ book.status }})
+                      </option>
+                    </select>
+                  </div>
 
-                    // SweetAlert success popup with emoji
-                    Swal.fire({
-                        icon: 'success',
-                        title: '🎉 Loyalty Card Issued!',
-                        text: `Card for ${customer.name} has been successfully issued.`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                  <div class="col-md-6">
+                    <label class="form-label">Select User*</label>
+                    <select class="form-select" v-model="borrowData.user_id">
+                      <option value="">-- Choose a User --</option>
+                      <option v-for="user in users" :key="user.id" :value="user.id">
+                        {{ user.name }}
+                      </option>
+                    </select>
+                  </div>
 
-                    // Optional toast for extra subtle notification
-                    toast.fire({
-                        icon: 'success',
-                        title: `✨ ${customer.name}'s loyalty card is now active!`
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
+                  <div class="col-md-6">
+                    <label class="form-label">Borrow Date</label>
+                    <input type="date" class="form-control" v-model="borrowData.borrow_date">
+                  </div>
 
-                    // Error popup
-                    Swal.fire({
-                        icon: 'error',
-                        title: '❌ Failed to Issue Card',
-                        text: 'Something went wrong while issuing the loyalty card.'
-                    });
-                });
+                  <div class="col-md-6">
+                    <label class="form-label">Expected Return Date</label>
+                    <input type="date" class="form-control" v-model="borrowData.expected_return_date">
+                  </div>
 
-            // Hide the modal after issuing
-            const modal = bootstrap.Modal.getInstance(document.getElementById('LoyaltyCardModal'));
-            modal.hide();
-        },
-        generateSerial(customer) {
-          return 'CYB-' + String(customer.id).padStart(4, '0');
-        }, 
-              
-        viewCustomer(customer)
-        {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
-          modal.show();
-        },
-        editCustomer(customer) {
-        this.form = {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
-        };
+                </form>
+              </div>
 
-        const modal = new bootstrap.Modal(
-            document.getElementById('EditCustomerModal')
-        );
-        modal.show();
-        },
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-success" style="background: darkgreen; border-color: darkgreen;"
+                        @click="submitBorrow">
+                  Borrow Book
+                </button>
+              </div>
 
-        validateEditForm() {
-        let isValid = true;
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </Master>
+</template>
 
-        if (!this.form.name) {
-            document.getElementById('name_edit').classList.add('is-invalid');
-            isValid = false;
-        } else {
-            document.getElementById('name_edit').classList.remove('is-invalid');
-        }
+<script>
+import Master from "@/components/Master.vue";
+import axios from "axios";
+import $ from "jquery";
+import "datatables.net-dt/js/dataTables.dataTables";
+import "datatables.net-dt/css/jquery.dataTables.min.css";
 
-        return isValid;
-        },
-        async submitChanges() {
-        if (!this.validateEditForm()) return;
-
-        this.submitting = true;
-
-        try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
-
-            toast.fire('Success!', 'Customer updated successfully', 'success');
-
-            const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
-            );
-            modal.hide();
-
-            this.loadLists();
-
-        } catch (error) {
-            console.error(error);
-            toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Failed to update customer',
-            'error'
-            );
-        } finally {
-            this.submitting = false;
-        }
-        },
-
-        addCustomer()
-        {
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
-          modal.show();
-        },
-        async submit() {
-            if (this.validateForm()) {
-
-                // Start submitting process
-                this.submitting = true;
-                
-                try {
-                    // Simulate asynchronous submission process (you would replace this with your actual submission logic)
-                    await this.submitForm();
-
-                    // Submission successful
-                    this.submitted = true;
-                } catch (error) {
-                    // Handle submission error
-                    console.error("Submission error:", error);
-                } finally {
-                    // End submitting process
-                    this.submitting = false;
-                }
-            }
-        },
-        validateForm() {
-        let isValid = true;
-
-        if (!this.data.name) {
-            document.getElementById('name').classList.add('is-invalid');
-            isValid = false;
-        } else {
-            document.getElementById('name').classList.remove('is-invalid');
-        }
-
-        return isValid;
-        },
-        async submit() {
-        if (!this.validateForm()) return;
-
-        this.submitting = true;
-
-        try {
-            await axios.post('/api/customers', this.data);
-
-            toast.fire('Success!', 'Customer added successfully', 'success');
-
-            const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
-            );
-            modal.hide();
-
-            // Reset form
-            this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
-            };
-
-            this.loadLists();
-
-        } catch (error) {
-            console.error(error);
-            toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Something went wrong',
-            'error'
-            );
-        } finally {
-            this.submitting = false;
-        }
-        },
-        navigateTo(location){
-            this.$router.push(location)
-        },
-        deleteCustomer(id){
-                Swal.fire({
-                  title: 'Are you sure?',
-                  text: "You won't be able to revert this!",
-                  icon: 'warning',
-                  showCancelButton: true,
-                  confirmButtonColor: '#006400',
-                  cancelButtonColor: '#FFA500',
-                  confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                  if (result.isConfirmed) { 
-                  //send request to the server
-                  axios.delete('/api/customers/'+id).then(() => {
-                  toast.fire(
-                    'Deleted!',
-                    'Customer has been deleted.',
-                    'success'
-                  )
-                  this.loadLists();
-                  }).catch(() => {
-                    Swal.fire(
-                    'Failed!',
-                    'There was something wrong.',
-                    'warning'
-                  )
-                  }); 
-                  }else if(result.isDenied) {
-                    console.log('cancelled')
-                  }
-                                   
-                })
-        },
-        loadLists() {
-          this.initializing = true; // Start spinner
-          axios.get('/api/customers')
-            .then((response) => {
-              this.customers = response.data;
-              console.log(response)
-
-              setTimeout(() => {
-                $("#CustomersTable").DataTable();
-              }, 10);
-            })
-            .catch((error) => {
-              console.error('Error fetching user list:', error);
-            })
-            .finally(() => {
-              this.initializing = false; // Stop spinner
-            });
-        },
+export default {
+  components: { Master },
+  data() {
+    return {
+      borrowRecords: [],
+      selectedRecord: null,
+      initializing: true,
+      borrowData: {
+        book_id: "",
+        user_id: "",
+        borrow_date: "",
+        expected_return_date: ""
       },
-      components : {
-          Master,
-      },
-      mounted(){
-        this.loadLists();
-        // this.user = localStorage.getItem('user');
-        // this.user = JSON.parse(this.user);
-        // this.userId = this.user.id;
-        // this.currentUser = JSON.parse(localStorage.getItem('user')) || {};
-        // this.current_user_id = this.currentUser.id;
-        // this.current_user = this.currentUser.first_name + " " + this.currentUser.last_name;
+      availableBooks: [],
+      users: []
+    };
+  },
+  methods: {
+    loadBorrowRecords() {
+      this.initializing = true;
+      axios.get('/api/borrow')
+        .then(res => {
+          this.borrowRecords = res.data;
+          setTimeout(() => { $("#BorrowTable").DataTable(); }, 10);
+        })
+        .finally(() => { this.initializing = false; });
+    },
 
+    viewRecord(record) {
+      this.selectedRecord = record;
+      new bootstrap.Modal(document.getElementById('viewBorrowModal')).show();
+    },
+
+    returnBook(record) {
+      axios.post(`/api/borrow/return/${record.id}`)
+        .then(() => this.loadBorrowRecords());
+    },
+
+    deleteRecord(id) {
+      if (!confirm('Delete this record?')) return;
+      axios.delete(`/api/borrow/${id}`).then(() => this.loadBorrowRecords());
+    },
+
+    // Open Borrow Book Modal
+    openBorrowModal() {
+      this.borrowData = {
+        book_id: "",
+        user_id: "",
+        borrow_date: new Date().toISOString().split("T")[0], // today
+        expected_return_date: "" // optional
+      };
+
+      // Load books that are available
+      axios.get("/api/books?status=available").then(res => {
+        this.availableBooks = res.data;
+      });
+
+      // Load all users
+      axios.get("/api/users").then(res => {
+        this.users = res.data;
+      });
+
+      const modal = new bootstrap.Modal(document.getElementById("BorrowBookModal"));
+      modal.show();
+    },
+
+    // Submit borrow record
+    submitBorrow() {
+      if (!this.borrowData.book_id || !this.borrowData.user_id) {
+        alert("Please select both a book and a user.");
+        return;
       }
+
+      axios.post("/api/borrow", this.borrowData)
+        .then(() => {
+          toast.fire("Success!", "Book borrowed successfully", "success");
+          this.loadBorrowRecords();
+
+          // Hide modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById("BorrowBookModal"));
+          modal.hide();
+        })
+        .catch(err => {
+          console.error(err);
+          toast.fire("Error!", err.response?.data?.message || "Failed to borrow book", "error");
+        });
     }
-    </script>
-    
-    
-    
+  },
+  mounted() {
+    this.loadBorrowRecords();
+  }
+};
+</script>

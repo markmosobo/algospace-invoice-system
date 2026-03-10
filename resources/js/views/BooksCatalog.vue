@@ -37,12 +37,12 @@
                     </div>
                   </div>
 
-                  <table id="BooksTable" class="table table-borderless">
+                  <table id="BooksTable" class="table table-borderless align-middle">
                     <thead>
                       <tr>
+                        <th>Cover</th>
                         <th>Title</th>
                         <th>Author</th>
-                        <th>ISBN</th>
                         <th>Status</th>
                         <th>Action</th>
                       </tr>
@@ -51,7 +51,7 @@
                     <!-- Spinner while loading -->
                     <tbody v-if="initializing">
                       <tr>
-                        <td colspan="5" class="text-center">
+                        <td colspan="6" class="text-center">
                           <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                           </div>
@@ -61,25 +61,53 @@
 
                     <tbody v-else>
                       <tr v-for="book in books" :key="book.id">
+
+                        <!-- Cover Image -->
+                        <td style="width: 70px;">
+                          <img
+                            :src="book.cover_url || defaultCover"
+                            alt="Book cover"
+                            class="img-thumbnail cursor-pointer"
+                            style="width: 50px; height: 70px; object-fit: cover;"
+                            @click="viewBook(book)"
+                          />
+                        </td>
+
                         <td>{{ book.title }}</td>
                         <td>{{ book.author }}</td>
-                        <td>{{ book.barcode ?? 'N/A' }}</td>
                         <td>
-                          <span v-if="book.available" class="badge bg-success">Available</span>
-                          <span v-else class="badge bg-secondary">Rented</span>
+                          <span
+                            v-if="book.status === 'available'"
+                            class="badge bg-success"
+                          >
+                            Available
+                          </span>
+                          <span
+                            v-else
+                            class="badge bg-secondary"
+                          >
+                            Rented
+                          </span>
                         </td>
+
                         <td>
                           <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" style="background-color: darkgreen; border-color: darkgreen;" data-bs-toggle="dropdown">
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                              style="background-color: darkgreen; border-color: darkgreen;"
+                              data-bs-toggle="dropdown"
+                            >
                               Action
                             </button>
                             <div class="dropdown-menu">
-                              <a @click="viewBook(book)" class="dropdown-item" href="#">View</a>
-                              <a @click="editBook(book)" class="dropdown-item" href="#">Edit</a>
-                              <a @click="deleteBook(book.id)" class="dropdown-item" href="#">Delete</a>
+                              <a @click.prevent="viewBook(book)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a>
+                              <a @click.prevent="editBook(book)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                              <a @click.prevent="deleteBook(book.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                             </div>
                           </div>
                         </td>
+
                       </tr>
                     </tbody>
                   </table>
@@ -87,6 +115,67 @@
                 </div>
               </div>
             </div><!-- End Books Section -->
+
+            <!-- View Book Modal -->
+            <div class="modal fade" id="ViewBookModal" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+
+                  <div class="modal-header">
+                    <h5 class="modal-title">Book Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="row">
+
+                      <!-- Cover -->
+                      <div class="col-md-4 text-center">
+                        <img
+                          :src="selectedBook.cover_url || defaultCover"
+                          class="img-fluid img-thumbnail"
+                          style="max-height: 350px; object-fit: cover;"
+                        />
+                      </div>
+
+                      <!-- Details -->
+                      <div class="col-md-8">
+                        <h4 class="mb-2">{{ selectedBook.title }}</h4>
+
+                        <p class="mb-1"><strong>Author:</strong> {{ selectedBook.author || 'N/A' }}</p>
+                        <p class="mb-1"><strong>Genre:</strong> {{ selectedBook.genre || 'N/A' }}</p>
+                        <p class="mb-1"><strong>Condition:</strong> {{ selectedBook.condition || 'N/A' }}</p>
+                        <p class="mb-1"><strong>ISBN:</strong> {{ selectedBook.barcode || 'N/A' }}</p>
+
+                        <p class="mt-2">
+                          <strong>Status:</strong>
+                          <span
+                            v-if="selectedBook.status === 'available'"
+                            class="badge bg-success ms-1"
+                          >
+                            Available
+                          </span>
+                          <span
+                            v-else
+                            class="badge bg-secondary ms-1"
+                          >
+                            Rented
+                          </span>
+                        </p>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">
+                      Close
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
 
             <!-- Add Book Modal -->
             <div class="modal fade" id="AddBookModal" tabindex="-1">
@@ -283,6 +372,16 @@ import "jquery/dist/jquery.min.js";
 import "datatables.net-dt/js/dataTables.dataTables";
 import "datatables.net-dt/css/jquery.dataTables.min.css";
 import $ from "jquery";
+import Swal from 'sweetalert2';
+
+const toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+});
+
+window.toast = toast;
 
 export default {
   components: { Master },
@@ -294,7 +393,8 @@ export default {
       initializing: true,
       coverPreview: null,
       bookData: this.emptyBook(),
-    };
+      selectedBook: {},     // 👈 ADD THIS
+      defaultCover: 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg'    };
   },
 
   methods: {
@@ -311,7 +411,15 @@ export default {
         cover_image: null, // 🔑 must match backend
       };
     },
+    viewBook(book) {
+      // Defensive copy (prevents reactive side-effects)
+      this.selectedBook = { ...book };
 
+      // Open modal
+      const modalEl = document.getElementById("ViewBookModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    },
     loadBooks() {
       this.initializing = true;
       axios.get("/api/books")
@@ -381,10 +489,37 @@ export default {
     });
     },
 
-    deleteBook(id) {
-      if (!confirm("Delete this book?")) return;
-      axios.delete(`/api/books/${id}`)
-        .then(() => this.loadBooks());
+    deleteBook(id){
+            Swal.fire({
+              title: 'Are you sure?',
+              text: "You won't be able to revert this!",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#006400',
+              cancelButtonColor: '#FFA500',
+              confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+              if (result.isConfirmed) { 
+              //send request to the server
+              axios.delete('/api/book/'+id).then(() => {
+              toast.fire(
+                'Deleted!',
+                'Book has been deleted.',
+                'success'
+              )
+              this.loadLists();
+              }).catch(() => {
+                Swal.fire(
+                'Failed!',
+                'There was something wrong.',
+                'warning'
+              )
+              }); 
+              }else if(result.isDenied) {
+                console.log('cancelled')
+              }
+                                
+            })
     },
 
     handleCoverUpload(e) {

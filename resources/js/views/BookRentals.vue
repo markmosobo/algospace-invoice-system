@@ -234,7 +234,7 @@ export default {
       });
 
       // Load all users
-      axios.get("/api/users").then(res => {
+      axios.get("/api/borrowers").then(res => {
         this.users = res.data;
       });
 

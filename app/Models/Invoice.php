@@ -18,6 +18,10 @@ class Invoice extends Model
         'due_date',
         'status',
         'total_amount',
+        'status',
+        'closed_note',
+        'closed_at',
+        'send_reminders'
     ];
 
     // Relationships
@@ -58,5 +62,10 @@ class Invoice extends Model
             '0',
             STR_PAD_LEFT
         );
-    }     
+    }  
+    
+    public function isClosedUnpaid()
+    {
+        return $this->status === 'closed_unpaid';
+    }
 }

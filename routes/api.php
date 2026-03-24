@@ -110,6 +110,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     // FINAL (DB)
     Route::get('/invoices/{id}/print', [InvoiceController::class, 'print']);
+    Route::post('/invoices/{invoice}/close-unpaid', [InvoiceController::class, 'closeUnpaid']);
     
     // routes/api.php
     Route::get('/invoices/preview-html', [InvoicePreviewController::class, 'previewHtml']);

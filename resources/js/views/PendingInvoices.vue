@@ -102,10 +102,11 @@
                                 :class="{
                                   'bg-secondary': item.status === 'pending',
                                   'bg-warning': item.status === 'partial',
-                                  'bg-success': item.status === 'paid'
+                                  'bg-success': item.status === 'paid',
+                                  'bg-dark': item.status === 'closed_unpaid'
                                 }"
                               >
-                                {{ item.status.toUpperCase() }}
+                                {{ item.status.replace('_', ' ').toUpperCase() }}
                               </span>
 
                             </td>
@@ -128,7 +129,7 @@
                                     <i class="ri-pencil-fill mr-2"></i>Edit
                                   </a>
                                   <a
-                                    v-if="item.status !== 'paid'"
+                                    v-if="!['paid', 'closed_unpaid'].includes(item.status)"
                                     @click="addPayment(item)"
                                     class="dropdown-item text-success"
                                     href="#"
@@ -139,8 +140,15 @@
                                       (KES {{ (item.total_amount - item.amount_paid).toFixed(2) }})
                                     </small>
                                   </a>
-
-
+                                  <a
+                                    v-if="item.status !== 'paid' && item.status !== 'closed_unpaid'"
+                                    @click="openCloseUnpaidModal(item)"
+                                    class="dropdown-item text-warning"
+                                    href="#"
+                                  >
+                                    <i class="ri-lock-line me-2"></i>
+                                    Close as Unpaid
+                                  </a>
                                     <div class="dropdown-divider"></div>
                                   <a @click="deleteInvoice(item.id)" class="dropdown-item" href="#">
                                     <i class="ri-delete-bin-line mr-2"></i>Delete
@@ -174,7 +182,7 @@
 
                           <!-- CUSTOMER / VENDOR -->
                           <div class="col-md-6" v-if="selectedInvoice.invoice_type === 'sales'">
-                            <strong>Customer:</strong> <br> {{ selectedInvoice.customer?.name || "N/A" }}
+                            <strong>Customer:</strong> <br> {{ selectedInvoice.customer?.name || "N/A" }} - {{ selectedInvoice.customer?.phone || "N/A" }}
                           </div>
 
                           <div class="col-md-6" v-if="selectedInvoice.invoice_type === 'expense'">
@@ -441,7 +449,54 @@
                   </div>
                 </div>
 
-                    
+                <div class="modal fade" id="closeUnpaidModal" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+
+                      <div class="modal-header">
+                        <h5 class="modal-title">Close Invoice as Unpaid</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <div class="modal-body">
+                        <p class="mb-2">
+                          This will mark the invoice as <strong>Closed – Unpaid</strong>.
+                        </p>
+
+                        <p class="text-muted small">
+                          No more reminders will be sent and the balance will remain outstanding
+                          for record purposes only.
+                        </p>
+
+                        <div class="mb-3">
+                          <label class="form-label">Internal Note (optional)</label>
+                          <textarea
+                            v-model="closeNote"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Client non-responsive after reminders"
+                          ></textarea>
+                        </div>
+                      </div>
+
+                      <div class="modal-footer">
+                        <button class="btn btn-light" data-bs-dismiss="modal">
+                          Cancel
+                        </button>
+
+                        <button
+                          class="btn btn-dark"
+                          :disabled="closingInvoice"
+                          @click="confirmCloseUnpaid"
+                        >
+                          <span v-if="closingInvoice" class="spinner-border spinner-border-sm me-2"></span>
+                          Close Invoice
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>                    
 
             </div>
         </section>
@@ -473,6 +528,8 @@
             customers: [],
             invoices: [],
             selectedInvoice: {},
+            closeNote: '',
+            closingInvoice: false,
             errors: {},
             initializing: true,
             submitting: false,
@@ -507,6 +564,34 @@
         }
       },      
       methods: { 
+        openCloseUnpaidModal(invoice) {
+          this.selectedInvoice = invoice
+          this.closeNote = 'Client non-responsive after reminders'
+
+          const modal = new bootstrap.Modal(
+            document.getElementById('closeUnpaidModal')
+          )
+          modal.show()
+        },
+
+        confirmCloseUnpaid() {
+          if (!this.selectedInvoice) return
+
+          this.closingInvoice = true
+
+          axios.post(`/api/invoices/${this.selectedInvoice.id}/close-unpaid`, {
+            note: this.closeNote
+          }).then(() => {
+            this.selectedInvoice.status = 'closed_unpaid'
+
+            this.closingInvoice = false
+            bootstrap.Modal.getInstance(
+              document.getElementById('closeUnpaidModal')
+            ).hide()
+          }).catch(() => {
+            this.closingInvoice = false
+          })
+        },        
         // Format date as dd/mm/yyyy
         formatDate(date) {
           if (!date) return "N/A";

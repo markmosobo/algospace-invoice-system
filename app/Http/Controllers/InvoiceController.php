@@ -187,4 +187,29 @@ class InvoiceController extends Controller
 
         return response()->file(storage_path('app/public/' . $invoice->pdf_path));
     }
+
+    public function closeUnpaid(Request $request, Invoice $invoice)
+    {
+        // Prevent closing paid invoices
+        if ($invoice->status === 'paid') {
+            return response()->json([
+                'message' => 'Paid invoices cannot be closed as unpaid.'
+            ], 422);
+        }
+
+        $request->validate([
+            'note' => 'nullable|string|max:1000'
+        ]);
+
+        $invoice->update([
+            'status' => 'closed_unpaid',
+            'closed_note' => $request->note,
+            'closed_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Invoice closed as unpaid.',
+            'invoice' => $invoice
+        ]);
+    }    
 }

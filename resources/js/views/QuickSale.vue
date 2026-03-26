@@ -54,6 +54,14 @@
                                 <i class="ri-user-line me-1"></i> {{ todayFootTraffic }} Visitors Today
                             </button>
 
+                            <!-- Add To-Do Button -->
+                            <a
+                            class="btn btn-sm btn-warning rounded-pill me-2"
+                            style="background-color: darkorange; border-color: darkorange;"
+                            @click="openToDoModal"
+                            >
+                            Add To-Do
+                            </a>
                             </div>
                         </div>
                         </p>
@@ -605,7 +613,51 @@
                 </div>
                 </div>
 
-                    
+                <!-- To-Do Modal -->
+                <div class="modal fade" id="toDoModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add To-Do</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form @submit.prevent="createToDo">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input v-model="newToDo.title" type="text" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea v-model="newToDo.description" class="form-control"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select v-model="newToDo.category" class="form-select">
+                            <option value="cyber">Cyber</option>
+                            <option value="farm">Farm</option>
+                            <option value="personal">Personal</option>
+                            <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Priority</label>
+                            <select v-model="newToDo.priority" class="form-select">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100">Add To-Do</button>
+                        </form>
+                    </div>
+                    </div>
+                </div>
+                </div>                   
 
             </div>
         </section>        
@@ -635,6 +687,14 @@ export default {
     return {
       customers: [],
       services: [],
+      showToDoModal: false,
+      newToDo: {
+        title: '',
+        description: '',
+        category: 'cyber',
+        priority: 'medium',
+      },
+      todos: [], // all current to-dos
       todayFootTraffic: 0,
       search: "",
       serviceSearch: "",
@@ -700,6 +760,32 @@ export default {
    },
 
   methods: {
+    openToDoModal() {
+        const modal = new bootstrap.Modal(document.getElementById('toDoModal'));
+        modal.show();
+    },
+
+    async createToDo() {
+        try {
+        const res = await axios.post('/api/to-dos', this.newToDo);
+        this.todos.push(res.data.task); // add to local list
+
+        // Reset form
+        this.newToDo = { title: '', description: '', category: 'cyber', priority: 'medium' };
+
+        // Close modal
+        const modalEl = document.getElementById('toDoModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        } catch (err) {
+        console.error('Failed to add To-Do:', err);
+        toast.fire({
+            icon: 'error',
+            title: 'Failed to add To-Do'
+        });
+        }
+    },
     goToFootTraffic() {
         this.$router.push({ name: 'FootTraffic' });
     },

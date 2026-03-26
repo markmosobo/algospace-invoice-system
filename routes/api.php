@@ -43,6 +43,7 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SystemLogController;
+use App\Http\Controllers\ToDoController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CapitalInjectionController;
@@ -74,6 +75,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('provider-services', ProviderServiceController::class);
     Route::apiResource('service-providers', ServiceProviderController::class);
     Route::apiResource('expenses', ExpenseController::class);
+    Route::apiResource('to-dos', ToDoController::class);
 
     Route::apiResource('farms', FarmController::class);
     Route::apiResource('farm-ventures', FarmVentureController::class);

@@ -39,7 +39,7 @@
                         <a @click="navigateTo('/foot-traffic')" class="dropdown-item" href="#">
                           <i class="ri-user-line mr-2"></i> Foot Traffic Dashboard
                         </a>
-                        <a @click="navigateTo('/quick-sales')" class="dropdown-item" href="#">
+                        <a @click="navigateTo('/quick-sale')" class="dropdown-item" href="#">
                           <i class="ri-shopping-cart-line mr-2"></i> Quick Sales
                         </a>
                       </div>

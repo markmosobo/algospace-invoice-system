@@ -613,16 +613,33 @@
                 </div>
                 </div>
 
-                <!-- To-Do Modal -->
-                <div class="modal fade" id="toDoModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
+                <!-- Manage To-Dos Modal -->
+                <div
+                class="modal fade"
+                id="toDoModal"
+                tabindex="-1"
+                aria-labelledby="toDoModalLabel"
+                aria-hidden="true"
+                >
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
                     <div class="modal-content">
+
+                    <!-- Header -->
                     <div class="modal-header">
-                        <h5 class="modal-title">Add To-Do</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title">
+                        To Do List
+                        </h5>
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
+
+                    <!-- Body -->
                     <div class="modal-body">
-                        <form @submit.prevent="createToDo">
+
+                        <!-- Add To Do Form -->
+                        <div class="card mb-3">
+                        <div class="card-header fw-bold">Add To-Do</div>
+                        <div class="card-body row g-3">
+
                         <div class="mb-3">
                             <label class="form-label">Title</label>
                             <input v-model="newToDo.title" type="text" class="form-control" required>
@@ -652,12 +669,75 @@
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-warning w-100">Add To-Do</button>
-                        </form>
+                            <div class="col-md-3 d-grid">
+                            <button
+                                class="btn btn-success"
+                                @click="createToDo"
+                            >
+                                Save To-Do
+                            </button>
+                            </div>
+
+                        </div>
+                        </div>
+
+                        <!-- To-Do Table -->
+                        <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th width="120">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr v-if="todos.length === 0">
+                            <td colspan="5" class="text-center text-muted">
+                                No to-dos added yet
+                            </td>
+                            </tr>
+
+                            <tr v-for="item in todos" :key="item.id">
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.category }}</td>
+                            <td>{{ item.priority }}</td>
+                            <td>
+                                <span
+                                class="badge"
+                                :class="item.status === 'medium' ? 'bg-success' : 'bg-danger'"
+                                >
+                                {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <button
+                                class="btn btn-sm btn-outline-danger"
+                                @click="deleteToDo(item)"
+                                >
+                                Delete
+                                </button>
+                            </td>
+                            </tr>
+                        </tbody>
+                        </table>
+
                     </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                        </button>
+                    </div>
+
                     </div>
                 </div>
-                </div>                   
+                </div>                  
+
+
 
             </div>
         </section>        
@@ -760,32 +840,49 @@ export default {
    },
 
   methods: {
-    openToDoModal() {
-        const modal = new bootstrap.Modal(document.getElementById('toDoModal'));
-        modal.show();
-    },
+        openToDoModal() {
+            this.todos = []
+            this.resetToDoForm()
+            this.fetchToDos()
 
-    async createToDo() {
-        try {
-        const res = await axios.post('/api/to-dos', this.newToDo);
-        this.todos.push(res.data.task); // add to local list
+            const modal = new bootstrap.Modal(
+            document.getElementById('toDoModal')
+            )
+            modal.show()
+        },
 
-        // Reset form
-        this.newToDo = { title: '', description: '', category: 'cyber', priority: 'medium' };
+        fetchToDos() {
+            axios.get(`/api/to-dos`)
+            .then(res => this.todos = res.data)
+        },
+        resetToDoForm() {
+            this.newToDo = {
+            title: '',
+            description: '',
+            category: '',
+            priority: '',
+            status: '',
+            }
+        },
+        createToDo() {
+            axios.post(
+            `/api/to-dos`,
+            this.newToDo
+            ).then(res => {
+            this.todos.unshift(res.data)
+            this.resetToDoForm()
+            })
+        },
 
-        // Close modal
-        const modalEl = document.getElementById('toDoModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
+        deleteToDo(item) {
+            if (!confirm('Delete this to-do?')) return
 
-        } catch (err) {
-        console.error('Failed to add To-Do:', err);
-        toast.fire({
-            icon: 'error',
-            title: 'Failed to add To-Do'
-        });
-        }
-    },
+            axios.delete(`/api/to-dos/${item.id}`)
+            .then(() => {
+                this.todos = this.todos.filter(u => u.id !== item.id)
+            })
+        },        
+
     goToFootTraffic() {
         this.$router.push({ name: 'FootTraffic' });
     },

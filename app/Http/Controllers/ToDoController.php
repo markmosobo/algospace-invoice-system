@@ -17,6 +17,18 @@ class ToDoController extends Controller
         return response()->json($todos);
     }
 
+    public function markDone(ToDo $todo)
+    {
+        $todo->update([
+            'status' => 'completed'
+        ]);
+
+        return response()->json([
+            'message' => 'To-do marked as done',
+            'todo' => $todo
+        ]);
+    }    
+
     /**
      * Store a newly created task.
      */

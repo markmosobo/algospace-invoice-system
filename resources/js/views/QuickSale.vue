@@ -613,129 +613,163 @@
                 </div>
                 </div>
 
-                <!-- Manage To-Dos Modal -->
-                <div
-                class="modal fade"
-                id="toDoModal"
-                tabindex="-1"
-                aria-labelledby="toDoModalLabel"
-                aria-hidden="true"
+<!-- Manage To-Dos Modal -->
+<div
+  class="modal fade"
+  id="toDoModal"
+  tabindex="-1"
+  aria-labelledby="toDoModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="toDoModalLabel">To-Do List</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Add To Do -->
+        <div class="card mb-4">
+          <div class="card-header fw-bold">Add To-Do</div>
+
+          <div class="card-body row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Title</label>
+              <input
+                v-model="newToDo.title"
+                type="text"
+                class="form-control"
+                placeholder="Enter task title"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <select v-model="newToDo.category" class="form-select">
+                <option value="cyber">Cyber</option>
+                <option value="farm">Farm</option>
+                <option value="personal">Personal</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label">Description</label>
+              <textarea
+                v-model="newToDo.description"
+                class="form-control"
+                rows="2"
+                placeholder="Optional description"
+              ></textarea>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Priority</label>
+              <select v-model="newToDo.priority" class="form-select">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div class="col-md-4 align-self-end">
+              <button
+                class="btn btn-success w-100"
+                @click="createToDo"
+              >
+                Save To-Do
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- To-Do Table -->
+        <table class="table table-bordered table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th width="150">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-if="todos.length === 0">
+              <td colspan="5" class="text-center text-muted">
+                No to-dos added yet
+              </td>
+            </tr>
+
+            <tr v-for="item in todos" :key="item.id">
+              <td>{{ item.title }}</td>
+
+              <td class="text-capitalize">
+                {{ item.category }}
+              </td>
+
+              <td>
+                <span
+                  class="badge"
+                  :class="{
+                    'bg-danger': item.priority === 'high',
+                    'bg-warning': item.priority === 'medium',
+                    'bg-secondary': item.priority === 'low'
+                  }"
                 >
-                <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                    <div class="modal-content">
+                  {{ item.priority }}
+                </span>
+              </td>
 
-                    <!-- Header -->
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                        To Do List
-                        </h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+              <td>
+                <span
+                  class="badge"
+                  :class="item.status === 'done' ? 'bg-success' : 'bg-warning'"
+                >
+                  {{ item.status }}
+                </span>
+              </td>
 
-                    <!-- Body -->
-                    <div class="modal-body">
+              <td class="d-flex gap-1">
+                <button
+                  v-if="item.status !== 'done'"
+                  class="btn btn-sm btn-outline-success"
+                  @click="markDone(item)"
+                >
+                  Done
+                </button>
 
-                        <!-- Add To Do Form -->
-                        <div class="card mb-3">
-                        <div class="card-header fw-bold">Add To-Do</div>
-                        <div class="card-body row g-3">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  @click="deleteToDo(item)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input v-model="newToDo.title" type="text" class="form-control" required>
-                        </div>
+      </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea v-model="newToDo.description" class="form-control"></textarea>
-                        </div>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select v-model="newToDo.category" class="form-select">
-                            <option value="cyber">Cyber</option>
-                            <option value="farm">Farm</option>
-                            <option value="personal">Personal</option>
-                            <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Priority</label>
-                            <select v-model="newToDo.priority" class="form-select">
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                            </select>
-                        </div>
-
-                            <div class="col-md-3 d-grid">
-                            <button
-                                class="btn btn-success"
-                                @click="createToDo"
-                            >
-                                Save To-Do
-                            </button>
-                            </div>
-
-                        </div>
-                        </div>
-
-                        <!-- To-Do Table -->
-                        <table class="table table-bordered table-striped">
-                        <thead class="table-dark">
-                            <tr>
-                            <th>Title</th>
-                            <th>Category</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th width="120">Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr v-if="todos.length === 0">
-                            <td colspan="5" class="text-center text-muted">
-                                No to-dos added yet
-                            </td>
-                            </tr>
-
-                            <tr v-for="item in todos" :key="item.id">
-                            <td>{{ item.title }}</td>
-                            <td>{{ item.category }}</td>
-                            <td>{{ item.priority }}</td>
-                            <td>
-                                <span
-                                class="badge"
-                                :class="item.status === 'medium' ? 'bg-success' : 'bg-danger'"
-                                >
-                                {{ item.status }}
-                                </span>
-                            </td>
-                            <td>
-                                <button
-                                class="btn btn-sm btn-outline-danger"
-                                @click="deleteToDo(item)"
-                                >
-                                Delete
-                                </button>
-                            </td>
-                            </tr>
-                        </tbody>
-                        </table>
-
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">
-                        Close
-                        </button>
-                    </div>
-
-                    </div>
-                </div>
-                </div>                  
+    </div>
+  </div>
+</div>                 
 
 
 
@@ -873,7 +907,19 @@ export default {
             this.resetToDoForm()
             })
         },
-
+        markDone(item) {
+        axios.patch(`/api/todos/${item.id}/done`)
+            .then(res => {
+            // update UI from backend response
+            item.status = res.data.todo.status;
+            })
+            .catch(() => {
+            toast.fire({
+                icon: 'error',
+                title: 'Failed to mark to-do as done'
+            });
+            });
+        },
         deleteToDo(item) {
             if (!confirm('Delete this to-do?')) return
 

@@ -76,7 +76,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('service-providers', ServiceProviderController::class);
     Route::apiResource('expenses', ExpenseController::class);
     Route::apiResource('to-dos', ToDoController::class);
-
+    Route::patch('/todos/{todo}/done', [ToDoController::class, 'markDone']); // Mark done
+    
     Route::apiResource('farms', FarmController::class);
     Route::apiResource('farm-ventures', FarmVentureController::class);
     Route::apiResource('crops', CropController::class);

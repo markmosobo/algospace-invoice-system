@@ -76,8 +76,13 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('service-providers', ServiceProviderController::class);
     Route::apiResource('expenses', ExpenseController::class);
     Route::apiResource('to-dos', ToDoController::class);
-    Route::patch('/todos/{todo}/done', [ToDoController::class, 'markDone']); // Mark done
-    
+    Route::get('/todos/active', [TodoController::class, 'active']);
+    Route::get('/todos-dashboard', [TodoController::class, 'dashboard']);
+    Route::patch('/todos/{todo}/done', [TodoController::class, 'markDone']);
+    Route::patch('/todos/{todo}/defer', [TodoController::class, 'defer']);
+    Route::patch('/todos/{todo}/resume', [TodoController::class, 'resume']);
+    Route::delete('/to-dos/{todo}', [TodoController::class, 'destroy']);
+
     Route::apiResource('farms', FarmController::class);
     Route::apiResource('farm-ventures', FarmVentureController::class);
     Route::apiResource('crops', CropController::class);

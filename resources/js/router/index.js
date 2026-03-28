@@ -41,6 +41,7 @@ import BookRentals from '@/views/BookRentals.vue';
 import BooksCatalog from '@/views/BooksCatalog.vue';
 import BookBorrowers from '@/views/BookBorrowers.vue';
 import Partners from '@/views/Partners.vue';
+import ToDos from '../views/ToDos.vue';
 
 const routes = [
   // Public routes
@@ -89,6 +90,8 @@ const routes = [
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
 
   { path: '/foot-traffic', name: 'FootTraffic', component: FootTraffic, meta: { requiresAuth: true } },
+
+  { path: '/to-do-tasks', name: 'ToDos', component: ToDos, meta: { requiresAuth: true } },
 
   { path: '/book-rentals', name: 'BookRentals', component: BookRentals, meta: { requiresAuth: true } },
   { path: '/books', name: 'BooksCatalog', component: BooksCatalog, meta: { requiresAuth: true } },

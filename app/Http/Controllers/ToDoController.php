@@ -17,6 +17,36 @@ class ToDoController extends Controller
         return response()->json($todos);
     }
 
+    public function active()
+    {
+        $todos = Todo::whereIn('status', ['pending', 'deferred'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($todos);
+    }
+
+public function dashboard()
+{
+    // 1. Fetch ALL todos (for accurate counts)
+    $allTodos = Todo::select('id', 'status')->get();
+
+    // 2. Count ALL statuses
+    $statusCounts = $allTodos
+        ->groupBy('status')
+        ->map(fn ($group) => $group->count());
+
+    // 3. Fetch ONLY todos you want to display
+    $todos = Todo::whereIn('status', ['pending', 'deferred'])
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'todos' => $todos,
+        'statusCounts' => $statusCounts
+    ]);
+}
+
     public function markDone(ToDo $todo)
     {
         $todo->update([
@@ -29,6 +59,37 @@ class ToDoController extends Controller
         ]);
     }    
 
+    public function defer(Todo $todo)
+    {
+        // Prevent deferring completed tasks
+        if ($todo->status === 'completed') {
+            return response()->json([
+                'message' => 'Completed tasks cannot be deferred'
+            ], 422);
+        }
+
+        $todo->status = 'deferred';
+        $todo->save();
+
+        return response()->json([
+            'todo' => $todo
+        ]);
+    }
+    public function resume(Todo $todo)
+    {
+        if ($todo->status !== 'deferred') {
+            return response()->json([
+                'message' => 'Only deferred tasks can be resumed'
+            ], 422);
+        }
+
+        $todo->status = 'pending';
+        $todo->save();
+
+        return response()->json([
+            'todo' => $todo
+        ]);
+    }        
     /**
      * Store a newly created task.
      */

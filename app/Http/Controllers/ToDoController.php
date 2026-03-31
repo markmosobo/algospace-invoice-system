@@ -26,26 +26,26 @@ class ToDoController extends Controller
         return response()->json($todos);
     }
 
-public function dashboard()
-{
-    // 1. Fetch ALL todos (for accurate counts)
-    $allTodos = Todo::select('id', 'status')->get();
+    public function dashboard()
+    {
+        // 1. Fetch ALL todos (for accurate counts)
+        $allTodos = Todo::select('id', 'status')->get();
 
-    // 2. Count ALL statuses
-    $statusCounts = $allTodos
-        ->groupBy('status')
-        ->map(fn ($group) => $group->count());
+        // 2. Count ALL statuses
+        $statusCounts = $allTodos
+            ->groupBy('status')
+            ->map(fn ($group) => $group->count());
 
-    // 3. Fetch ONLY todos you want to display
-    $todos = Todo::whereIn('status', ['pending', 'deferred'])
-        ->latest()
-        ->get();
+        // 3. Fetch ONLY todos you want to display
+        $todos = Todo::whereIn('status', ['pending', 'deferred'])
+            ->latest()
+            ->get();
 
-    return response()->json([
-        'todos' => $todos,
-        'statusCounts' => $statusCounts
-    ]);
-}
+        return response()->json([
+            'todos' => $todos,
+            'statusCounts' => $statusCounts
+        ]);
+    }
 
     public function markDone(ToDo $todo)
     {

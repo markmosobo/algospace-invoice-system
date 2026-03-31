@@ -61,59 +61,106 @@
         </div>
 
         <!-- Optional Table -->
-<div class="col-12 mt-3" v-if="showTable">
-  <div class="card">
-    <div class="card-body">
-      <h5>Details</h5>
-      <table class="table table-bordered">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Type</th>
-            <th>Reference</th>
-            <th>Amount</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(d, index) in paginatedDetails" :key="d.id">
-            <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
-            <td>{{ d.type }}</td>
-            <td>{{ d.reference }}</td>
-            <td>{{ Number(d.amount).toLocaleString() }}</td>
-            <td>{{ formatDate(d.payment_date) }}</td>
-          </tr>
-          <tr v-if="details.length === 0">
-            <td colspan="5" class="text-center">No details found.</td>
-          </tr>
-        </tbody>
-      </table>
+        <div class="col-12 mt-3" v-if="showTable">
+        <div class="card">
+            <div class="card-body">
+            <h5>Details</h5>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Type</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(d, index) in paginatedDetails" :key="d.id">
+                    <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
+                    <td>{{ d.type }}</td>
+                    <td>{{ d.reference }}</td>
+                    <td>{{ Number(d.amount).toLocaleString() }}</td>
+                    <td>{{ formatDate(d.payment_date) }}</td>
+                </tr>
+                <tr v-if="details.length === 0">
+                    <td colspan="5" class="text-center">No details found.</td>
+                </tr>
+                </tbody>
+            </table>
 
-      <!-- Pagination Controls -->
-      <nav v-if="totalPages > 1" class="mt-2">
-        <ul class="pagination justify-content-center mb-0">
-          <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <button class="page-link" @click="currentPage--">Previous</button>
-          </li>
+            <!-- Pagination Controls -->
+            <nav v-if="totalPages > 1" class="mt-2">
+                <ul class="pagination justify-content-center mb-0">
+                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <button class="page-link" @click="currentPage--">Previous</button>
+                </li>
 
-          <li
-            v-for="page in totalPages"
-            :key="page"
-            class="page-item"
-            :class="{ active: currentPage === page }"
-          >
-            <button class="page-link" @click="currentPage = page">{{ page }}</button>
-          </li>
+                <li
+                    v-for="page in totalPages"
+                    :key="page"
+                    class="page-item"
+                    :class="{ active: currentPage === page }"
+                >
+                    <button class="page-link" @click="currentPage = page">{{ page }}</button>
+                </li>
 
-          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-            <button class="page-link" @click="currentPage++">Next</button>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
+                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                    <button class="page-link" @click="currentPage++">Next</button>
+                </li>
+                </ul>
+            </nav>
+            </div>
+        </div>
+        </div>
 
+        <!-- AI INSIGHTS CHAT -->
+        <div class="col-12 mt-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">AI Insights</h5>
+            <small class="text-muted">Ask about trends, risks, projections</small>
+            </div>
+
+            <div class="card-body d-flex flex-column" style="height: 420px;">
+            <!-- Messages -->
+            <div class="flex-grow-1 overflow-auto mb-2">
+                <div
+                v-for="(msg, i) in aiMessages"
+                :key="i"
+                class="mb-2"
+                :class="msg.role === 'user' ? 'text-end' : 'text-start'"
+                >
+                <span
+                    class="d-inline-block p-2 rounded"
+                    :class="msg.role === 'user'
+                    ? 'bg-primary text-white'
+                    : 'bg-light text-dark'"
+                    style="max-width: 80%;"
+                >
+                    {{ msg.text }}
+                </span>
+                </div>
+
+                <div v-if="aiLoading" class="text-muted small">
+                AI is thinking…
+                </div>
+            </div>
+
+            <!-- Input -->
+            <form @submit.prevent="sendAIMessage" class="d-flex gap-2">
+                <input
+                v-model="aiInput"
+                class="form-control"
+                placeholder="Why did profits drop?"
+                />
+                <button class="btn btn-dark" :disabled="aiLoading">
+                Send
+                </button>
+            </form>
+            </div>
+        </div>
+        </div>
 
     </div>
     </section>
@@ -194,6 +241,15 @@
 
         chartSeries: [],
         showTable: true,
+        //ai
+        aiInput: '',
+        aiLoading: false,
+        aiMessages: [
+        {
+            role: 'ai',
+            text: 'I can explain your numbers, trends, and risks. Ask me anything.'
+        }
+        ],        
         };
     },
     computed: {
@@ -213,6 +269,42 @@
     },
 
     methods: {
+        async sendAIMessage() {
+        if (!this.aiInput.trim()) return
+
+        const message = this.aiInput
+
+        this.aiMessages.push({
+            role: 'user',
+            text: message
+        })
+
+        this.aiInput = ''
+        this.aiLoading = true
+
+        try {
+            const res = await axios.post('/api/ai/chat', {
+            message,
+            context: {
+                start_date: this.filters.start_date,
+                end_date: this.filters.end_date,
+                summary: this.summary
+            }
+            })
+
+            this.aiMessages.push({
+            role: 'ai',
+            text: res.data.reply
+            })
+        } catch (e) {
+            this.aiMessages.push({
+            role: 'ai',
+            text: 'Something went wrong. Try again.'
+            })
+        } finally {
+            this.aiLoading = false
+        }
+        },        
         // Format date as dd/mm/yyyy
         formatDate(date) {
           if (!date) return "N/A";

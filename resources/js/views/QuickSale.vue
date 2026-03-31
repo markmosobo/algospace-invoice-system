@@ -23,57 +23,60 @@
                     <div class="card-body pb-0">
                       <h5 class="card-title">Quick Sales <span>| Sales at AlgoSpace Cyber</span></h5>
                         <p class="card-text">
-                        <div class="row">
-                        <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="row mb-3">
+                        <div class="d-flex align-items-center flex-wrap gap-2 w-100">
 
+                            <!-- Left buttons -->
+                            <div class="d-flex flex-wrap gap-2">
                             <!-- Add Quick Sale -->
                             <a
-                            :href="href"
-                            :class="{ active: isActive }"
-                            class="btn btn-sm btn-primary rounded-pill"
-                            style="background-color: darkgreen; border-color: darkgreen;"
-                            @click="addQuickSale()"
+                                :href="href"
+                                :class="{ active: isActive }"
+                                class="btn btn-sm btn-primary rounded-pill"
+                                style="background-color: darkgreen; border-color: darkgreen;"
+                                @click="addQuickSale()"
                             >
-                            Add Quick Sale
+                                Add Quick Sale
                             </a>
 
                             <!-- Log Walk-in -->
                             <button
-                            class="btn btn-sm btn-outline-success rounded-pill"
-                            data-bs-toggle="modal"
-                            data-bs-target="#walkInModal"
+                                class="btn btn-sm btn-outline-success rounded-pill"
+                                data-bs-toggle="modal"
+                                data-bs-target="#walkInModal"
                             >
-                            Log Walk-in
+                                Log Walk-in
                             </button>
 
                             <!-- Foot Traffic Button -->
                             <button
-                            class="btn btn-sm btn-outline-info rounded-pill"
-                            @click="goToFootTraffic"
+                                class="btn btn-sm btn-outline-info rounded-pill"
+                                @click="goToFootTraffic"
                             >
-                            <i class="ri-user-line me-1"></i>
-                            {{ todayFootTraffic }} Visitors Today
+                                <i class="ri-user-line me-1"></i>
+                                {{ todayFootTraffic }} Visitors Today
                             </button>
+                            </div>
 
-                            <!-- Spacer between Visitors & To-Do -->
-                            <div class="ms-3"></div>
-
+                            <!-- Right buttons -->
+                            <div class="d-flex flex-wrap gap-2 ms-auto">
                             <!-- Add To-Do -->
                             <button
-                            class="btn btn-sm btn-warning rounded-pill"
-                            style="background-color: darkorange; border-color: darkorange;"
-                            @click="openToDoModal"
+                                class="btn btn-sm btn-warning rounded-pill"
+                                style="background-color: darkorange; border-color: darkorange;"
+                                @click="openToDoModal"
                             >
-                            Add To-Do
+                                Add To-Do
                             </button>
 
                             <!-- To-Dos Button -->
                             <button
-                            class="btn btn-sm btn-outline-warning rounded-pill"
-                            @click="goToTasks"
+                                class="btn btn-sm btn-outline-warning rounded-pill"
+                                @click="goToTasks"
                             >
-                            To-Dos
+                                To-Dos
                             </button>
+                            </div>
 
                         </div>
                         </div>
@@ -943,15 +946,22 @@ export default {
         status: '',
         }
     },
-    createToDo() {
-        axios.post(
-        `/api/to-dos`,
-        this.newToDo
-        ).then(res => {
-        this.todos.unshift(res.data)
-        this.resetToDoForm()
-        })
-    },
+createToDo() {
+  axios.post(`/api/to-dos`, this.newToDo)
+    .then(res => {
+      console.log(res.data) // <- check this in browser console
+      const newItem = res.data.todo ? res.data.todo : res.data
+
+      // Fill missing defaults
+      newItem.id = newItem.id || Date.now()        // temporary id if API doesn't provide
+      newItem.status = newItem.status || 'pending'
+      newItem.priority = newItem.priority
+      newItem.category = newItem.category
+
+      this.todos.unshift(newItem)
+      this.resetToDoForm()
+    })
+},
     markDone(item) {
     axios.patch(`/api/todos/${item.id}/done`)
         .then(res => {

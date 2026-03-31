@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\BorrowController;
@@ -183,5 +184,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/borrowers/{id}', [UserController::class, 'updateUser']);
     Route::post('/partners', [UserController::class, 'storeUser']);
     Route::put('/partners/{id}', [UserController::class, 'updateUser']);
+
+    Route::post('/ai/chat', [AiChatController::class, 'send']);
+    Route::get('/ai/chat/{session}', [AiChatController::class, 'messages']);    
 
 });

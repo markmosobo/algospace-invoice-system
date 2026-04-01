@@ -114,60 +114,61 @@
         </div>
         </div>
 
-        <!-- AI INSIGHTS CHAT -->
-        <div class="col-12 mt-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">AI Insights</h5>
-            <small class="text-muted">Ask about trends, risks, projections</small>
-            </div>
-
-            <div class="card-body d-flex flex-column" style="height: 420px;">
-            <!-- Messages -->
-            <div class="flex-grow-1 overflow-auto mb-2">
-                <div
-                v-for="(msg, i) in aiMessages"
-                :key="i"
-                class="mb-2"
-                :class="msg.role === 'user' ? 'text-end' : 'text-start'"
-                >
-                <span
-                    class="d-inline-block p-2 rounded"
-                    :class="msg.role === 'user'
-                    ? 'bg-primary text-white'
-                    : 'bg-light text-dark'"
-                    style="max-width: 80%;"
-                >
-                    {{ msg.text }}
-                </span>
-                </div>
-
-                <div v-if="aiLoading" class="text-muted small">
-                AI is thinking…
-                </div>
-            </div>
-
-            <!-- Input -->
-            <form @submit.prevent="sendAIMessage" class="d-flex gap-2">
-                <input
-                v-model="aiInput"
-                class="form-control"
-                placeholder="Why did profits drop?"
-                />
-                <button class="btn btn-dark" :disabled="aiLoading">
-                Send
-                </button>
-            </form>
-            </div>
-        </div>
-        </div>
-
     </div>
     </section>
 
+    <!-- Floating AI Chat Button -->
+    <button
+      class="ai-chat-btn"
+      @click="chatOpen = !chatOpen"
+    >
+      🤖
+    </button>
+
+    <!-- Side AI Chat Panel -->
+    <div class="ai-chat-panel" :class="{ open: chatOpen }">
+    <div class="ai-chat-header">
+        <strong>AI Insights</strong>
+        <button class="btn-close" @click="chatOpen = false"></button>
+    </div>
+
+    <div class="ai-chat-body">
+        <div
+        v-for="(msg, i) in aiMessages"
+        :key="i"
+        class="mb-2"
+        :class="msg.role === 'user' ? 'text-end' : 'text-start'"
+        >
+        <span
+            class="d-inline-block p-2 rounded"
+            :class="msg.role === 'user'
+            ? 'bg-primary text-white'
+            : 'bg-light text-dark'"
+            style="max-width: 80%;"
+        >
+            {{ msg.text }}
+        </span>
+        </div>
+
+        <div v-if="aiLoading" class="text-muted small">
+        AI is thinking…
+        </div>
+    </div>
+
+    <form class="ai-chat-input" @submit.prevent="sendAIMessage">
+        <input
+        v-model="aiInput"
+        class="form-control"
+        placeholder="Ask about profits, risks…"
+        />
+        <button class="btn btn-dark" :disabled="aiLoading">
+        Send
+        </button>
+    </form>
+    </div>    
 
     </Master>
-    </template>
+</template>
     
     <script>
     import Master from "@/components/Master.vue";
@@ -242,6 +243,7 @@
         chartSeries: [],
         showTable: true,
         //ai
+        chatOpen: false,
         aiInput: '',
         aiLoading: false,
         aiMessages: [
@@ -365,7 +367,61 @@
     };
     </script>
 
+<style>
+.ai-chat-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: #fff;
+  border: none;
+  font-size: 22px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  z-index: 1050;
+}
 
+.ai-chat-panel {
+  position: fixed;
+  top: 0;
+  right: -380px;
+  width: 360px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+  z-index: 1049;
+}
+
+.ai-chat-panel.open {
+  right: 0;
+}
+
+.ai-chat-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-chat-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.ai-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+</style>
 
     
     

@@ -212,7 +212,45 @@
                 </button>
               </div>
 
+              <!-- ACCOUNT ADJUSTMENT -->
+              <div class="p-3 rounded bg-dark bg-opacity-10 border mb-3">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-sliders me-1"></i> Adjust Account Balance
+                </div>
 
+                <!-- Select account -->
+                <select v-model="adjustment.account_id"
+                        class="form-select form-select-sm mb-2">
+                  <option disabled value="">Select account</option>
+                  <option v-for="acc in personalAccounts"
+                          :key="acc.id"
+                          :value="acc.id">
+                    {{ acc.name }} (KES {{ acc.balance }})
+                  </option>
+                </select>
+
+                <!-- Actual balance -->
+                <input type="number"
+                      v-model.number="adjustment.actual_balance"
+                      class="form-control form-control-sm mb-2"
+                      placeholder="Actual balance on ground">
+
+                <!-- Reason -->
+                <input type="text"
+                      v-model="adjustment.reason"
+                      class="form-control form-control-sm mb-3"
+                      placeholder="Reason (e.g. Cash count correction)">
+
+                <button class="btn btn-sm btn-dark w-100"
+                        :disabled="!adjustment.account_id || adjustment.actual_balance === null"
+                        @click="submitAdjustment">
+                  Apply Adjustment
+                </button>
+
+                <div class="small text-muted mt-2">
+                  Creates an adjustment ledger entry (no manual edits).
+                </div>
+              </div> 
             </div>
 
             <!-- RIGHT COLUMN -->
@@ -330,7 +368,7 @@
                         @click="submitFundsOut">
                   Pay Expense
                 </button>
-              </div>
+              </div>             
 
             </div>
           </div>
@@ -441,6 +479,11 @@ export default {
   },
   data() {
     return {
+      adjustment: {
+        account_id: '',
+        actual_balance: null,
+        reason: ''
+      },    
       currentYear: '',
       filters: {
         start_date: null,
@@ -507,6 +550,31 @@ export default {
   },
 
   methods: {
+    submitAdjustment() {
+      const account = this.personalAccounts.find(
+        a => a.id === this.adjustment.account_id
+      );
+
+      if (!account) return;
+
+      const currentBalance = Number(account.balance);
+      const actualBalance = Number(this.adjustment.actual_balance);
+      const difference = actualBalance - currentBalance;
+
+      if (difference === 0) {
+        alert('No adjustment needed. Balances already match.');
+        return;
+      }
+
+      axios.post('api/ledger/adjust', {
+        account_id: account.id,
+        difference: difference,
+        reason: this.adjustment.reason
+      }).then(() => {
+        this.fetchReport();
+        this.adjustment = { account_id: '', actual_balance: null, reason: '' };
+      });
+    },    
     formatKES(value) {
       const number = Number(value || 0);
       return number.toLocaleString('en-KE', {

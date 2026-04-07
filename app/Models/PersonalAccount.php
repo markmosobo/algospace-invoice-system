@@ -12,5 +12,16 @@ class PersonalAccount extends Model
         'sub_type',
         'balance',
         'currency'
-    ];    
+    ];  
+    
+    public function applyAdjustment(float $amount, string $type): void
+    {
+        if ($type === 'debit') {
+            $this->balance += $amount;
+        } elseif ($type === 'credit') {
+            $this->balance -= $amount;
+        }
+
+        $this->save();
+    }    
 }

@@ -75,7 +75,12 @@
                         </tbody>
                         <tbody v-else>
                           <tr v-for="customer in customers" :key="customer.id">
-                            <td>{{customer.name}}</td>
+                            <td>
+                              {{ customer.name }}
+                              <span v-if="customer.is_risky" class="badge bg-danger ms-2" title="Has unpaid invoices">
+                                RISKY
+                              </span>
+                            </td>
                             <td>{{customer.phone ?? "N/A"}}</td>
                             <td>{{customer.visits_count}}</td>
                             <td>

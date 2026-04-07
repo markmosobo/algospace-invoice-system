@@ -241,6 +241,102 @@
                 </div>
                 </div>
             </div>
+
+        <!-- Edit Supply Modal -->
+        <div class="modal fade" id="EditSupplyModal" tabindex="-1" aria-labelledby="EditSupplyModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+              <div class="modal-header">
+                <h5 class="modal-title" id="EditSupplyModalLabel">Edit Supply</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body">
+                <form class="row g-3 needs-validation" novalidate>
+
+                  <!-- Status -->
+                  <div class="col-md-6">
+                    <label class="form-label">Status*</label>
+                    <select class="form-select" v-model="editForm.status" id="edit_status">
+                      <option value="" disabled>Select status</option>
+                      <option value="replenisheble">Replenisheble</option>
+                      <option value="onetime">Onetime</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <!-- Payment Method -->
+                  <div class="col-md-6">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" v-model="editForm.payment_method" id="edit_payment_method">
+                      <option value="" disabled>Select payment method</option>
+                      <option value="cash">Cash</option>
+                      <option value="mpesa">MPESA</option>
+                      <option value="card">Card</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <!-- Name -->
+                  <div class="col-md-6">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" v-model="editForm.item" id="edit_item">
+                  </div>
+
+                  <!-- Unit Price -->
+                  <div class="col-md-6">
+                    <label class="form-label">Unit Price</label>
+                    <input type="number" class="form-control" v-model="editForm.unit_price" id="edit_unit_price" placeholder="KES">
+                  </div>
+
+                  <!-- Quantity -->
+                  <div class="col-md-6">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" min="1" class="form-control" v-model="editForm.quantity" id="edit_quantity">
+                  </div>
+
+                  <!-- Supplier -->
+                  <div class="col-md-6">
+                    <label class="form-label">Supplier</label>
+                    <select class="form-select" v-model="editForm.supplier_id" id="edit_supplier_id">
+                      <option value="0" disabled>Select Supplier</option>
+                      <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                        {{ supplier.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Upload New Images -->
+                  <div class="col-md-6">
+                    <label class="form-label">Upload Images</label>
+                    <input type="file" class="form-control" multiple accept="image/*" @change="handleEditImages">
+                  </div>
+
+                  <!-- Image Previews -->
+                  <div class="col-12 mt-3" v-if="editImages.length > 0">
+                    <label class="form-label fw-bold">Preview Images</label>
+                    <div class="image-preview-container">
+                      <div class="preview-box" v-for="(img, index) in editImages" :key="index">
+                        <img :src="img.preview" class="preview-img">
+                        <button class="remove-btn" @click="removeEditImage(index)">×</button>
+                      </div>
+                    </div>
+                  </div>
+
+                </form>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-success" @click="submitEdit" style="background: darkgreen; border-color: darkgreen;">
+                  Save Changes
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>            
         </div>
         </section> 
 </Master>
@@ -294,6 +390,19 @@ export default {
         images: [],
         existingImages: [],
         newImages: [],
+            // For edit modal
+        editForm: {
+          id: null,
+          supplier_id: "",
+          unit_price: "",
+          quantity: 1,
+          item: "",
+          total: "",
+          payment_date: "",
+          payment_method: "cash",
+          status: "replenisheble"
+        },
+        editImages: [], // new and existing images
         badgeClasses: [
         'text-success',
         'text-danger',
@@ -331,6 +440,93 @@ export default {
     }
   },
   methods: {
+editProduct(product) {
+    // populate form
+    this.editForm = {
+      id: product.id,
+      supplier_id: product.supplier_id,
+      unit_price: product.unit_price,
+      quantity: product.quantity,
+      item: product.item,
+      total: product.total,
+      payment_date: product.payment_date,
+      payment_method: product.payment_method || 'cash',
+      status: product.status || 'replenisheble'
+    };
+
+    // Load existing images
+    this.editImages = (product.images || []).map(img => ({
+      file: null,
+      preview: '/storage/supplies/' + img.name,
+      existing: true,
+      id: img.id
+    }));
+
+    // show modal
+    const modal = new bootstrap.Modal(document.getElementById('EditSupplyModal'));
+    modal.show();
+  },
+
+  handleEditImages(e) {
+    const files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+      this.editImages.push({
+        file: files[i],
+        preview: URL.createObjectURL(files[i]),
+        existing: false
+      });
+    }
+  },
+
+  removeEditImage(index) {
+    const img = this.editImages[index];
+    if (img.existing) {
+      // remove via API
+      axios.delete(`/api/supplies/images/${img.id}`)
+        .then(() => {
+          this.editImages.splice(index, 1);
+          toast.fire('Success!', 'Image removed!', 'success');
+        })
+        .catch(() => {
+          toast.fire('Error!', 'Could not remove image', 'error');
+        });
+    } else {
+      this.editImages.splice(index, 1);
+    }
+  },
+
+  async submitEdit() {
+    try {
+      const formData = new FormData();
+      Object.keys(this.editForm).forEach(key => {
+        if (key !== 'id') formData.append(key, this.editForm[key]);
+      });
+
+      // append only new images
+      this.editImages.forEach(img => {
+        if (!img.existing && img.file) formData.append('images[]', img.file);
+      });
+
+      await axios.post(`/api/supplies/${this.editForm.id}?_method=PUT`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      toast.fire('Success!', 'Supply updated successfully!', 'success');
+
+      // close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('EditSupplyModal'));
+      modal.hide();
+
+      // reset
+      this.editForm = { id: null, supplier_id: "", unit_price: "", quantity: 1, item: "", total: "", payment_date: "", payment_method: "cash", status: "replenisheble" };
+      this.editImages = [];
+
+      this.loadLists();
+    } catch (error) {
+      console.error(error);
+      toast.fire('Error!', error.response?.data?.message || 'Failed to update supply', 'error');
+    }
+  },    
     viewProduct(product)
     {
         console.log(product)

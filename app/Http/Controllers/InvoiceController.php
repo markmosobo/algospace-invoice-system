@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -188,28 +189,45 @@ class InvoiceController extends Controller
         return response()->file(storage_path('app/public/' . $invoice->pdf_path));
     }
 
-    public function closeUnpaid(Request $request, Invoice $invoice)
-    {
-        // Prevent closing paid invoices
-        if ($invoice->status === 'paid') {
-            return response()->json([
-                'message' => 'Paid invoices cannot be closed as unpaid.'
-            ], 422);
-        }
+public function closeUnpaid(Request $request, Invoice $invoice)
+{
+    // Prevent closing paid invoices
+    if ($invoice->status === 'paid') {
+        return response()->json([
+            'message' => 'Paid invoices cannot be closed as unpaid.'
+        ], 422);
+    }
 
-        $request->validate([
-            'note' => 'nullable|string|max:1000'
-        ]);
+    $request->validate([
+        'note' => 'nullable|string|max:1000'
+    ]);
 
+    // Start a transaction to keep things consistent
+    DB::transaction(function () use ($invoice, $request) {
+
+        // 1️⃣ Update invoice
         $invoice->update([
             'status' => 'closed_unpaid',
             'closed_note' => $request->note,
             'closed_at' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Invoice closed as unpaid.',
-            'invoice' => $invoice
-        ]);
-    }    
+        // 2️⃣ Update customer if invoice is linked to a customer
+        if ($invoice->customer_id) {
+            $customer = $invoice->customer;
+
+            $customer->increment('unpaid_invoices_count'); // +1 unpaid
+            $customer->last_unpaid_invoice_at = now();
+            $customer->is_risky = true; // mark as risky
+
+            $customer->save();
+        }
+
+    });
+
+    return response()->json([
+        'message' => 'Invoice closed as unpaid and customer flagged as risky.',
+        'invoice' => $invoice
+    ]);
+}    
 }

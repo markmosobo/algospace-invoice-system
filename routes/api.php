@@ -149,6 +149,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/ledger/capital-injection', [CapitalInjectionController::class, 'store']);   
     Route::post('/ledger/funds-in', [CapitalInjectionController::class, 'fundsIn']);   
     Route::post('/ledger/funds-out', [LedgerReportController::class, 'fundsOut']);   
+    Route::post('/ledger/adjust', [LedgerReportController::class, 'adjust']);
 
     Route::post('/foot-traffic', [FootTrafficController::class, 'store']);
     Route::post('/anon-foot-traffic', [FootTrafficController::class, 'storeAnon']);

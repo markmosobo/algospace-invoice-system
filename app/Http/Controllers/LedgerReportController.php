@@ -65,4 +65,51 @@ class LedgerReportController extends Controller
             ], 500);
         }
     }   
+
+    public function adjust(Request $request)
+    {
+        $request->validate([
+            'account_id' => 'required|exists:personal_accounts,id',
+            'difference' => 'required|numeric|not_in:0',
+        ]);
+
+        DB::transaction(function () use ($request) {
+
+            $difference = (float) $request->difference;
+
+            $account = PersonalAccount::findOrFail($request->account_id);
+
+            // 🔑 Equity / Balance Adjustment account
+            $equityAccount = PersonalAccount::where('name', 'Balance Adjustment')
+                ->orWhere('account_type', 'equity')
+                ->first();
+
+            if (!$equityAccount) {
+                abort(500, 'Balance Adjustment account not found.');
+            }
+
+            // Determine sides
+            $debitAccount  = $difference > 0 ? $account : $equityAccount;
+            $creditAccount = $difference > 0 ? $equityAccount : $account;
+
+            $amount = abs($difference);
+
+            // 1️⃣ Create ledger entry
+            LedgerEntry::create([
+                'entry_date' => now(),
+                'debit_account_id' => $debitAccount->id,
+                'credit_account_id' => $creditAccount->id,
+                'amount' => $amount,
+                'entry_type' => 'adjustment',
+                'description' => $request->reason ?: 'Balance adjustment',
+                'created_by' => auth()->id(),
+            ]);
+
+            // 2️⃣ Update balances
+            $debitAccount->applyAdjustment($amount, 'debit');
+            $creditAccount->applyAdjustment($amount, 'credit');
+        });
+
+        return response()->json(['message' => 'Adjustment posted and balances updated']);
+    } 
 }

@@ -228,19 +228,20 @@
                             class="form-control mb-1"
                         />
                         <select class="form-select" v-model="customerForm.customer_id" size="5">
-                        <option v-for="c in filteredCustomers" :key="c.id" :value="c.id">
+                            <option v-for="c in filteredCustomers" :key="c.id" :value="c.id">
+                            {{ c.name }} ({{ c.phone || 'No Phone' }}) —
 
-                        {{ c.name }} ({{ c.phone || 'No Phone' }}) —
+                            <!-- Show card or visits -->
+                            <span v-if="c.active_card">
+                                🎟️ Card Active: {{ c.active_card.visits }}/10 Visit(s)
+                            </span>
+                            <span v-else>
+                                👣 Visits: {{ c.visits }}
+                            </span>
 
-                        <span v-if="c.active_card">
-                        🎟️ Card Active: {{ c.active_card.visits }}/10 Visit(s)
-                        </span>
-
-                        <span v-else>
-                        👣 Visits: {{ c.visits }}
-                        </span>
-
-                        </option>
+                            <!-- RISKY badge -->
+                            {{ c.is_risky ? ' ⚠️ RISKY' : '' }}
+                            </option>
                         </select>
                         </div>
 
@@ -946,22 +947,22 @@ export default {
         status: '',
         }
     },
-createToDo() {
-  axios.post(`/api/to-dos`, this.newToDo)
-    .then(res => {
-      console.log(res.data) // <- check this in browser console
-      const newItem = res.data.todo ? res.data.todo : res.data
+    createToDo() {
+    axios.post(`/api/to-dos`, this.newToDo)
+        .then(res => {
+        console.log(res.data) // <- check this in browser console
+        const newItem = res.data.todo ? res.data.todo : res.data
 
-      // Fill missing defaults
-      newItem.id = newItem.id || Date.now()        // temporary id if API doesn't provide
-      newItem.status = newItem.status || 'pending'
-      newItem.priority = newItem.priority
-      newItem.category = newItem.category
+        // Fill missing defaults
+        newItem.id = newItem.id || Date.now()        // temporary id if API doesn't provide
+        newItem.status = newItem.status || 'pending'
+        newItem.priority = newItem.priority
+        newItem.category = newItem.category
 
-      this.todos.unshift(newItem)
-      this.resetToDoForm()
-    })
-},
+        this.todos.unshift(newItem)
+        this.resetToDoForm()
+        })
+    },
     markDone(item) {
     axios.patch(`/api/todos/${item.id}/done`)
         .then(res => {

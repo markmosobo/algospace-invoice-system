@@ -37,9 +37,7 @@ class ToDoController extends Controller
             ->map(fn ($group) => $group->count());
 
         // 3. Fetch ONLY todos you want to display
-        $todos = Todo::whereIn('status', ['pending', 'deferred'])
-            ->latest()
-            ->get();
+        $todos = Todo::latest()->get();
 
         return response()->json([
             'todos' => $todos,

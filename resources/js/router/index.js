@@ -45,8 +45,19 @@ import ToDos from '../views/ToDos.vue';
 
 const routes = [
   // Public routes
-  { path: '/', name: 'index', component: Login },
-  { path: '/login', name: 'login', component: Login },
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
+    beforeEnter: (to, from, next) => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        next('/dashboard') // UX improvement happens here
+      } else {
+        next()
+      }
+    }
+  },
   { path: '/login2', name: 'login2', component: Login2 },
   { path: '/register', name: 'register', component: Register },
 

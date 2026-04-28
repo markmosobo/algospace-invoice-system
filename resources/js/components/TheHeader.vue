@@ -3,8 +3,11 @@
     <header id="header" class="header fixed-top d-flex align-items-center">
   
       <div class="d-flex align-items-center justify-content-between">
-        <a href="#" class="logo d-flex align-items-center">
-          <!-- <img src="@/assets/img/apex-logo.png" alt=""> -->
+        <a href="/" class="logo d-flex align-items-center gap-2" title="Back to AlgoSpace Cyber Website">
+          <img src="@/assets/img/algospacelogo.png" alt="AlgoSpace Cyber Logo" />
+          <span class="logo-text small opacity-75">
+            Back to website
+          </span>
         </a>
         <i class="bi bi-list toggle-sidebar-btn" @click="handleSidebar"></i>
         <span class="d-none d-lg-block" style="color: darkgreen;"><strong>ALGOSPACE CYBER</strong> PORTAL</span>

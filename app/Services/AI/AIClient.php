@@ -3,53 +3,78 @@
 namespace App\Services\AI;
 
 use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class AIClient
 {
     public static function ask(string $prompt): array
     {
-        // 1️⃣ Create prediction
-        $response = Http::withToken(config('services.replicate.token'))
-            ->post('https://api.replicate.com/v1/predictions', [
-                'version' => config('services.replicate.llama_70b'),
-                'input' => [
-                    'prompt' => $prompt,
-                    'max_tokens' => 300,
-                    'temperature' => 0.6,
+        $client   = new Client();
+        $apiToken = env('REPLICATE_API_TOKEN');
+
+        try {
+            /** 1️⃣ Send request to Replicate */
+            $response = $client->post('https://api.replicate.com/v1/predictions', [
+                'headers' => [
+                    'Authorization' => "Token {$apiToken}",
+                    'Content-Type'  => 'application/json',
                 ],
-            ])
-            ->json();
+                'json' => [
+                    'version' => config('services.replicate.model'),
+                    'input' => [
+                        'prompt' => $prompt,
+                        'temperature' => 0.7,
+                        'max_new_tokens' => 500,
+                    ],
+                ],
+            ]);
 
-        if (!isset($response['id'])) {
-            return self::fallback();
-        }
+            $body = json_decode($response->getBody(), true);
 
-        $predictionId = $response['id'];
-
-        // 2️⃣ Poll until completed
-        for ($i = 0; $i < 15; $i++) {
-            sleep(1);
-
-            $statusResponse = Http::withToken(config('services.replicate.token'))
-                ->get("https://api.replicate.com/v1/predictions/{$predictionId}")
-                ->json();
-
-            if (($statusResponse['status'] ?? '') === 'succeeded') {
-                $text = self::extractText($statusResponse);
-
-                return [
-                    'content' => $text ?: 'No meaningful output generated.',
-                    'confidence' => self::confidenceFromText($text),
-                    'model' => 'llama-3-70b',
-                ];
+            /** 2️⃣ Poll until completed */
+            $getUrl = $body['urls']['get'] ?? null;
+            if (!$getUrl) {
+                throw new \Exception('Failed to initiate prediction');
             }
 
-            if (($statusResponse['status'] ?? '') === 'failed') {
-                break;
-            }
-        }
+            for ($i = 0; $i < 12; $i++) {
+                sleep(1);
 
-        return self::fallback();
+                $pollResponse = $client->get($getUrl, [
+                    'headers' => [
+                        'Authorization' => "Token {$apiToken}",
+                    ],
+                ]);
+
+                $pollBody = json_decode($pollResponse->getBody(), true);
+
+                if ($pollBody['status'] === 'succeeded') {
+                    return [
+                        'content' => is_array($pollBody['output'])
+                            ? implode('', $pollBody['output'])
+                            : $pollBody['output'],
+                        'model' => 'meta-llama-3-70b',
+                        'confidence' => null,
+                    ];
+                }
+
+                if ($pollBody['status'] === 'failed') {
+                    throw new \Exception('Prediction failed');
+                }
+            }
+
+            throw new \Exception('AI response timed out');
+
+        } catch (\Exception $e) {
+            Log::error('AIClient Error: ' . $e->getMessage());
+
+            return [
+                'content' => 'Sorry, I could not generate a response at the moment.',
+                'model' => 'meta-llama-error',
+                'confidence' => null,
+            ];
+        }
     }
 
     protected static function extractText(array $response): ?string

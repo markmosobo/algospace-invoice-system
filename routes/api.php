@@ -187,6 +187,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/partners/{id}', [UserController::class, 'updateUser']);
 
     Route::post('/ai/chat', [AiChatController::class, 'send']);
-    Route::get('/ai/chat/{session}', [AiChatController::class, 'messages']);    
+    Route::get('/ai/chat/{session}', [AiChatController::class, 'messages']); 
+       
 
 });

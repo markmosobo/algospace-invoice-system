@@ -2,6 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/{any}', function () {
-    return view('app'); // or welcome, or whatever mounts Vue
-})->where('any', '.*');
+/*
+|--------------------------------------------------------------------------
+| Marketing / Public Pages (Blade)
+|--------------------------------------------------------------------------
+*/
+
+// Landing page
+Route::view('/', 'marketing');          // homepage
+Route::view('/landing', 'marketing');   // optional alias
+
+
+/*
+|--------------------------------------------------------------------------
+| Vue SPA (Dashboard)
+|--------------------------------------------------------------------------
+*/
+
+Route::view('/dashboard', 'app');
+Route::view('/{any}', 'app')->where('any', '.*');

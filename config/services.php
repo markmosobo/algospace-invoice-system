@@ -36,7 +36,7 @@ return [
     ],
     'replicate' => [
         'token' => env('REPLICATE_API_TOKEN'),
-        'llama_70b' => env('REPLICATE_LLAMA_70B'),
+        'model' => env('REPLICATE_MODEL', 'meta/meta-llama-3-8b-instruct'),
     ],
 
 ];

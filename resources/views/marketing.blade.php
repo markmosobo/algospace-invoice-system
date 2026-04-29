@@ -153,7 +153,7 @@
 
                                 <li><a class="menu-item" href="#">Guides</a></li>
 
-                                <li><a class="menu-item" href="{{ url('/contact') }}">Get in Touch</a></li>
+                                <li><a class="menu-item" href="#">Get in Touch</a></li>
 
                             </ul>
 
@@ -168,7 +168,7 @@
                                     <span>Client Portal</span>
                                 </a>
 
-                                <a href="{{ url('/pricing') }}" class="btn-main fx-slide">
+                                <a href="#" class="btn-main fx-slide">
                                     <span>See Our Prices</span>
                                 </a>
 
@@ -348,7 +348,7 @@
                                 <div class="relative overflow-hidden">
                                     <h3 class="abs text-white fs-32 lh-1 p-4 top-0 start-0 z-3">01</h3>
 
-                                    <img src="{{ asset('templates/marketing_site/images/misc/geralt-data.jpg') }}"
+                                    <img src="{{ asset('templates/marketing_site/images/misc/geralt-data.webp') }}"
                                         class="w-100 hover-scale-1-2"
                                         alt="Fast Internet">
                                 </div>
@@ -375,7 +375,7 @@
                                 <div class="relative overflow-hidden">
                                     <h3 class="abs text-white fs-32 lh-1 p-4 top-0 start-0 z-3">02</h3>
 
-                                    <img src="{{ asset('templates/marketing_site/images/misc/aristal-ai.jpg') }}"
+                                    <img src="{{ asset('templates/marketing_site/images/misc/aristal-ai.webp') }}"
                                         class="w-100 hover-scale-1-2"
                                         alt="Assisted Services">
                                 </div>
@@ -559,7 +559,7 @@
                 <!-- ITEM 1 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".0s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/branded-shirt.png') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/branded-shirt.webp') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
@@ -581,7 +581,7 @@
                 <!-- ITEM 2 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".3s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/github.png') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/github.webp') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
@@ -603,7 +603,7 @@
                 <!-- ITEM 3 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".6s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/learn.png') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/learn.webp') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
@@ -626,7 +626,7 @@
         </div>
     </section>
 
-    <section>
+    <!-- <section>
         <div class="container">
             <div class="row g-4 mb-2">
                 <div class="col-lg-12 text-center">
@@ -648,7 +648,6 @@
             <div class="row">
                 <div class="owl-carousel owl-theme wow fadeInUp four-cols-center-dots">
 
-                    <!-- ITEM 1 -->
                     <div class="item">
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
@@ -676,7 +675,6 @@
                         </div>
                     </div>
 
-                    <!-- ITEM 2 -->
                     <div class="item">
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
@@ -704,7 +702,6 @@
                         </div>
                     </div>
 
-                    <!-- ITEM 3 -->
                     <div class="item">
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
@@ -732,7 +729,6 @@
                         </div>
                     </div>
 
-                    <!-- ITEM 4 -->
                     <div class="item">
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
@@ -760,7 +756,6 @@
                         </div>
                     </div>
 
-                    <!-- ITEM 5 -->
                     <div class="item">
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
@@ -790,14 +785,14 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> -->
     
     <section aria-label="section" class="section-dark p-0">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-12">
 
-                    <a class="d-block hover popup-youtube" href="https://www.youtube.com/watch?v=xQQskN6UXRY">
+                    <a class="d-block hover popup-youtube" href="https://www.youtube.com/watch?v=fQJ-uWAXaZ8">
 
                         <div class="relative overflow-hidden">
 
@@ -811,7 +806,7 @@
                             <div class="absolute w-100 h-100 top-0 bg-dark hover-op-05"></div>
 
                             <!-- IMAGE -->
-                            <img src="{{ asset('templates/marketing_site/images/background/w1.webp') }}"
+                            <img src="{{ asset('templates/marketing_site/images/background/developer.webp') }}"
                                 class="w-100 hover-scale-1-1"
                                 alt="AlgoSpace Cyber Services">
 
@@ -832,7 +827,7 @@
         </div>
     </section> 
     
-    <section>
+    <!-- <section>
     <div class="container">
         <div class="row g-4 mb-2">
             <div class="col-lg-12 text-center">
@@ -851,9 +846,8 @@
 
         <div class="row g-4">
 
-            <!-- ITEM 1 -->
             <div class="col-lg-4">
-                <a href="blog-single.php.html" class="d-block hover relative rounded-20 overflow-hidden text-light">
+                <a href="#" class="d-block hover relative rounded-20 overflow-hidden text-light">
 
                     <img src="{{ asset('templates/marketing_site/images/news/s1.webp') }}" class="w-100 hover-scale-1-1" alt="">
 
@@ -879,9 +873,8 @@
                 </a>
             </div>
 
-            <!-- ITEM 2 -->
             <div class="col-lg-4">
-                <a href="blog-single.php.html" class="d-block hover relative rounded-20 overflow-hidden text-light">
+                <a href="#" class="d-block hover relative rounded-20 overflow-hidden text-light">
 
                     <img src="{{ asset('templates/marketing_site/images/news/s2.webp') }}" class="w-100 hover-scale-1-1" alt="">
 
@@ -907,9 +900,8 @@
                 </a>
             </div>
 
-            <!-- ITEM 3 -->
             <div class="col-lg-4">
-                <a href="blog-single.php.html" class="d-block hover relative rounded-20 overflow-hidden text-light">
+                <a href="#" class="d-block hover relative rounded-20 overflow-hidden text-light">
 
                     <img src="{{ asset('templates/marketing_site/images/news/s3.webp') }}" class="w-100 hover-scale-1-1" alt="">
 
@@ -937,7 +929,7 @@
 
         </div>
     </div>
-    </section>   
+    </section>    -->
 
     <section class="section-dark bg-color text-light pt-60 pb-50 relative overflow-hidden">
         
@@ -1012,11 +1004,11 @@
                     <div class="widget">
                         <h5>Quick Links</h5>
                         <ul>
-                            <li><a href="index.php.html">Home</a></li>
-                            <li><a href="services.php.html">Services</a></li>
-                            <li><a href="about.php.html">About Us</a></li>                        
-                            <li><a href="pricing.php.html">Pricing</a></li>
-                            <li><a href="contact.php.html">Contact</a></li>
+                            <li><a href="#">Home</a></li>
+                            <li><a href="#">Services</a></li>
+                            <li><a href="#">About Us</a></li>                        
+                            <li><a href="#">Pricing</a></li>
+                            <li><a href="#">Contact</a></li>
                         </ul>
                     </div>
                 </div>

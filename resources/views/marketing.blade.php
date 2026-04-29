@@ -348,7 +348,7 @@
                                 <div class="relative overflow-hidden">
                                     <h3 class="abs text-white fs-32 lh-1 p-4 top-0 start-0 z-3">01</h3>
 
-                                    <img src="{{ asset('templates/marketing_site/images/misc/glass-fiber.png') }}"
+                                    <img src="{{ asset('templates/marketing_site/images/misc/geralt-data.jpg') }}"
                                         class="w-100 hover-scale-1-2"
                                         alt="Fast Internet">
                                 </div>
@@ -375,7 +375,7 @@
                                 <div class="relative overflow-hidden">
                                     <h3 class="abs text-white fs-32 lh-1 p-4 top-0 start-0 z-3">02</h3>
 
-                                    <img src="{{ asset('templates/marketing_site/images/misc/s3.webp') }}"
+                                    <img src="{{ asset('templates/marketing_site/images/misc/aristal-ai.jpg') }}"
                                         class="w-100 hover-scale-1-2"
                                         alt="Assisted Services">
                                 </div>
@@ -559,19 +559,19 @@
                 <!-- ITEM 1 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".0s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/1.webp') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/branded-shirt.png') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
-                                Helping students and entrepreneurs set up online applications, emails, and digital accounts quickly and correctly without errors.
+                                Helping individuals, startups, and small businesses build a strong digital identity — from professional email setup and online profiles to business branding essentials, document presentation, and digital presence setup that makes you look credible both online and offline.
                             </div>
-                            <a class="btn-line" href="project-single.php.html">Learn More</a>
+                            <a class="btn-line" href="#">Learn More</a>
                         </div>
 
                         <div class="abs bg-color z-2 top-0 w-100 h-100 hover-op-1"></div>
 
                         <div class="abs z-2 bottom-0 mb-3 w-100 text-center hover-op-0">
-                            <h4 class="fs-20 mb-3">Online Applications & Setup Support</h4>
+                            <h4 class="fs-20 mb-3">Digital Branding & Identity Setup Services</h4>
                         </div>
 
                         <div class="gradient-edge-bottom abs w-100 h-60 bottom-0"></div>
@@ -581,13 +581,13 @@
                 <!-- ITEM 2 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".3s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/2.webp') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/github.png') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
                                 We design, fix, and deploy websites for businesses — from simple landing pages to full business websites and online stores.
                             </div>
-                            <a class="btn-line" href="project-single.php.html">Learn More</a>
+                            <a class="btn-line" href="#">Learn More</a>
                         </div>
 
                         <div class="abs bg-color z-2 top-0 w-100 h-100 hover-op-1"></div>
@@ -603,13 +603,13 @@
                 <!-- ITEM 3 -->
                 <div class="col-lg-4 col-sm-6">
                     <div class="hover rounded-1 overflow-hidden relative text-light text-center wow fadeInRight" data-wow-delay=".6s">
-                        <img src="{{ asset('templates/marketing_site/images/projects/3.webp') }}" class="hover-scale-1-1 w-100" alt="">
+                        <img src="{{ asset('templates/marketing_site/images/projects/learn.png') }}" class="hover-scale-1-1 w-100" alt="">
                         
                         <div class="abs w-100 px-4 hover-op-1 z-4 hover-mt-40 abs-centered">
                             <div class="mb-3">
                                 We support businesses and individuals with computer setup, software installation, troubleshooting, and everyday IT problem solving.
                             </div>
-                            <a class="btn-line" href="project-single.php.html">Learn More</a>
+                            <a class="btn-line" href="#">Learn More</a>
                         </div>
 
                         <div class="abs bg-color z-2 top-0 w-100 h-100 hover-op-1"></div>

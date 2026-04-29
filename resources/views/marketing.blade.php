@@ -626,7 +626,7 @@
         </div>
     </section>
 
-    <!-- <section>
+    <section>
         <div class="container">
             <div class="row g-4 mb-2">
                 <div class="col-lg-12 text-center">
@@ -652,10 +652,10 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
-                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/1.webp') }}">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/silas.webp') }}">
                                     <div class="mt-2">
-                                        <div class="text-dark fw-bold lh-1">Brian K.</div>
-                                        <small>Student</small>
+                                        <div class="text-dark fw-bold lh-1">S.C Ndiema</div>
+                                        <small>Mentor</small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
@@ -669,8 +669,8 @@
                             </div>
 
                             <p>
-                                “They helped me apply for KUCCPS and print all my documents quickly.
-                                I didn’t have to stress or figure it out alone.”
+                                “The services here are excellent, and the knowledge and expertise go beyond the required standards.
+                                 I truly enjoy the experience every time I visit.”
                             </p>
                         </div>
                     </div>
@@ -679,10 +679,10 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
-                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/2.webp') }}">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/jakes.webp') }}">
                                     <div class="mt-2">
-                                        <div class="text-dark fw-bold lh-1">Mary A.</div>
-                                        <small>Business Owner</small>
+                                        <div class="text-dark fw-bold lh-1">Jakes O.</div>
+                                        <small>Entrepreneur</small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
@@ -696,8 +696,8 @@
                             </div>
 
                             <p>
-                                “They designed my business website and set up my email.
-                                Everything was explained clearly and done professionally.”
+                                “The staff was fast, friendly, and very helpful with my printing/scanning needs.
+                                 The computers are fast, and the environment is clean. Highly recommend!”
                             </p>
                         </div>
                     </div>
@@ -706,10 +706,10 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
-                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/3.webp') }}">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/himram.webp') }}">
                                     <div class="mt-2">
-                                        <div class="text-dark fw-bold lh-1">Kevin M.</div>
-                                        <small>Job Seeker</small>
+                                        <div class="text-dark fw-bold lh-1">Himram N.</div>
+                                        <small></small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
@@ -723,8 +723,8 @@
                             </div>
 
                             <p>
-                                “My CV was typed and formatted perfectly, and they also helped me submit online applications.
-                                Very fast service.”
+                                “By grace, there is achievement of objectives. This is the kind of self-dependence young men should strive to embrace. 
+                                Be careful not to stumble when you are still resourceful enough to make adjustments. Learn to reflect, adapt, and make wise comparisons that guide you well through the course of life”
                             </p>
                         </div>
                     </div>
@@ -785,7 +785,7 @@
                 </div>
             </div>
         </div>
-    </section> -->
+    </section> 
     
     <section aria-label="section" class="section-dark p-0">
         <div class="container-fluid">

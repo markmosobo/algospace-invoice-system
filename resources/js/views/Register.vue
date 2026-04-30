@@ -284,7 +284,7 @@ main {
 
 /* Full background image */
 .background-image {
-  background-image: url('@/assets/img/slides-3.jpg');
+  background-image: url('@/assets/img/cyber.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

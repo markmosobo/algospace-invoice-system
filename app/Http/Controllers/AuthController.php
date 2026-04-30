@@ -53,7 +53,9 @@ class AuthController extends Controller
         ]);
 
 
-        $token = auth('api')->login($user);
+        // $token = auth('api')->login($user);
+        // 👇 THIS sends email verification link automatically
+        $user->sendEmailVerificationNotification();
 
         // ✅ Use the created user, NOT auth()->user()
         SystemLog::create([
@@ -63,9 +65,8 @@ class AuthController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'User registered successfully.',
+            'message' => 'Account created. Please verify your email.',
             'user'    => $user,
-            'token'   => $token,
         ], 201);
     }
 
@@ -77,19 +78,33 @@ class AuthController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
+        // attempt login first
         if (!$token = auth('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return response()->json([
+                'error' => 'Invalid credentials'
+            ], 401);
         }
 
-        //record system log
+        // get authenticated user
+        $user = auth('api')->user();
+
+        // 🔴 EMAIL VERIFICATION CHECK (IMPORTANT)
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please verify your email first'
+            ], 403);
+        }
+
+        // record system log
         SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' logged in'
-        ]);        
+            'user_id' => $user->id,
+            'description' => $user->name . ' logged in'
+        ]);
 
         return response()->json([
             'status' => 'success',
-            'user' => auth('api')->user(),
+            'user' => $user,
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60

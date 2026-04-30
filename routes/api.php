@@ -52,10 +52,12 @@ use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
 // Public routes
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login2', [AuthController::class, 'login'])->name('login');
+
 
 Route::middleware(['auth:api'])->group(function () {
 

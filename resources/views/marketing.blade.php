@@ -8,10 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AlgoSpaceCyber offers professional cybersecurity services.">
     <meta name="keywords" content="cyber security, firewall, antivirus, data protection">
-    <meta name="author" content="Designesia">
+    <meta name="author" content="AlgoSpace">
 
     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('templates/marketing_site/images/icon.webp') }}" sizes="16x16">
+    <!-- <link rel="icon" href="{{ asset('templates/marketing_site/images/icon.webp') }}" sizes="16x16"> -->
+    <link rel="icon" href="/algospace-favicon.png" type="image/x-icon">
+
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <!-- CSS Files -->
     <link href="{{ asset('templates/marketing_site/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -723,8 +725,9 @@
                             </div>
 
                             <p>
-                                “By grace, there is achievement of objectives. This is the kind of self-dependence young men should strive to embrace. 
-                                Be careful not to stumble when you are still resourceful enough to make adjustments. Learn to reflect, adapt, and make wise comparisons that guide you well through the course of life”
+                                “I’ve seen objectives being achieved here.
+                                 There’s a strong sense of self-dependence in operations.
+                                  It reflects a place that learns, adjusts, and makes improvements where needed”
                             </p>
                         </div>
                     </div>
@@ -733,10 +736,10 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
-                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/4.webp') }}">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/jacinta.webp') }}">
                                     <div class="mt-2">
-                                        <div class="text-dark fw-bold lh-1">Peter O.</div>
-                                        <small>Entrepreneur</small>
+                                        <div class="text-dark fw-bold lh-1">Jacinta M.</div>
+                                        <small>Restaurant Owner</small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
@@ -750,8 +753,8 @@
                             </div>
 
                             <p>
-                                “They installed Windows and software on my laptop and fixed issues I had for months.
-                                Very reliable team.”
+                                “The services offered are excellent, with a great customer rapport.
+                                 Fast service and internet make the experience even better”
                             </p>
                         </div>
                     </div>
@@ -760,10 +763,10 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
-                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/5.webp') }}">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/riziki.webp') }}">
                                     <div class="mt-2">
-                                        <div class="text-dark fw-bold lh-1">Sandra W.</div>
-                                        <small>Student</small>
+                                        <div class="text-dark fw-bold lh-1">Riziki H.</div>
+                                        <small>April Properties</small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
@@ -777,7 +780,8 @@
                             </div>
 
                             <p>
-                                “I regularly come here for printing and internet services. They’re fast and very helpful whenever I’m stuck.”
+                                “The system has been very helpful in our office—fast, user-friendly, and reliable for our daily operations.
+                                 We’ve found AlgoSpace Cyber very reliable in service delivery.”
                             </p>
                         </div>
                     </div>

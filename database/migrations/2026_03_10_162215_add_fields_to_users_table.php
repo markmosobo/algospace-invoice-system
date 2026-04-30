@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('address')->nullable()->after('dob');
             $table->string('city')->nullable()->after('address');
             $table->string('postal_code')->nullable()->after('city');
-            $table->enum('membership_type', ['student', 'staff', 'public', 'premium'])
+            $table->enum('membership_type', ['basic','student', 'staff', 'public', 'premium'])
                   ->default('public')
                   ->after('postal_code');
             $table->integer('borrow_limit')->default(3)->after('membership_type');

@@ -20,8 +20,10 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:100',
             'last_name'  => 'required|string|max:100',
-            'email'      => 'required|string|email|max:100|unique:users',
-            'password'   => 'required|string|min:6',
+            'email'      => 'required|email|unique:users',
+            'password'   => 'required|min:6',
+            'phone'      => 'nullable|string|max:20',
+            'role'       => 'required|in:office,personal,farm,partner,staff,borrower,client',
         ]);
 
         if ($validator->fails()) {
@@ -32,11 +34,22 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name'       => $request->first_name . ' ' . $request->last_name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'role'       => $request->role ?? 'user',
-            'status'     => 1,
+            'name'   => trim($request->first_name . ' ' . $request->last_name),
+            'email'  => $request->email,
+            'password' => Hash::make($request->password),
+            'role'   => $request->role ?? 'client',
+
+            // core system defaults
+            'status' => 'pending',
+
+            // extended fields (safe optional mapping)
+            'phone' => $request->phone,
+            'dob' => $request->dob ?? null,
+            'address' => $request->address ?? null,
+            'city' => $request->city ?? null,
+            'postal_code' => $request->postal_code ?? null,
+            'membership_type' => $request->membership_type ?? 'basic',
+            'borrow_limit' => $request->borrow_limit ?? 0,
         ]);
 
 

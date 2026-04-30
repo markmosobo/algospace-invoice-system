@@ -28,6 +28,7 @@ import router from './router';
 import Swal from 'sweetalert2';
 import * as jwt_decode from 'jwt-decode'; // Fixed import
 
+
 const app = createApp(App);
 
 // Axios default config
@@ -41,6 +42,7 @@ axios.interceptors.request.use(config => {
     }
     return config;
 }, error => Promise.reject(error));
+
 
 // Response interceptor to handle expired token
 axios.interceptors.response.use(

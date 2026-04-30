@@ -18,7 +18,7 @@
         "@fortawesome/fontawesome-free": "^7.0.0",
         "@vitejs/plugin-vue": "^6.0.3",
         "apexcharts": "^5.3.6",
-        "bootstrap": "^5.3.7",
+        "bootstrap": "^5.3.8",
         "datatables.net-dt": "^1.13.4",
         "datatables.net-vue3": "^2.1.0",
         "jquery": "^3.7.1",

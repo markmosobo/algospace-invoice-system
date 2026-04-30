@@ -5,12 +5,12 @@
           <div class="row justify-content-center">
             <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
               <div class="d-flex justify-content-center py-4">
-                <router-link to="/">
-                  <a href="#" class="logo d-flex align-items-center w-auto">
-                    <!-- <img src="/images/apex-logo.png" alt="April Properties Logo"> -->
-                    <span class="d-none d-lg-block" style="color: darkgreen;">AlgoSpace Cyber</span>
-                  </a>
-                </router-link>
+                <a href="/" class="logo d-flex align-items-center w-auto">
+                  <img src="@/assets/img/algospacelogo.png" alt="AlgoSpace Cyber Logo">
+                  <span class="d-none d-lg-block" style="color: white;">
+                    ALGOSPACE CYBER
+                  </span>
+                </a>
               </div>
               <!-- End Logo -->
 
@@ -40,8 +40,8 @@
                     <div class="row g-3">
                       <div class="col-12 col-md-6">
                         <label for="yourEmail" class="form-label">Phone Number</label>
-                        <input type="text" name="phone_number" placeholder="Phone Number" class="form-control" id="phone_number" v-model="form.phone_number" required>
-                        <div class="invalid-feedback" v-if="!form.phone_number">Please enter phone number!</div>
+                        <input type="text" name="phone" placeholder="Phone Number" class="form-control" id="phone" v-model="form.phone" required>
+                        <div class="invalid-feedback" v-if="!form.phone">Please enter phone number!</div>
                       </div>
                       <div class="col-12 col-md-6">
                         <label for="yourEmail" class="form-label">Email Address</label>
@@ -96,7 +96,14 @@
                         </div>
                       </div>
                       <div class="col-12">
-                        <button class="btn btn-success rounded-pill w-100" type="submit">Create Account</button>
+                        <button
+                          class="btn btn-success rounded-pill w-100"
+                          type="submit"
+                          :disabled="loading || !form.email || !form.password"
+                        >
+                          <span v-if="!loading">Create Account</span>
+                          <span v-else>Creating Account...</span>
+                        </button>
                       </div>
                       <div class="col-12">
                         <p class="small mb-0">Already have an account? <router-link to="login" style="color: orange;">Log In</router-link></p>
@@ -139,9 +146,23 @@
           first_name: '',
           last_name: '',
           email: '',
+          phone: '',
           password: '',
-          role: 'tenant'
+          confirm_password: '',
+          role: 'client',
+
+          dob: '',
+          address: '',
+          city: '',
+          postal_code: '',
+
+          membership_type: 'basic',
+          borrow_limit: 0,
+
+          profile_photo_file: null,
+          profile_photo_url: ''
         },
+        loading: false,
         errors: {},
         isPasswordVisible: false,
       }
@@ -152,82 +173,96 @@
         },
         validateForm() {
           let isValid = true;
-          if (!this.form.first_name) {
+
+          const fields = [
+            'first_name',
+            'last_name',
+            'phone',
+            'email',
+            'password',
+            'confirm_password'
+          ];
+
+          fields.forEach(field => {
+            const el = document.getElementById(field);
+
+            if (!this.form[field] || (field === 'confirm_password' && this.form.password !== this.form.confirm_password)) {
               isValid = false;
-              document.getElementById('first_name').classList.add('is-invalid');
-          } else {
-              document.getElementById('first_name').classList.remove('is-invalid');
-          }
-          if (!this.form.last_name) {
-              isValid = false;
-              document.getElementById('last_name').classList.add('is-invalid');
-          } else {
-              document.getElementById('last_name').classList.remove('is-invalid');
-          }
-          if (!this.form.phone_number) {
-              isValid = false;
-              document.getElementById('phone_number').classList.add('is-invalid');
-          } else {
-              document.getElementById('phone_number').classList.remove('is-invalid');
-          }
-          if (!this.form.email) {
-              isValid = false;
-              document.getElementById('email').classList.add('is-invalid');
-          } else {
-              document.getElementById('email').classList.remove('is-invalid');
-          }
-          if (!this.form.password) {
-              isValid = false;
-              document.getElementById('password').classList.add('is-invalid');
-          } else {
-              document.getElementById('password').classList.remove('is-invalid');
-          }
-          if (!this.form.confirm_password || this.form.password !== this.form.confirm_password) {
-            isValid = false;
-            document.getElementById('confirm_password').classList.add('is-invalid');
-          } else {
-            document.getElementById('confirm_password').classList.remove('is-invalid');
-          }
+              el?.classList.add('is-invalid');
+            } else {
+              el?.classList.remove('is-invalid');
+            }
+          });
+
           return isValid;
-       },
-       create_user() {
+        },
+        async create_user() {
           if (!this.validateForm()) return;
 
-          this.errors = {}; // clear old errors
+          this.errors = {};
+          this.loading = true;
 
-          axios.post('api/register', this.form)
-            .then(response => {
+          try {
+            const response = await axios.post('/api/register', this.form);
+
+            if (response.status === 201 || response.status === 200) {
+
               toast.fire({
-                title: 'Hurry',
-                text: 'You have been registered successfully.',
+                title: 'Account Created',
+                text: 'We have sent a verification email. Please verify your email before logging in.',
                 icon: 'success',
+                timer: 3000,
+                showConfirmButton: false
               });
 
-              this.$router.push('/login');
-            })
-            .catch(error => {
-              console.log(error.response);
+              // keep loading during UX delay
+              setTimeout(() => {
+                this.loading = false;
+                this.$router.push('/login');
+              }, 2500);
+            }
 
-              // ✅ Laravel validation errors (422)
-              if (error.response && error.response.status === 422) {
-                this.errors = error.response.data.errors;
+          } catch (error) {
+            this.loading = false;
 
-                // Optional toast summary
-                Swal.fire({
-                  title: 'Validation error',
-                  text: Object.values(this.errors)[0][0],
-                  icon: 'warning',
-                });
-              } 
-              // ❌ Other server errors
-              else {
-                Swal.fire({
-                  title: 'Error',
-                  text: 'Something went wrong. Please try again.',
-                  icon: 'error',
-                });
-              }
+            const status = error.response?.status;
+
+            if (status === 422) {
+              this.errors = error.response.data.errors;
+
+              Swal.fire({
+                title: 'Validation Error',
+                text: Object.values(this.errors)[0][0],
+                icon: 'warning',
+                confirmButtonColor: '#d33'
+              });
+              return;
+            }
+
+            if (status === 409) {
+              Swal.fire({
+                title: 'Account Exists',
+                text: 'This email is already registered.',
+                icon: 'info'
+              });
+              return;
+            }
+
+            if (status === 403) {
+              Swal.fire({
+                title: 'Registration Not Allowed',
+                text: error.response.data.message,
+                icon: 'error'
+              });
+              return;
+            }
+
+            Swal.fire({
+              title: 'System Error',
+              text: 'Please try again later.',
+              icon: 'error'
             });
+          }
         }
 
   }

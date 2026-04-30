@@ -178,21 +178,31 @@ export default {
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
 
         // Update UI state
-        const loggedInUser = response.data.user
-        this.current_user = `${loggedInUser.first_name || ''} ${loggedInUser.last_name || ''}`
-        this.current_user_id = loggedInUser.id
+        const user = response.data.user
 
-        // Success alert (optional)
-        toast.fire({
-            title: 'Welcome!',
-            text: `Hello ${this.current_user}, you are now logged in.`,
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false
-        })
+        if (response.status === 200 && response.data.token) {
 
-        // Redirect to dashboard
-        this.$router.push('/login2')
+            localStorage.setItem('token', response.data.token)
+            localStorage.setItem('user', JSON.stringify(user))
+
+            axios.defaults.headers.common['Authorization'] =
+                `Bearer ${response.data.token}`
+
+            toast.fire({
+                title: 'Welcome!',
+                text: `Hello ${user.first_name || ''}`,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            })
+
+            // ✅ ROUTE CONTROL
+            if (user.role === 'office') {
+                this.$router.push('/login2')   // your special page
+            } else {
+                this.$router.push('/dashboard')
+            }
+        }
         } else {
         Swal.fire({
             title: 'Oops!',

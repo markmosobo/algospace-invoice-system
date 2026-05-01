@@ -12,6 +12,16 @@
         </router-link>
       </li>
 
+      <!-- Analytics -->
+      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+        <router-link to="/analytics" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>Analytics</span>
+          </a>
+        </router-link>
+      </li>      
+
       <!-- Ledger Reports -->
       <li v-show="userRole === 'personal'" class="nav-item">
         <router-link to="/ledger-report" custom v-slot="{ href, navigate }">

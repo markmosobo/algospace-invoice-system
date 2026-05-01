@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use App\Mail\VerifyEmailMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class AuthController extends Controller
 {
@@ -38,11 +41,7 @@ class AuthController extends Controller
             'email'  => $request->email,
             'password' => Hash::make($request->password),
             'role'   => $request->role ?? 'client',
-
-            // core system defaults
             'status' => 'pending',
-
-            // extended fields (safe optional mapping)
             'phone' => $request->phone,
             'dob' => $request->dob ?? null,
             'address' => $request->address ?? null,
@@ -52,12 +51,21 @@ class AuthController extends Controller
             'borrow_limit' => $request->borrow_limit ?? 0,
         ]);
 
+        // 🔐 CREATE SIGNED VERIFICATION LINK
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id'   => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
 
-        // $token = auth('api')->login($user);
-        // 👇 THIS sends email verification link automatically
-        $user->sendEmailVerificationNotification();
+        // 📧 SEND EMAIL MANUALLY
+        Mail::to($user->email)->send(
+            new VerifyEmailMail($verificationUrl)
+        );
 
-        // ✅ Use the created user, NOT auth()->user()
         SystemLog::create([
             'user_id' => $user->id,
             'description' => $user->name . ' created account'

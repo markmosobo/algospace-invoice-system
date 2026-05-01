@@ -42,6 +42,7 @@ import BooksCatalog from '@/views/BooksCatalog.vue';
 import BookBorrowers from '@/views/BookBorrowers.vue';
 import Partners from '@/views/Partners.vue';
 import ToDos from '../views/ToDos.vue';
+import Analytics from '../views/Analytics.vue';
 
 const routes = [
   // Public routes
@@ -63,6 +64,7 @@ const routes = [
 
   // Protected routes
   { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true } },
+  { path: '/analytics', name: 'analytics', component: Analytics, meta: { requiresAuth: true } },
   { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true } },
   { path: '/suppliers', name: 'suppliers', component: Suppliers, meta: { requiresAuth: true } },
   { path: '/restocks', name: 'restocks', component: Restocks, meta: { requiresAuth: true } },

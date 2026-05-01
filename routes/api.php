@@ -29,6 +29,7 @@ use App\Http\Controllers\LedgerReportController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoyaltyCardController;
+use App\Http\Controllers\OnlineVisitController;
 use App\Http\Controllers\OwnerDrawController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PersonalAccountController;
@@ -190,6 +191,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/ai/chat', [AiChatController::class, 'send']);
     Route::get('/ai/chat/{session}', [AiChatController::class, 'messages']); 
-       
+        
+    Route::get('/analytics/visits/total', [OnlineVisitController::class, 'totalVisits']);
+    Route::get('/analytics/visits/today', [OnlineVisitController::class, 'todayVisits']);
+    Route::get('/analytics/visits/unique', [OnlineVisitController::class, 'uniqueVisitors']);
+    Route::get('/analytics/visits/top-pages', [OnlineVisitController::class, 'topPages']);    
 
 });

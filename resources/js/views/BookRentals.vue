@@ -49,10 +49,10 @@
                   <tr v-for="record in borrowRecords" :key="record.id">
                     <td>{{ record.book.title }}</td>
                     <td>{{ record.user.name }}</td>
-                    <td>{{ record.borrow_date }}</td>
-                    <td>{{ record.expected_return_date || 'N/A' }}</td>
-                    <td>{{ record.return_date || 'N/A' }}</td>
-                    <td>{{ record.late_fee.toFixed(2) }}</td>
+                    <td>{{ formatDate(record.borrow_date )}}</td>
+                    <td>{{ formatDate(record.expected_return_date) }}</td>
+                    <td>{{ formatDate(record.return_date) }}</td>
+                    <td>{{ record.late_fee }}</td>
                     <td>
                       <span v-if="record.status==='borrowed'" class="badge bg-warning">Borrowed</span>
                       <span v-else-if="record.status==='returned'" class="badge bg-success">Returned</span>
@@ -94,10 +94,10 @@
               <div class="modal-body" v-if="selectedRecord">
                 <p><strong>Book:</strong> {{ selectedRecord.book.title }}</p>
                 <p><strong>User:</strong> {{ selectedRecord.user.name }}</p>
-                <p><strong>Borrow Date:</strong> {{ selectedRecord.borrow_date }}</p>
-                <p><strong>Expected Return:</strong> {{ selectedRecord.expected_return_date || 'N/A' }}</p>
-                <p><strong>Return Date:</strong> {{ selectedRecord.return_date || 'N/A' }}</p>
-                <p><strong>Late Fee:</strong> {{ selectedRecord.late_fee.toFixed(2) }}</p>
+                <p><strong>Borrow Date:</strong> {{ formatDate(selectedRecord.borrow_date) }}</p>
+                <p><strong>Expected Return:</strong> {{ formatDate(selectedRecord.expected_return_date) }}</p>
+                <p><strong>Return Date:</strong> {{ formatDate(selectedRecord.return_date) }}</p>
+                <p><strong>Late Fee:</strong> {{ selectedRecord.late_fee }}</p>
                 <p><strong>Status:</strong> {{ selectedRecord.status }}</p>
               </div>
               <div class="modal-footer">
@@ -194,6 +194,15 @@ export default {
     };
   },
   methods: {
+    formatDate(date) {
+        if (!date) return 'N/A';
+
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    },
     loadBorrowRecords() {
       this.initializing = true;
       axios.get('/api/borrow')

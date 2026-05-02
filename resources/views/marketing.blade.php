@@ -734,6 +734,32 @@
                         <div class="bg-light rounded-1 p-30">
                             <div class="d-flex justify-content-between mb-3">
                                 <div class="d-flex align-items-center">
+                                    <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/derrick.webp') }}">
+                                    <div class="mt-2">
+                                        <div class="text-dark fw-bold lh-1">Derrick S.</div>
+                                        <small>Client</small>
+                                    </div>
+                                </div>
+                                <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">
+                            </div>  
+
+                            <div class="de-rating-ext mb-2">
+                                <span class="d-stars">
+                                    <i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
+                                </span>
+                                <span class="ms-2 text-white">5.0</span>
+                            </div>
+
+                            <p>
+                                “The best service I have ever received while paying with paybill”
+                            </p>
+                        </div>
+                    </div>                    
+
+                    <div class="item">
+                        <div class="bg-light rounded-1 p-30">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
                                     <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/himram.webp') }}">
                                     <div class="mt-2">
                                         <div class="text-dark fw-bold lh-1">Himram N.</div>
@@ -765,7 +791,7 @@
                                     <img class="w-40px circle me-3" src="{{ asset('templates/marketing_site/images/testimonial/jacinta.webp') }}">
                                     <div class="mt-2">
                                         <div class="text-dark fw-bold lh-1">Jacinta M.</div>
-                                        <small>Restaurant Owner</small>
+                                        <small>Waitress</small>
                                     </div>
                                 </div>
                                 <img src="{{ asset('templates/marketing_site/images/misc/google-icon.svg') }}" class="w-30px">

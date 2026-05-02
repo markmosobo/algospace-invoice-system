@@ -52,6 +52,7 @@ use App\Http\Controllers\CapitalInjectionController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
 
 // Public routes
@@ -59,6 +60,39 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login2', [AuthController::class, 'login'])->name('login');
 
+/*
+|--------------------------------------------------------------------------
+| EMAIL VERIFICATION (CUSTOM JWT-FRIENDLY)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/email/verify/{id}', function (Request $request, $id) {
+
+    // 🔒 validate signed URL
+    if (! $request->hasValidSignature()) {
+        abort(403, 'Invalid or expired verification link');
+    }
+
+    $user = User::findOrFail($id);
+    // 🔥 DEBUG (temporary)
+    // dd($user->email_verified_at, $user->status);
+
+    // ✅ update verification fields
+    if (is_null($user->email_verified_at)) {
+        $user->email_verified_at = now();
+        $user->status = 'active';
+        $user->save();
+    }
+    
+    // ✔ mark verified
+    $user->update([
+        'email_verified_at' => now(),
+        'status' => 'active'
+    ]);
+
+    return redirect(env('FRONTEND_URL') . '/login?verified=1');
+
+})->name('verification.verify');
 
 Route::middleware(['auth:api'])->group(function () {
 

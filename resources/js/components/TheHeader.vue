@@ -257,6 +257,9 @@ import axios from 'axios';
           clearInterval(this.reminderInterval);
         }
 
+        const user = JSON.parse(localStorage.getItem('user'));
+        const role = user?.role;
+
         await axios.post('/api/logout', {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -266,11 +269,30 @@ import axios from 'axios';
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 
-        this.$router.replace('/login2');
+        // 🔥 ROLE-BASED REDIRECT LOGIC
+        const allowedLogin2Roles = ['office', 'personal', 'farm'];
+
+        if (allowedLogin2Roles.includes(role)) {
+          this.$router.replace('/login2');
+        } else {
+          this.$router.replace('/login');
+        }
 
       } catch (error) {
         localStorage.removeItem('token');
-        this.$router.push('/login2');
+        localStorage.removeItem('user');
+
+        // fallback same logic
+        const user = JSON.parse(localStorage.getItem('user'));
+        const role = user?.role;
+
+        const allowedLogin2Roles = ['office', 'personal', 'farm'];
+
+        if (allowedLogin2Roles.includes(role)) {
+          this.$router.push('/login2');
+        } else {
+          this.$router.push('/login');
+        }
       }
     },
 

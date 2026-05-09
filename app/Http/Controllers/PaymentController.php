@@ -76,7 +76,7 @@ class PaymentController extends Controller
 
             if ($request->method === 'bank') {
                 $account = PersonalAccount::lockForUpdate()
-                    ->where('name', 'I&M BANK')
+                    ->where('name', 'I&M ALGOSPACE CYBER PAYBILL')
                     ->firstOrFail();
             }
 

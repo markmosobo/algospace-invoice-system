@@ -59,10 +59,18 @@ const routes = [
       }
     }
   },
-  { path: '/login2', name: 'login2', component: Login2 },
   { path: '/register', name: 'register', component: Register },
 
   // Protected routes
+  {
+    path: '/login2',
+    name: 'login2',
+    component: Login2,
+    meta: {
+      requiresAuth: true,
+      roles: ['office', 'personal', 'farm']
+    }
+  },
   { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true } },
   { path: '/analytics', name: 'analytics', component: Analytics, meta: { requiresAuth: true } },
   { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true } },

@@ -6,8 +6,8 @@
     <!-- Meta -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AlgoSpaceCyber offers professional cybersecurity services.">
-    <meta name="keywords" content="cyber security, firewall, antivirus, data protection">
+    <meta name="description" content="AlgoSpaceCyber offers professional cyber services.">
+    <meta name="keywords" content="cyber, software development, antivirus, data protection">
     <meta name="author" content="AlgoSpace">
 
     <!-- Favicon -->

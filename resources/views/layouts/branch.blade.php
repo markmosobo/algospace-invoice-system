@@ -313,6 +313,6 @@
 <script src="{{ asset('templates/marketing_site/js/plugins.js') }}"></script>
 <script src="{{ asset('templates/marketing_site/js/designesia.js') }}"></script>
 <script src="{{ asset('templates/marketing_site/js/swiper.js') }}"></script>
-
+@stack('scripts')
 </body>
 </html>

@@ -1,43 +1,38 @@
 @extends('layouts.app')
 
-@section('title', 'About AlgoSpace Cyber')
+@section('title', 'About Us - AlgoSpace Cyber')
 
 @section('content')
 
-<section class="section-dark bg-dark text-light py-90">
-    <div class="container text-center">
+<!-- Subheader -->
+<section id="subheader" class="section-dark bg-dark text-light relative jarallax">
+    <div class="container relative z-2">
+        <div class="row gy-4 gx-5 align-items-center">
 
-        <div class="subtitle">About Our Cyber Branch</div>
+            <div class="col-lg-6">
+                <h1>About Us</h1>
 
-        <h1>AlgoSpace Cyber Services</h1>
+                <ul class="crumb">
+                    <li><a href="/">Home</a></li>
+                    <li class="active">About Us</li>
+                </ul>
+            </div>
 
-        <p class="lead">
-            We provide digital services including printing, typing, CV writing,
-            online applications, and IT support.
-        </p>
+            <div class="col-lg-6 text-lg-end sm-hide">
+                <h3>"Prevention is cheaper than a breach"</h3>
+            </div>
 
+        </div>
     </div>
 </section>
 
-<section class="section-dark bg-dark-2 text-light py-90">
+<!-- Page Content -->
+<section class="py-5">
     <div class="container">
-
-        <div class="row">
-            <div class="col-lg-6">
-                <h3>Our Mission</h3>
-                <p>
-                    To simplify digital access for students, job seekers, and businesses.
-                </p>
-            </div>
-
-            <div class="col-lg-6">
-                <h3>Our Vision</h3>
-                <p>
-                    A fully digitized community where everyone can access cyber services easily.
-                </p>
-            </div>
-        </div>
-
+        <h2>Defending Your Digital World</h2>
+        <p>
+            For over 15 years, we’ve been safeguarding organizations from cyber threats...
+        </p>
     </div>
 </section>
 

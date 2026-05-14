@@ -255,15 +255,127 @@
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="section-dark bg-dark-3 text-light pt-60 pb-50">
-        <div class="container d-flex justify-content-between align-items-center">
-            <h3 class="mb-0">
-                Need fast internet, printing, or online services?
-            </h3>
-            <a href="/register" class="btn-main fx-slide btn-line">
-                <span>Get Help Now</span>
-            </a>
+    <!-- REMOTE SERVICES / ONLINE ORDERS -->
+    <section class="section-dark bg-dark-2 text-light">
+        <div class="container">
+
+            <div class="row g-4 align-items-center">
+
+                <!-- TEXT SIDE -->
+                <div class="col-lg-6">
+
+                    <div class="subtitle wow fadeInUp">
+                        Serving You Anywhere
+                    </div>
+
+                    <h2 class="wow fadeInUp" data-wow-delay=".2s">
+                        Not Near Our Cyber? We Help You Online
+                    </h2>
+
+                    <p class="lead wow fadeInUp" data-wow-delay=".4s">
+                        You don’t need to visit our physical cyber to get help.
+                        We assist clients remotely with document typing, CV writing,
+                        online applications, website setup, system support, and more.
+                    </p>
+
+                    <ul class="wow fadeInUp" data-wow-delay=".5s">
+                        <li>✔ WhatsApp & Email support</li>
+                        <li>✔ M-Pesa payment supported</li>
+                        <li>✔ Fast turnaround time</li>
+                        <li>✔ Clients served across Kenya</li>
+                    </ul>
+
+                    <div class="spacer-single"></div>
+
+                    <a href="https://wa.me/254112514440"
+                    target="_blank"
+                    class="btn-main fx-slide me-3 wow fadeInUp"
+                    data-wow-delay=".6s">
+                        <span>Request Help on WhatsApp</span>
+                    </a>
+
+                    <a href="{{ route('submit.job') }}"
+                    class="btn-main fx-slide btn-line wow fadeInUp"
+                    data-wow-delay=".7s">
+                        <span>Submit a Job Online</span>
+                    </a>
+
+                </div>
+
+                <!-- IMAGE SIDE -->
+                <div class="col-lg-6">
+
+                    <div class="relative wow fadeInUp" data-wow-delay=".3s">
+
+                        <img src="{{ asset('templates/marketing_site/images/misc/remote-work.webp') }}"
+                            class="w-100 rounded-1"
+                            alt="Remote Cyber Services">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section-dark bg-dark section-pad text-light">
+        <div class="container">
+
+            <div class="text-center mb-5">
+                <div class="subtitle wow fadeInUp">Simple Process</div>
+
+                <h2 class="wow fadeInUp" data-wow-delay=".2s">
+                    How It Works
+                </h2>
+
+                <p class="lead wow fadeInUp" data-wow-delay=".4s">
+                    Getting help from AlgoSpace Cyber is simple. Whether online or in person,
+                    we follow a clear process to get your work done fast and correctly.
+                </p>
+            </div>
+
+            <div class="row g-4">
+
+                <!-- STEP 1 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="bg-dark-gradient rounded-2 p-30 h-100 wow fadeInUp" data-wow-delay=".1s">
+                        <span class="fs-32 fw-bold text-white">01</span>
+                        <h4 class="mt-3">Submit Your Request</h4>
+                        <p>Use WhatsApp or the online form to tell us what you need.</p>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="bg-dark-gradient rounded-2 p-30 h-100 wow fadeInUp" data-wow-delay=".3s">
+                        <span class="fs-32 fw-bold text-white">02</span>
+                        <h4 class="mt-3">Get a Quote</h4>
+                        <p>We review your request and send a clear price estimate.</p>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="bg-dark-gradient rounded-2 p-30 h-100 wow fadeInUp" data-wow-delay=".5s">
+                        <span class="fs-32 fw-bold text-white">03</span>
+                        <h4 class="mt-3">Make Payment</h4>
+                        <p>Pay securely via M-Pesa to begin processing.</p>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="bg-dark-gradient rounded-2 p-30 h-100 wow fadeInUp" data-wow-delay=".7s">
+                        <span class="fs-32 fw-bold text-white">04</span>
+                        <h4 class="mt-3">Get Your Work Done</h4>
+                        <p>We complete your task and deliver it digitally or physically.</p>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </section>
 

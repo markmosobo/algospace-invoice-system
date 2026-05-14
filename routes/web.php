@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'marketing');          // homepage
 Route::view('/landing', 'marketing');   // optional alias
 
+// Public Blade pages
+Route::view('/submit-job', 'submit-job')->name('submit.job');
 
 /*
 |--------------------------------------------------------------------------

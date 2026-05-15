@@ -21,7 +21,9 @@
                 <th>Urgency</th>
                 <th>Status</th>
                 <th>Contact</th>
+                <th>Payment</th>
                 <th>Created</th>
+                <th>Last Update</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -29,7 +31,7 @@
             <!-- LOADING -->
             <tbody v-if="initializing">
               <tr>
-                <td colspan="7" class="text-center">
+                <td colspan="9" class="text-center">
                   <div class="spinner-border text-primary"></div>
                 </td>
               </tr>
@@ -81,9 +83,21 @@
                   <div>{{ item.phone }}</div>
                   <small>{{ item.email }}</small>
                 </td>
-
+                <td>
+                  <span
+                    class="badge"
+                    :class="{
+                      'bg-danger': item.payment_status === 'unpaid',
+                      'bg-warning': item.payment_status === 'pending',
+                      'bg-success': item.payment_status === 'paid'
+                    }"
+                  >
+                    {{ item.payment_status }}
+                  </span>
+                </td>
                 <!-- CREATED -->
                 <td>{{ item.created_at }}</td>
+                <td>{{ item.updated_at }}</td>
 
                 <!-- ACTION -->
                 <td>
@@ -104,16 +118,16 @@
                         <i class="bi bi-eye"></i> View
                       </a>
 
-                      <!-- MOVE TO PROCESSING -->
+                      <!-- PENDING → PROCESSING -->
                       <a
-                        v-if="item.status === 'pending'"
+                        v-if="!(item.payment_type === 'prepay' && item.payment_status !== 'paid') && item.status === 'pending'"
                         class="dropdown-item"
                         @click="updateStatus(item, 'processing')"
                       >
-                        <i class="bi bi-arrow-repeat"></i> Mark Processing
+                        Start Processing
                       </a>
 
-                      <!-- COMPLETE -->
+                      <!-- PROCESSING → COMPLETED -->
                       <a
                         v-if="item.status === 'processing'"
                         class="dropdown-item"
@@ -122,7 +136,7 @@
                         <i class="bi bi-check-circle"></i> Mark Completed
                       </a>
 
-                      <!-- CANCEL -->
+                      <!-- CANCEL ONLY IF NOT COMPLETED -->
                       <a
                         v-if="item.status !== 'completed' && item.status !== 'cancelled'"
                         class="dropdown-item text-danger"
@@ -130,6 +144,21 @@
                       >
                         <i class="bi bi-x-circle"></i> Cancel Request
                       </a>
+
+                      <a
+                        v-if="item.payment_status !== 'paid'"
+                        class="dropdown-item"
+                        @click="updatePayment(item, 'paid')"
+                      >
+                        <i class="bi bi-cash-coin"></i> Mark Paid
+                      </a>
+                      <a
+                        v-if="item.payment_status === 'paid'"
+                        class="dropdown-item text-warning"
+                        @click="updatePayment(item, 'unpaid')"
+                      >
+                        <i class="bi bi-arrow-counterclockwise"></i> Revert Payment
+                      </a>                      
 
                     </div>
 
@@ -266,7 +295,15 @@ export default {
           toast.fire("Updated", "Status changed", "success");
           this.loadLists();
         });
-    }
+    },
+    updatePayment(item, status) {
+      axios.put(`/api/cyber-requests/${item.id}`, {
+        payment_status: status
+      }).then(() => {
+        toast.fire("Updated", "Payment status changed", "success");
+        this.loadLists();
+      });
+    }    
   },
 
   mounted() {

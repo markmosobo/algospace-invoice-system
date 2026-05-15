@@ -16,7 +16,8 @@ Route::view('/', 'marketing');          // homepage
 Route::view('/landing', 'marketing');   // optional alias
 
 // Public Blade pages
-Route::view('/submit-job', 'submit-job')->name('submit.job');
+Route::get('/submit-job', [CyberRequestController::class, 'create'])
+    ->name('submit.job');
 Route::post('/cyber-request', [CyberRequestController::class, 'store'])
     ->name('cyber.requests.store');
 /*

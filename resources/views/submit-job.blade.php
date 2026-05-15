@@ -37,7 +37,8 @@
                     <form id="booking_form"
                           class="relative z1000 bg-light rounded-1 p-40"
                           method="POST"
-                          action="{{ route('cyber.requests.store') }}">
+                          action="{{ route('cyber.requests.store') }}"
+                          enctype="multipart/form-data">
 
                         @csrf
 
@@ -54,21 +55,36 @@
                                 </p>
                             </div>
 
-                            <!-- SERVICE -->
+                            <!-- SERVICE (SEARCHABLE) -->
                             <div class="col-lg-12">
-                                <select name="service" class="form-control" required>
+                                <select name="service_id"
+                                        id="service_select"
+                                        class="form-control select2"
+                                        required>
+
                                     <option value="" disabled selected>Select Service You Need</option>
-                                    <option>Printing / Scanning / Photocopy</option>
-                                    <option>CV Writing / Typing</option>
-                                    <option>KUCCPS Application</option>
-                                    <option>KRA PIN / Returns Filing</option>
-                                    <option>HELB Application</option>
-                                    <option>Online Job Application</option>
-                                    <option>Document Formatting</option>
-                                    <option>Website / App Development</option>
-                                    <option>Website / Tech Support</option>
-                                    <option>Other Digital Task</option>
+
+                                    @foreach($services as $service)
+                                        <option value="{{ $service->id }}"
+                                                data-price="{{ $service->price }}"
+                                                data-payment="{{ $service->payment_type }}">
+                                            {{ $service->name }} (KES {{ number_format($service->price) }})
+                                        </option>
+                                    @endforeach
+
                                 </select>
+                            </div>
+
+                            <!-- PRICE DISPLAY -->
+                            <div class="col-lg-12">
+                                <div id="price_box"
+                                     class="alert alert-info"
+                                     style="display:none;">
+                                    <strong>Amount:</strong>
+                                    <span id="service_price"></span><br>
+
+                                    <small id="payment_note"></small>
+                                </div>
                             </div>
 
                             <!-- MESSAGE -->
@@ -86,11 +102,11 @@
                                 </label>
 
                                 <input type="file"
-                                    name="files[]"
-                                    class="form-control"
-                                    multiple
-                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" />
-                            </div>                            
+                                       name="files[]"
+                                       class="form-control"
+                                       multiple
+                                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" />
+                            </div>
 
                             <!-- DELIVERY -->
                             <div class="col-lg-6">
@@ -119,16 +135,27 @@
                             </div>
 
                             <div class="col-lg-4">
-                                <input type="email" name="email" class="form-control" placeholder="Email" required>
+                                <input type="email"
+                                    name="email"
+                                    class="form-control"
+                                    placeholder="Email"
+                                    required>
                             </div>
 
                             <div class="col-lg-4">
-                                <input type="text" name="phone" class="form-control" placeholder="WhatsApp Number" required>
+                                <input type="text"
+                                    name="phone"
+                                    class="form-control"
+                                    placeholder="WhatsApp Number"
+                                    pattern="^254[0-9]{9}$"
+                                    title="Use format 2547XXXXXXXX"
+                                    required>
                             </div>
 
                             <!-- SUBMIT -->
                             <div class="col-lg-12">
-                                <input type="submit" id="submit_btn"
+                                <input type="submit"
+                                       id="submit_btn"
                                        value="Submit Request"
                                        class="btn-main w-100">
                             </div>
@@ -146,64 +173,106 @@
 
 
 @push('scripts')
+
+<!-- jQuery + Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+.select2-container .select2-selection--single {
+    height: 48px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 46px;
+    color: #333;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 46px;
+}
+</style>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+$(document).ready(function () {
 
-    const form = document.getElementById('booking_form');
-    const button = document.getElementById('submit_btn');
-    const successBox = document.getElementById('success_message_col');
-    const successExtra = document.getElementById('success_extra');
+    // SEARCHABLE SERVICE DROPDOWN
+    $('#service_select').select2({
+        placeholder: "Search or select a service",
+        width: '100%'
+    });
 
-    form.addEventListener('submit', async function (e) {
+    // PRICE LOGIC
+    $('#service_select').on('change', function () {
+
+        const option = this.selectedOptions[0];
+
+        const price = option.dataset.price;
+        const paymentType = option.dataset.payment;
+
+        $('#service_price').text(`KES ${Number(price).toLocaleString()}`);
+
+        $('#payment_note').text(
+            paymentType === 'prepay'
+                ? 'Payment is required before processing this request.'
+                : 'Payment can be made after service delivery.'
+        );
+
+        $('#price_box').show();
+    });
+
+    // AJAX FORM SUBMIT
+    $('#booking_form').on('submit', function (e) {
         e.preventDefault();
 
+        let form = this;
         let formData = new FormData(form);
+        let button = $('#submit_btn');
 
-        button.value = "Submitting...";
-        button.disabled = true;
+        button.val("Submitting...");
+        button.prop("disabled", true);
 
-        try {
-            const response = await fetch(form.action, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
+        $.ajax({
+            url: form.action,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function (data) {
 
-            const data = await response.json();
+                $('#booking_form').hide();
+                $('#success_message_col').show();
 
-            if (!response.ok) {
-                throw data;
+                $('#success_extra').html(`
+                    <p><strong>Request ID:</strong> #${data.request_id ?? 'N/A'}</p>
+                    <p>We will contact you shortly via WhatsApp or Email.</p>
+
+                    <a class="btn-line mt-3" target="_blank"
+                       href="https://wa.me/254112514440">
+                       Chat on WhatsApp
+                    </a>
+                `);
+            },
+            error: function () {
+
+                button.val("Submit Request");
+                button.prop("disabled", false);
+
+                alert("Something went wrong. Please try again.");
             }
+        });
 
-            // hide form
-            form.style.display = "none";
-
-            // show success
-            successBox.style.display = "block";
-
-            successExtra.innerHTML = `
-                <p><strong>Request ID:</strong> #${data.request_id ?? 'N/A'}</p>
-                <p>We will contact you shortly via WhatsApp or Email.</p>
-
-                <a class="btn-line mt-3" target="_blank"
-                   href="https://wa.me/254112514440">
-                   Chat on WhatsApp
-                </a>
-            `;
-
-        } catch (err) {
-            console.error(err);
-
-            button.value = "Submit Request";
-            button.disabled = false;
-
-            alert("Something went wrong. Please try again.");
-        }
     });
 
 });
 </script>
+
 @endpush

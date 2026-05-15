@@ -24,6 +24,7 @@ class Kernel extends ConsoleKernel
     {
         // Run the monthly bills command on the 1st of every month at midnight
         $schedule->command('bills:create-monthly')->monthlyOn(1, '00:00');
+        $schedule->command('cyber:cleanup')->daily();
 
         // Optional: add other scheduled tasks here
     }

@@ -12,6 +12,7 @@ class Service extends Model
         'name',
         'category',
         'price',
+        'payment_type',
         'unit',        // page, document, hour, service, bundle
         'is_bundle',   // boolean
         'created_at',

@@ -16,7 +16,9 @@ return new class extends Migration
 
             $table->string('name');                // Service name
             $table->string('category');            // Printing & Copying, Bundles, etc
+            $table->boolean('is_active')->default(true)->after('price');
 
+            $table->string('payment_type')->default('prepay');
             $table->decimal('price', 10, 2);       // Service price (KES)
             $table->string('unit');                // page, hour, service, bundle, document
 

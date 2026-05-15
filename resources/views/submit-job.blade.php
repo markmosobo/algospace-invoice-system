@@ -79,6 +79,19 @@
                                           required></textarea>
                             </div>
 
+                            <!-- FILE UPLOAD -->
+                            <div class="col-lg-12">
+                                <label class="form-label text-dark mb-1">
+                                    Attach Files (optional)
+                                </label>
+
+                                <input type="file"
+                                    name="files[]"
+                                    class="form-control"
+                                    multiple
+                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" />
+                            </div>                            
+
                             <!-- DELIVERY -->
                             <div class="col-lg-6">
                                 <select name="delivery_method" class="form-control" required>

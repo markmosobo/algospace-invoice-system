@@ -63,6 +63,18 @@
     </li>
 
     <li v-show="userRole === 'office'" class="nav-item">
+      <router-link to="/cyber-requests" custom v-slot="{ href, navigate, isActive }">
+        <a :href="href"
+          :class="{ active: isActive }"
+          class="nav-link"
+          @click="navigate">
+          <i class="bi bi-inbox"></i>
+          Cyber Requests
+        </a>
+      </router-link>
+    </li>    
+
+    <li v-show="userRole === 'office'" class="nav-item">
       <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
         <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
           <i class="bi bi-cash-stack"></i>

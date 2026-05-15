@@ -20,6 +20,7 @@ class CyberRequestController extends Controller
             'name' => 'required|string',
             'email' => 'required|email',
             'phone' => 'required|string',
+            'files.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120'
         ]);
 
         $cyberRequest = CyberRequest::create([
@@ -33,6 +34,21 @@ class CyberRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        // handle files
+        if ($request->hasFile('files')) {
+
+            foreach ($request->file('files') as $file) {
+
+                $path = $file->store('cyber_requests', 'public');
+
+                $cyberRequest->files()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                ]);
+            }
+        }        
+
         // dispatch emails to queue
         SendCyberRequestEmails::dispatch($cyberRequest);
 
@@ -42,4 +58,43 @@ class CyberRequestController extends Controller
             'request_id' => $cyberRequest->id,
         ]);
     }
+
+    public function cyberRequests()
+    {
+        return CyberRequest::with('files')
+            ->latest()
+            ->get()
+            ->map(function ($req) {
+                return [
+                    'id' => $req->id,
+                    'name' => $req->name,
+                    'email' => $req->email,
+                    'phone' => $req->phone,
+                    'service' => $req->service,
+                    'status' => $req->status,
+                    'urgency' => $req->urgency,
+                    'message' => $req->message,
+                    'created_at' => $req->created_at->format('d/m/Y H:i'),
+                    'files' => $req->files
+                ];
+            });
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,cancelled'
+        ]);
+
+        $cyberRequest = CyberRequest::findOrFail($id);
+
+        $cyberRequest->update([
+            'status' => $request->status
+        ]);
+
+        return response()->json([
+            'message' => 'Status updated successfully',
+            'data' => $cyberRequest
+        ]);
+    }    
 }

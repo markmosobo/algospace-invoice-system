@@ -26,7 +26,7 @@ class CreateMonthlyBills extends Command
         foreach($bills as $bill){
             // Calculate remind_at for each bill
             $entry_date = $now->copy()->startOfMonth(); // store the bill as for the month
-            $remind_at = $entry_date->copy()->addDays($bill['due_day'] - 1); // e.g. due_day=5 means 5th of month
+            $remind_at = $now->copy()->startOfMonth()->day($bill['due_day']);
 
             DiaryEntry::updateOrCreate(
                 [

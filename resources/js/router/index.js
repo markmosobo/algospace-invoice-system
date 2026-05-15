@@ -7,6 +7,7 @@ import Home from '../views/Home.vue';
 import Supplies from '../views/Supplies.vue';
 import Suppliers from '../views/Suppliers.vue';
 import QuickSale from '../views/QuickSale.vue';
+import CyberRequests from '../views/CyberRequests.vue';
 import Invoices from '../views/Invoices.vue';
 import Payments from '../views/Payments.vue';
 import PendingInvoices from '../views/PendingInvoices.vue';
@@ -77,6 +78,7 @@ const routes = [
   { path: '/suppliers', name: 'suppliers', component: Suppliers, meta: { requiresAuth: true } },
   { path: '/restocks', name: 'restocks', component: Restocks, meta: { requiresAuth: true } },
   { path: '/quick-sale', name: 'quick-sale', component: QuickSale, meta: { requiresAuth: true } },
+  { path: '/cyber-requests', name: 'cyber-requests', component: CyberRequests, meta: { requiresAuth: true } },
   { path: '/pending-invoices', name: 'pending-invoices', component: PendingInvoices, meta: { requiresAuth: true } },
   { path: '/invoices', name: 'invoices', component: Invoices, meta: { requiresAuth: true } },
   { path: '/payments', name: 'payments', component: Payments, meta: { requiresAuth: true } },

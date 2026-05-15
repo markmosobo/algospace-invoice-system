@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CyberRequestFile;
 
 class CyberRequest extends Model
 {
@@ -16,4 +17,9 @@ class CyberRequest extends Model
         'phone',
         'status',
     ];
+
+    public function files()
+    {
+        return $this->hasMany(CyberRequestFile::class);
+    }    
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomRewardController;
+use App\Http\Controllers\CyberRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
@@ -230,5 +231,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/analytics/visits/today', [OnlineVisitController::class, 'todayVisits']);
     Route::get('/analytics/visits/unique', [OnlineVisitController::class, 'uniqueVisitors']);
     Route::get('/analytics/visits/top-pages', [OnlineVisitController::class, 'topPages']);    
+
+    Route::get('/cyber-requests', [CyberRequestController::class, 'cyberRequests']);    
+    Route::put('/cyber-requests/{id}', [CyberRequestController::class, 'updateStatus']);
 
 });

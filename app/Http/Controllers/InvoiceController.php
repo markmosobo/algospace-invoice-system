@@ -8,9 +8,17 @@ use App\Models\InvoiceItem;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\InvoiceService;
 
 class InvoiceController extends Controller
 {
+
+    protected $invoiceService;
+
+    public function __construct(InvoiceService $invoiceService)
+    {
+        $this->invoiceService = $invoiceService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -45,42 +53,34 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the incoming request
         $request->validate([
             'customer_id'    => 'required|exists:customers,id',
-            // 'invoice_date'   => 'required|date',
             'due_date'       => 'nullable|date',
             'status'         => 'nullable|in:pending,paid,overdue',
             'total_amount'   => 'required|numeric|min:0',
+            'items'          => 'required|array'
         ]);
 
-        // Create new invoice
-        $invoice = Invoice::create([
-            'customer_id'    => $request->customer_id,
-            'invoice_number' => Invoice::generateInvoiceNumber(),
-            'invoice_date' => $request->invoice_date ?? now(),
-            'due_date'       => $request->due_date,
-            'status'         => $request->status ?? 'pending',
-            'total_amount'   => $request->total_amount,
-        ]);
+        $customer = Customer::findOrFail($request->customer_id);
 
-        // Save items
-        foreach ($request->items as $item) {
-            InvoiceItem::create([
-                'invoice_id'   => $invoice->id,
-                'service_id'   => $item['service_id'],
-                'service_name' => $item['name'],
-                'unit_price'   => $item['price'],
-                'quantity'     => $item['quantity'],
-                'line_total'   => $item['line_total'],
-            ]);
-        }        
+        $data = [
+            'items' => $request->items,
+            'due_date' => $request->due_date,
+            'status' => $request->status,
+            'total_amount' => $request->total_amount,
+        ];
 
-        //record system log
+        $invoice = $this->invoiceService->create(
+            $data,
+            $customer,
+            'walkin',
+            null
+        );
+
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created invoice #'.$invoice->id
-        ]);        
+            'description' => auth('api')->user()->name.' created invoice via walk-in #'.$invoice->id
+        ]);
 
         return response()->json([
             'message' => 'Invoice created successfully',

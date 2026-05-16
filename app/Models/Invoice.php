@@ -16,6 +16,8 @@ class Invoice extends Model
         'invoice_type',
         'invoice_date',
         'due_date',
+        'source',
+        'source_id',
         'status',
         'total_amount',
         'status',
@@ -39,6 +41,11 @@ class Invoice extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function cyberRequest()
+    {
+        return $this->belongsTo(CyberRequest::class, 'source_id');
+    }    
 
     // Helper function: get total paid
     public function totalPaid()

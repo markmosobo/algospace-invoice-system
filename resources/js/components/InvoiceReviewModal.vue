@@ -8,57 +8,80 @@
           <div>
             <h5 class="modal-title">Invoice Review</h5>
             <small class="text-muted">
-              Human review + system suggestion
+              Smart billing adapts to request type
             </small>
           </div>
+
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
         <!-- BODY -->
         <div class="modal-body" v-if="draft">
 
-          <!-- SMART SUMMARY -->
-          <div class="card mb-3 bg-light border-0">
-            <div class="card-body d-flex justify-content-between">
+          <!-- MODE DETECTION -->
+          <div class="alert alert-secondary">
+            <strong>Billing Mode:</strong>
+
+            <span v-if="hasFiles">
+              Document-based (Pages detected)
+            </span>
+
+            <span v-else>
+              Service-based (No attachments)
+            </span>
+          </div>
+
+          <!-- INTELLIGENCE -->
+          <div class="card mb-3 border-0 bg-light">
+            <div class="card-body py-2 d-flex justify-content-between align-items-center">
 
               <div>
-                <strong>{{ draft.service_name }}</strong><br>
+                <strong>Invoice Intelligence</strong><br>
                 <small class="text-muted">
-                  Client: {{ draft.client_name }}
+                  Adaptive pricing system
                 </small>
               </div>
 
               <div class="text-end">
-                <div class="badge bg-dark">
-                  Base: KES {{ draft.service_price }}
-                </div>
-
-                <div class="badge bg-info mt-1">
-                  × {{ draft.urgency_multiplier }} urgency
-                </div>
-
-                <div class="badge bg-success mt-1">
-                  Suggested: KES {{ draft.suggested_total }}
-                </div>
+                <span class="badge bg-info">
+                  Suggested Pages: {{ draft.system_pages }}
+                </span>
               </div>
 
             </div>
           </div>
 
-          <!-- CONFIDENCE -->
-          <div class="alert" :class="confidenceClass">
-            Confidence: {{ Math.round(draft.confidence * 100) }}%
+          <!-- CLIENT INFO -->
+          <div class="mb-3">
+            <strong>Client:</strong> {{ draft.client_name }} <br>
+            <strong>Request ID:</strong> #{{ draft.request_id }} <br>
+            <strong>Service:</strong> {{ draft.service_name || '—' }}
           </div>
 
-          <!-- ITEMS -->
-          <table class="table table-bordered">
-            <thead>
+          <!-- FILE SECTION (ONLY IF EXISTS) -->
+          <div v-if="hasFiles" class="mb-3">
+            <h6 class="text-muted">Attachments</h6>
+
+            <div class="alert alert-light">
+              This request includes documents. Pricing is page-based.
+            </div>
+          </div>
+
+          <!-- SERVICE MODE NOTICE -->
+          <div v-else class="alert alert-warning">
+            No attachments found.
+            You can still create an invoice manually for this service.
+          </div>
+
+          <!-- ITEMS TABLE -->
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
               <tr>
                 <th>Description</th>
-                <th>Pages</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th></th>
+                <th width="140">Pages</th>
+                <th width="160">Unit Price</th>
+                <th width="140">Total</th>
+                <th width="60"></th>
               </tr>
             </thead>
 
@@ -66,30 +89,38 @@
               <tr v-for="(item, i) in draft.items" :key="i">
 
                 <td>
-                  <input v-model="item.description" class="form-control" />
+                  <input v-model="item.description" class="form-control">
                 </td>
 
+                <!-- PAGES ONLY MEANINGFUL IF FILES EXIST -->
                 <td>
                   <input type="number"
                          v-model.number="item.pages"
-                         class="form-control" />
+                         class="form-control"
+                         :disabled="!hasFiles">
+
                   <small class="text-muted">
-                    System: {{ draft.system_pages }}
+                    <span v-if="hasFiles">
+                      Suggested: {{ item.pages }} pages
+                    </span>
+                    <span v-else>
+                      Flat service item
+                    </span>
                   </small>
                 </td>
 
                 <td>
                   <input type="number"
                          v-model.number="item.unit_price"
-                         class="form-control" />
+                         class="form-control">
                 </td>
 
-                <td>
+                <td class="fw-bold">
                   {{ item.pages * item.unit_price }}
                 </td>
 
                 <td>
-                  <button class="btn btn-danger btn-sm"
+                  <button class="btn btn-sm btn-danger"
                           @click="removeItem(i)">
                     ×
                   </button>
@@ -99,35 +130,32 @@
             </tbody>
           </table>
 
-          <button class="btn btn-outline-primary btn-sm"
+          <button class="btn btn-sm btn-outline-primary"
                   @click="addItem">
             + Add Item
           </button>
 
           <!-- SUMMARY -->
           <div class="mt-4 p-3 bg-light rounded">
+
             <div class="d-flex justify-content-between">
               <span>Subtotal</span>
               <strong>{{ subtotal }}</strong>
             </div>
 
-            <div class="d-flex justify-content-between">
-              <span>Tax</span>
-              <strong>{{ tax }}</strong>
-            </div>
-
-            <hr />
+            <hr>
 
             <div class="d-flex justify-content-between fs-5">
               <span>Total</span>
               <strong>{{ total }}</strong>
             </div>
+
           </div>
 
           <!-- NOTES -->
           <textarea v-model="notes"
                     class="form-control mt-3"
-                    placeholder="Internal notes"></textarea>
+                    placeholder="Internal notes (optional)"></textarea>
 
         </div>
 
@@ -141,7 +169,7 @@
           <button class="btn btn-success"
                   @click="confirmInvoice"
                   :disabled="saving">
-            {{ saving ? "Saving..." : "Confirm Invoice" }}
+            {{ saving ? 'Saving...' : 'Confirm Invoice' }}
           </button>
         </div>
 
@@ -163,27 +191,22 @@ export default {
   },
 
   computed: {
+    hasFiles() {
+      return this.draft?.files?.length > 0;
+    },
+
     subtotal() {
-      if (!this.draft) return 0;
+      if (!this.draft?.items?.length) return 0;
 
       return this.draft.items.reduce((sum, i) => {
-        return sum + (i.pages * i.unit_price);
+        const qty = this.hasFiles ? (i.pages || 1) : 1;
+        const price = Number(i.unit_price || 0);
+        return sum + qty * price;
       }, 0);
     },
 
-    tax() {
-      return 0;
-    },
-
     total() {
-      return this.subtotal + this.tax;
-    },
-
-    confidenceClass() {
-      if (!this.draft) return "";
-      if (this.draft.confidence >= 0.8) return "alert-success";
-      if (this.draft.confidence >= 0.5) return "alert-warning";
-      return "alert-danger";
+      return this.subtotal;
     }
   },
 
@@ -192,8 +215,25 @@ export default {
     openDraft(requestId) {
       axios.get(`/api/cyber-requests/${requestId}/invoice-draft`)
         .then(res => {
+
           this.draft = res.data.draft;
           this.notes = "";
+
+          // ✅ FIX: ensure items ALWAYS valid
+          if (!Array.isArray(this.draft.items) || !this.draft.items.length) {
+            this.draft.items = [{
+              description: this.draft.service_name || "Cyber Service",
+              pages: 1,
+              unit_price: this.draft.unit_price || 0
+            }];
+          }
+
+          // ✅ FIX: normalize all items
+          this.draft.items = this.draft.items.map(i => ({
+            description: i.description || this.draft.service_name || "Service",
+            pages: i.pages || 1,
+            unit_price: Number(i.unit_price || 0)
+          }));
 
           this.$nextTick(() => {
             new bootstrap.Modal(
@@ -205,7 +245,7 @@ export default {
 
     addItem() {
       this.draft.items.push({
-        description: "",
+        description: this.draft.service_name || "Service",
         pages: 1,
         unit_price: 0
       });
@@ -218,15 +258,27 @@ export default {
     confirmInvoice() {
       this.saving = true;
 
+      const payload = {
+        items: this.draft.items.map(i => ({
+          // ✅ IMPORTANT: backend-safe mapping
+          description: i.description || this.draft.service_name || "Service",
+          name: i.description || this.draft.service_name || "Service",
+
+          pages: i.pages || 1,
+          unit_price: Number(i.unit_price || 0),
+
+          quantity: this.hasFiles ? (i.pages || 1) : 1
+        })),
+        notes: this.notes
+      };
+
       axios.post(
         `/api/cyber-requests/${this.draft.request_id}/confirm-invoice`,
-        {
-          items: this.draft.items,
-          notes: this.notes
-        }
+        payload
       )
       .then(() => {
         this.saving = false;
+
         bootstrap.Modal.getInstance(
           document.getElementById("invoiceReviewModal")
         ).hide();
@@ -235,8 +287,10 @@ export default {
       })
       .catch(() => {
         this.saving = false;
+        alert("Failed to confirm invoice");
       });
     }
+
   }
 };
 </script>

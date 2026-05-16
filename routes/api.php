@@ -236,16 +236,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/cyber-requests', [CyberRequestController::class, 'cyberRequests']);    
     Route::put('/cyber-requests/{id}', [CyberRequestController::class, 'updateStatus']);
     
-    Route::get(
-        '/cyber-requests/{id}/invoice-draft',
-        [CyberRequestInvoiceController::class, 'draft']
-    );
+    Route::get('/cyber-requests/{id}/invoice-draft', [CyberRequestInvoiceController::class, 'draft']);
+    Route::post('/cyber-requests/{id}/confirm-invoice', [CyberRequestInvoiceController::class, 'confirm']);
 
-    Route::post(
-        '/cyber-requests/{id}/confirm-invoice',
-        [CyberRequestInvoiceController::class, 'confirm']
-    );
-    // routes/api.php
     Route::patch('/services/{id}/toggle', [ServiceController::class, 'toggleActive']);
 
 });

@@ -38,8 +38,7 @@ class CyberRequestController extends Controller
         $service = Service::findOrFail($validated['service_id']);
 
         $cyberRequest = CyberRequest::create([
-            'service_id' => $service->id,
-            'service' => $service->name,
+            'service_id' => $validated['service_id'],
 
             // 🔥 INHERIT FROM SERVICE (KEY CHANGE)
             'payment_type' => $service->payment_type ?? 'prepay',
@@ -85,34 +84,71 @@ class CyberRequestController extends Controller
 
     public function cyberRequests()
     {
-        return CyberRequest::with('files')
-            ->latest()
-            ->get()
-            ->map(function ($req) {
+        return CyberRequest::with([
+            'files',
+            'service',
+            'invoice.items',   // 🔥 IMPORTANT
+            'invoice.customer' // 🔥 IMPORTANT
+        ])
+        ->latest()
+        ->get()
+        ->map(function ($req) {
 
-                return [
-                    'id' => $req->id,
+            return [
+                'id' => $req->id,
+                'name' => $req->name,
+                'email' => $req->email,
+                'phone' => $req->phone,
 
-                    'name' => $req->name,
-                    'email' => $req->email,
-                    'phone' => $req->phone,
-                    'service' => $req->service,
+                'service' => $req->service ? [
+                    'id' => $req->service->id,
+                    'name' => $req->service->name,
+                    'price' => $req->service->price,
+                ] : null,
 
-                    'status' => $req->status,
-                    'urgency' => $req->urgency,
+                'status' => $req->status,
+                'urgency' => $req->urgency,
 
-                    'payment_type' => $req->payment_type, // 🔥 IMPORTANT
-                    'payment_status' => $req->payment_status,
-                    'amount' => $req->amount,
+                'payment_type' => $req->payment_type,
+                'payment_status' => $req->payment_status,
+                'amount' => $req->amount,
 
-                    'message' => $req->message,
+                'message' => $req->message,
 
-                    'created_at' => $req->created_at->format('d/m/Y H:i'),
-                    'updated_at' => $req->updated_at->format('d/m/Y H:i'),
+                'created_at' => $req->created_at->format('d/m/Y H:i'),
+                'updated_at' => $req->updated_at->format('d/m/Y H:i'),
 
-                    'files' => $req->files
-                ];
-            });
+                'files' => $req->files,
+
+                // 🔥 FULL INVOICE OBJECT (NO SECOND API CALL NEEDED)
+                'invoice_id' => $req->invoice?->id,
+
+                'invoice' => $req->invoice ? [
+                    'id' => $req->invoice->id,
+                    'invoice_number' => $req->invoice->invoice_number,
+                    'total_amount' => $req->invoice->total_amount,
+                    'status' => $req->invoice->status,
+                    'invoice_date' => $req->invoice->invoice_date,
+
+                    // 🔥 CRITICAL PART
+                    'customer' => $req->invoice->customer ? [
+                        'name' => $req->invoice->customer->name,
+                        'email' => $req->invoice->customer->email,
+                        'phone' => $req->invoice->customer->phone,
+                    ] : null,
+
+                    'items' => $req->invoice->items->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'description' => $item->description,
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'line_total' => $item->quantity * $item->unit_price,
+                        ];
+                    }),
+                ] : null,
+            ];
+        });
     }
 
     public function updateStatus(Request $request, $id)

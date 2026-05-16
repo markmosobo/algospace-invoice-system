@@ -10,7 +10,7 @@ use App\Models\Invoice;
 class CyberRequest extends Model
 {
     protected $fillable = [
-        'service',
+        'service_id',
         'message',
         'delivery_method',
         'urgency',
@@ -19,19 +19,28 @@ class CyberRequest extends Model
         'email',
         'phone',
 
-        // STATUS
+        // STATUS FLOW
         'status',
 
-        // PAYMENT FIELDS (NEW)
+        // PAYMENT FLOW
         'payment_type',
         'payment_status',
         'amount',
         'payment_reference',
         'paid_at',
+
+        // 🆕 TIMESTAMPS (IMPORTANT)
+        'billed_at',
+        'completed_at',
+
+        // 🆕 OPTIONAL DIRECT LINK (if you still use it in some places)
+        'invoice_id',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'billed_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function service()
@@ -44,12 +53,27 @@ class CyberRequest extends Model
         return $this->hasMany(CyberRequestFile::class);
     }
 
-    public function isPaid()
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class, 'source_id')
+            ->where('source', 'cyber_request');
+    }
+
+    // -------------------------
+    // STATUS HELPERS
+    // -------------------------
+
+    public function isBilled(): bool
+    {
+        return $this->status === 'billed';
+    }
+
+    public function isPaid(): bool
     {
         return $this->payment_status === 'paid';
     }
 
-    public function isCompleted()
+    public function isCompleted(): bool
     {
         return $this->status === 'completed';
     }
@@ -57,10 +81,10 @@ class CyberRequest extends Model
     public function isPrepay(): bool
     {
         return $this->payment_type === 'prepay';
-    }    
+    }
 
-    public function invoice()
+    public function hasInvoice(): bool
     {
-        return $this->hasOne(Invoice::class);
-    }    
+        return $this->invoice()->exists();
+    }
 }

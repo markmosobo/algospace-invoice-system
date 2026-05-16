@@ -6,10 +6,11 @@
     <!-- Meta -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="@yield('meta_description', 'AlgoSpaceCyber offers professional cybersecurity and digital services.')">
+    <meta name="description" content="@yield('meta_description', 'AlgoSpaceCyber offers professional cyber and digital services.')">
     <meta name="keywords" content="cyber services, printing, online applications, IT support">
     <meta name="author" content="AlgoSpace">
-
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('algospace-favicon.png') }}" type="image/x-icon">
 

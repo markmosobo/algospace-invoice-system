@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CyberRequestFile;
+use App\Models\Service;
+use App\Models\Invoice;
 
 class CyberRequest extends Model
 {
@@ -55,5 +57,10 @@ class CyberRequest extends Model
     public function isPrepay(): bool
     {
         return $this->payment_type === 'prepay';
+    }    
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
     }    
 }

@@ -7,19 +7,6 @@
                 <div class="col-12">
                   <div class="card top-selling overflow-auto">
     
-                    <div class="filter">
-                    <!--                       <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li class="dropdown-header text-start">
-                          <h6>Filter</h6>
-                        </li>
-    
-                        <li><a class="dropdown-item" href="#">Today</a></li>
-                        <li><a class="dropdown-item" href="#">This Month</a></li>
-                        <li><a class="dropdown-item" href="#">This Year</a></li>
-                      </ul> -->
-                    </div>
-    
                     <div class="card-body pb-0">
                       <h5 class="card-title">Services <span>| Services offered at AlgoSpace Cyber</span></h5>
                       <p class="card-text">
@@ -60,13 +47,14 @@
                             <th scope="col">Category</th>
                             <th scope="col">Price</th>
                             <th scope="col">Unit</th>
+                            <th scope="col">Status</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
                         <!-- Spinner shown while data is initializing -->
                         <tbody v-if="initializing">
                           <tr>
-                            <td colspan="7" class="text-center">
+                            <td colspan="6" class="text-center">
                               <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                               </div>
@@ -79,7 +67,11 @@
                             <td>{{item.category ?? "N/A"}}</td>
                             <td>{{item.price ?? "N/A"}}</td>
                             <td>{{item.unit ?? "N/A"}}</td>
-
+                            <td>
+                              <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+                                  {{ item.is_active ? 'Available Online' : 'Walk-in Only' }}
+                              </span>
+                            </td>
                            
                             <td>
                               <div class="btn-group" role="group">
@@ -89,6 +81,11 @@
                                   <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
                                   <a @click="viewService(item)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
                                   <a @click="editService(item)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
+                                  <a @click="toggleService(item)" class="dropdown-item" href="#">
+                                      <i class="ri-toggle-line mr-2"></i>
+
+                                      {{ item.is_active ? 'Move to Walk-in Only' : 'Publish Online' }}
+                                  </a>
                                   <a @click="deleteService(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
                               </div>
@@ -388,6 +385,31 @@
             this.submitting = false;
         }
         },
+        async toggleService(item) {
+
+            try {
+                const res = await axios.patch(`/api/services/${item.id}/toggle`);
+
+                toast.fire(
+                    'Success!',
+                    res.data.is_active ? 'Service activated' : 'Service deactivated',
+                    'success'
+                );
+
+                // update locally (no reload needed)
+                item.is_active = res.data.is_active;
+
+            } catch (error) {
+
+                console.error(error);
+
+                toast.fire(
+                    'Error!',
+                    'Failed to update service status',
+                    'error'
+                );
+            }
+        },        
 
         addService()
         {

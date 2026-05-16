@@ -123,4 +123,18 @@ class ServiceController extends Controller
 
         return response()->json(['message' => 'Deleted']);
     }
+
+    // ServiceController.php
+    public function toggleActive($id)
+    {
+        $service = Service::findOrFail($id);
+
+        $service->is_active = !$service->is_active;
+        $service->save();
+
+        return response()->json([
+            'message' => 'Service status updated',
+            'is_active' => $service->is_active
+        ]);
+    }    
 }

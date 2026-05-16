@@ -55,13 +55,12 @@
                                 </p>
                             </div>
 
-                            <!-- SERVICE (SEARCHABLE) -->
+                            <!-- SERVICE -->
                             <div class="col-lg-12">
                                 <select name="service_id"
                                         id="service_select"
                                         class="form-control select2"
                                         required>
-
                                     <option value="" disabled selected>Select Service You Need</option>
 
                                     @foreach($services as $service)
@@ -71,7 +70,6 @@
                                             {{ $service->name }} (KES {{ number_format($service->price) }})
                                         </option>
                                     @endforeach
-
                                 </select>
                             </div>
 
@@ -130,26 +128,48 @@
                             </div>
 
                             <!-- CONTACT -->
-                            <div class="col-lg-4">
-                                <input type="text" name="name" class="form-control" placeholder="Full Name" required>
-                            </div>
+                            <div class="row g-3">
 
-                            <div class="col-lg-4">
-                                <input type="email"
-                                    name="email"
-                                    class="form-control"
-                                    placeholder="Email"
-                                    required>
-                            </div>
+                                <!-- NAME + EMAIL (SAME LINE) -->
+                                <div class="col-lg-6">
+                                    <input type="text"
+                                        name="name"
+                                        class="form-control"
+                                        placeholder="Full Name"
+                                        required>
+                                </div>
 
-                            <div class="col-lg-4">
-                                <input type="text"
-                                    name="phone"
-                                    class="form-control"
-                                    placeholder="WhatsApp Number"
-                                    pattern="^254[0-9]{9}$"
-                                    title="Use format 2547XXXXXXXX"
-                                    required>
+                                <div class="col-lg-6">
+                                    <input type="email"
+                                        name="email"
+                                        class="form-control"
+                                        placeholder="Email"
+                                        required>
+                                </div>
+
+                                <!-- PHONE (FULL WIDTH BELOW) -->
+                                <div class="col-lg-12">
+                                    <label class="form-label text-dark mb-1">Phone Number</label>
+
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-whatsapp text-success"></i>
+                                            +254
+                                        </span>
+
+                                        <input type="text"
+                                            id="phone_local"
+                                            class="form-control"
+                                            placeholder="712345678"
+                                            maxlength="9"
+                                            required>
+
+                                        <input type="hidden" name="phone" id="phone_full">
+                                    </div>
+
+                                    <small class="text-muted">Enter 9-digit number only (e.g. 712345678)</small>
+                                </div>
+
                             </div>
 
                             <!-- SUBMIT -->
@@ -174,7 +194,6 @@
 
 @push('scripts')
 
-<!-- jQuery + Select2 -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -200,7 +219,7 @@
 <script>
 $(document).ready(function () {
 
-    // SEARCHABLE SERVICE DROPDOWN
+    // SELECT2
     $('#service_select').select2({
         placeholder: "Search or select a service",
         width: '100%'
@@ -225,7 +244,21 @@ $(document).ready(function () {
         $('#price_box').show();
     });
 
-    // AJAX FORM SUBMIT
+    // PHONE AUTO BUILD (+254)
+    $('#phone_local').on('input', function () {
+
+        let val = $(this).val().replace(/\D/g, '');
+
+        if (val.length > 9) {
+            val = val.substring(0, 9);
+        }
+
+        $(this).val(val);
+
+        $('#phone_full').val('254' + val);
+    });
+
+    // AJAX SUBMIT
     $('#booking_form').on('submit', function (e) {
         e.preventDefault();
 
@@ -269,10 +302,34 @@ $(document).ready(function () {
                 alert("Something went wrong. Please try again.");
             }
         });
-
     });
 
 });
 </script>
+
+<style>
+.input-group-text {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px 0 0 6px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-right: 0;
+    font-size: 14px;
+}
+
+.input-group .form-control {
+    height: 48px;
+    border-radius: 0 6px 6px 0;
+    border: 1px solid #ddd;
+    box-shadow: none;
+}
+
+.input-group .form-control:focus {
+    box-shadow: none;
+    border-color: #aaa;
+}    
+</style>
 
 @endpush

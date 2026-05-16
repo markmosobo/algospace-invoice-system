@@ -118,6 +118,14 @@
                         <i class="bi bi-eye"></i> View
                       </a>
 
+                      <a
+                        v-if="!item.invoice_id"
+                        class="dropdown-item"
+                        @click="generateInvoice(item)"
+                      >
+                        <i class="bi bi-receipt"></i> Generate Invoice
+                      </a>
+
                       <!-- PENDING → PROCESSING -->
                       <a
                         v-if="!(item.payment_type === 'prepay' && item.payment_status !== 'paid') && item.status === 'pending'"
@@ -232,6 +240,11 @@
       </div>
     </div>
 
+<InvoiceReviewModal
+  ref="invoiceModal"
+  @refresh="loadLists"
+/>   
+
   </div>
 </section>
 </Master>
@@ -242,6 +255,7 @@ import Master from "@/components/Master.vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import $ from "jquery";
+import InvoiceReviewModal from "@/components/InvoiceReviewModal.vue";
 
 const toast = Swal.mixin({
   toast: true,
@@ -251,15 +265,37 @@ const toast = Swal.mixin({
 });
 
 export default {
-  components: { Master },
+  components: { Master, InvoiceReviewModal },
 
   data() {
     return {
       requests: [],
       selectedRequest: null,
       initializing: true,
+      invoiceDraft: null,
     };
   },
+
+computed: {
+  formattedTotal() {
+    if (!this.invoiceDraft) return "0";
+
+    const base =
+      this.invoiceDraft.final_pages *
+      this.invoiceDraft.unit_price;
+
+    const urgencyMultiplier = {
+      normal: 1,
+      urgent: 1.2,
+      express: 1.5,
+    }[this.invoiceDraft.urgency] ?? 1;
+
+    return (
+      base * urgencyMultiplier +
+      this.invoiceDraft.extra_fees
+    ).toLocaleString();
+  },
+},  
 
   methods: {
 
@@ -288,6 +324,10 @@ export default {
         document.getElementById("viewRequestModal")
       ).show();
     },
+generateInvoice(item) {
+  this.$refs.invoiceModal.openDraft(item.id);
+},
+  
 
     updateStatus(item, status) {
       axios.put(`/api/cyber-requests/${item.id}`, { status })

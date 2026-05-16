@@ -8,6 +8,7 @@ use App\Http\Controllers\CropController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomRewardController;
 use App\Http\Controllers\CyberRequestController;
+use App\Http\Controllers\CyberRequestInvoiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\ExpenseController;
@@ -234,5 +235,17 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::get('/cyber-requests', [CyberRequestController::class, 'cyberRequests']);    
     Route::put('/cyber-requests/{id}', [CyberRequestController::class, 'updateStatus']);
+    
+    Route::get(
+        '/cyber-requests/{id}/invoice-draft',
+        [CyberRequestInvoiceController::class, 'draft']
+    );
+
+    Route::post(
+        '/cyber-requests/{id}/confirm-invoice',
+        [CyberRequestInvoiceController::class, 'confirm']
+    );
+    // routes/api.php
+    Route::patch('/services/{id}/toggle', [ServiceController::class, 'toggleActive']);
 
 });

@@ -140,7 +140,7 @@ class CyberRequestController extends Controller
                     'items' => $req->invoice->items->map(function ($item) {
                         return [
                             'id' => $item->id,
-                            'description' => $item->description,
+                            'description' => $item->service_name ?? '—',
                             'quantity' => $item->quantity,
                             'unit_price' => $item->unit_price,
                             'line_total' => $item->quantity * $item->unit_price,

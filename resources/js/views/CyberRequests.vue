@@ -258,6 +258,7 @@
 
       <InvoiceModal
         ref="invoiceModal"
+        @refresh="loadLists"
       />
     </div>
   </section>
@@ -343,8 +344,11 @@
         this.$refs.invoiceReviewModal.openDraft(item.id);
       },
       viewInvoice(item) {
-        this.$refs.invoiceModal.openInvoice(item.invoice);
-      },   
+        this.$refs.invoiceModal.openInvoice({
+          ...item.invoice,
+          service: item.service
+        });
+      },  
 
       updateStatus(item, status) {
         axios.put(`/api/cyber-requests/${item.id}`, { status })

@@ -64,11 +64,16 @@ class InvoiceService
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
 
-                    // Flexible mapping (supports cyber + walkin)
-                    'service_id'   => $item['service_id'] ?? null,
-                    'service_name' => $item['name'] ?? $item['description'] ?? null,
+                    'service_id' => $item['service_id'] 
+                        ?? ($item['service']['id'] ?? null),
 
-                    'provider_service_id'   => $item['provider_service_id'] ?? null,
+                    'service_name' => $item['service_name']
+                        ?? ($item['service']['name'] ?? null)
+                        ?? $item['name']
+                        ?? $item['description']
+                        ?? null,
+
+                    'provider_service_id' => $item['provider_service_id'] ?? null,
                     'provider_service_name' => $item['provider_service_name'] ?? null,
 
                     'expense_name' => $item['expense_name'] ?? null,
@@ -78,7 +83,6 @@ class InvoiceService
                     'unit_price' => $unitPrice,
                     'quantity'   => $quantity,
                     'line_total' => $lineTotal,
-                    
                 ]);
             }
 

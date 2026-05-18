@@ -514,7 +514,7 @@
                         <i class="p-3 circle bg-color text-light fs-34 d-inline-block mb-3 icofont-briefcase-2"></i>
 
                         <h3 class="fs-48 fw-bold mb-1 lh-1">
-                            <span class="timer" data-to="800" data-speed="3000">0</span>+
+                            <span class="timer" data-to="{{ $documentsProcessed }}" data-speed="3000">0</span>+
                         </h3>
 
                         <p class="mb-0 opacity-75">
@@ -531,7 +531,7 @@
                         <i class="p-3 circle bg-color text-light fs-34 d-inline-block mb-3 icofont-thumbs-up"></i>
 
                         <h3 class="fs-48 fw-bold mb-1 lh-1">
-                            <span class="timer" data-to="200" data-speed="3000">0</span>+
+                            <span class="timer" data-to="{{ $customersCount }}" data-speed="3000">0</span>+
                         </h3>
 
                         <p class="mb-0 opacity-75">
@@ -548,7 +548,7 @@
                         <i class="p-3 circle bg-color text-light fs-34 d-inline-block mb-3 icofont-users-alt-3"></i>
 
                         <h3 class="fs-48 fw-bold mb-1 lh-1">
-                            <span class="timer" data-to="50" data-speed="3000">0</span>+
+                            <span class="timer" data-to="{{$servicesCount}}" data-speed="3000">0</span>+
                         </h3>
 
                         <p class="mb-0 opacity-75">
@@ -565,7 +565,7 @@
                         <i class="p-3 circle bg-color text-light fs-34 d-inline-block mb-3 icofont-badge"></i>
 
                         <h3 class="fs-48 fw-bold mb-1 lh-1">
-                            <span class="timer" data-to="3" data-speed="3000">0</span>+
+                            <span class="timer" data-to="{{$monthsServing}}" data-speed="3000">0</span>+
                         </h3>
 
                         <p class="mb-0 opacity-75">

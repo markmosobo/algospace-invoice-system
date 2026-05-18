@@ -4,6 +4,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CyberRequestController;
+use App\Http\Controllers\MarketingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,8 +13,8 @@ use App\Http\Controllers\CyberRequestController;
 */
 
 // Landing page
-Route::view('/', 'marketing');          // homepage
-Route::view('/landing', 'marketing');   // optional alias
+Route::get('/', [MarketingController::class, 'index']);
+Route::get('/landing', [MarketingController::class, 'index']);
 
 // Public Blade pages
 Route::get('/submit-job', [CyberRequestController::class, 'create'])

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Customer;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use App\Models\InvoiceSend;
 
 class Invoice extends Model
 {
@@ -45,6 +46,11 @@ class Invoice extends Model
     public function cyberRequest()
     {
         return $this->belongsTo(CyberRequest::class, 'source_id');
+    }
+    
+    public function sends()
+    {
+        return $this->hasMany(InvoiceSend::class);
     }    
 
     // Helper function: get total paid

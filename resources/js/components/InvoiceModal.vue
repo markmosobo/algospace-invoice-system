@@ -1,218 +1,267 @@
 <template>
  <div class="modal fade" id="invoiceModal">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
 
-        <!-- HEADER -->
-        <div class="modal-header">
-          <div>
-            <h5 class="modal-title">Invoice</h5>
-            <small class="text-muted">Full invoice details</small>
-          </div>
-
-          <button class="btn-close" data-bs-dismiss="modal"></button>
+      <!-- HEADER -->
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Invoice</h5>
+          <small class="text-muted">Full invoice details</small>
         </div>
 
-        <!-- BODY (IMPORTANT: capture wrapper) -->
-        <div class="modal-body bg-light" v-if="invoice">
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-          <!-- CAPTURE AREA START -->
-          <div ref="invoiceArea" class="bg-white p-4 rounded shadow-sm">
+      <!-- BODY -->
+      <div class="modal-body bg-light" v-if="invoice">
 
-            <!-- INVOICE HEADER -->
-            <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
+        <!-- CAPTURE AREA -->
+        <div ref="invoiceArea" class="bg-white p-4 rounded shadow-sm">
+
+          <!-- BRAND -->
+          <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+
+            <div class="d-flex align-items-center gap-3">
+              <img src="@/assets/algospacelogo.png" style="height:55px;" />
+
               <div>
-                <h4 class="text-primary fw-bold">INVOICE</h4>
-                <div class="text-muted">
-                  #{{ invoice.invoice_number }}
-                </div>
-              </div>
-
-              <div>
-                <span class="badge bg-warning text-dark">
-                  {{ invoice.status }}
-                </span>
+                <div class="fw-bold">AlgoSpace Cyber</div>
+                <div class="text-muted small">Professional Digital Services</div>
               </div>
             </div>
 
-            <!-- CUSTOMER + SERVICE -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <h6 class="text-muted">Customer</h6>
-                <div class="fw-semibold">{{ invoice.customer.name }}</div>
-                <div class="small text-muted">{{ invoice.customer.email }}</div>
-                <div class="small text-muted">{{ invoice.customer.phone }}</div>
-              </div>
-
-              <div class="col-md-6 text-md-end">
-                <h6 class="text-muted">Service</h6>
-                <div class="fw-bold text-primary">
-                  {{ invoice.service?.name }}
-                </div>
-                <div class="small text-muted">
-                  KES {{ invoice.service?.price }}
-                </div>
-              </div>
-            </div>
-
-            <!-- ITEMS -->
-            <table class="table table-borderless">
-              <thead class="border-bottom">
-                <tr class="text-muted small">
-                  <th>Description</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-end">Unit Price</th>
-                  <th class="text-end">Total</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr v-for="item in invoice.items" :key="item.id">
-                  <td>
-                    <div class="fw-semibold text-primary">
-                      {{ invoice.service?.name }}
-                    </div>
-                    <div class="small text-muted">
-                      {{ item.description }}
-                    </div>
-                  </td>
-                  <td class="text-center">{{ item.quantity }}</td>
-                  <td class="text-end">{{ item.unit_price }}</td>
-                  <td class="text-end fw-bold">{{ item.line_total }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- TOTAL -->
-            <div class="d-flex justify-content-end border-top pt-3">
-              <div class="text-end">
-                <div class="text-muted">Total</div>
-                <h4 class="text-success fw-bold">
-                  KES {{ invoice.total_amount }}
-                </h4>
-              </div>
-            </div>
-
-            <!-- PAYMENT DETAILS (IMPORTANT FOR IMAGE) -->
-            <div class="mt-4 p-3 border rounded bg-light">
-              <h6 class="fw-bold mb-2">PAYMENT DETAILS</h6>
-
-              <div class="d-flex justify-content-between">
-                <span>Paybill</span>
-                <span class="fw-bold">542542</span>
-              </div>
-
-              <div class="d-flex justify-content-between">
-                <span>Account</span>
-                <span class="fw-bold">
-                  608755
-                </span>
-              </div>
-
-              <div class="d-flex justify-content-between text-success mt-2">
-                <span>Amount</span>
-                <span class="fw-bold">
-                  KES {{ invoice.total_amount }}
-                </span>
+            <div class="text-end">
+              <div class="text-muted small">Invoice</div>
+              <div class="fw-bold text-primary">
+                #{{ invoice.invoice_number }}
               </div>
             </div>
 
           </div>
-          <!-- CAPTURE AREA END -->
+
+          <!-- CUSTOMER -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-muted">Bill To</h6>
+              <div class="fw-semibold">{{ invoice.customer.name }}</div>
+              <div class="small text-muted">{{ invoice.customer.email }}</div>
+              <div class="small text-muted">{{ invoice.customer.phone }}</div>
+            </div>
+
+            <div class="col-md-6 text-md-end">
+              <h6 class="text-muted">Service</h6>
+              <div class="fw-bold">{{ invoice.service?.name }}</div>
+              <div class="text-muted small">
+                KES {{ invoice.service?.price }}
+              </div>
+            </div>
+          </div>
+
+          <!-- ITEMS -->
+          <table class="table table-borderless">
+            <thead>
+              <tr class="text-muted small">
+                <th>Description</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Unit</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="item in invoice.items" :key="item.id">
+                <td>
+                  <div class="fw-semibold">{{ invoice.service?.name }}</div>
+                  <div class="text-muted small">{{ item.description }}</div>
+                </td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">{{ item.unit_price }}</td>
+                <td class="text-end fw-bold">{{ item.line_total }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- TOTAL -->
+          <div class="d-flex justify-content-end border-top pt-3">
+            <h4 class="text-success">
+              KES {{ invoice.total_amount }}
+            </h4>
+          </div>
+
+          <!-- PAYMENT -->
+          <div class="mt-3 p-3 border rounded bg-light">
+            <div class="fw-bold mb-2">PAYMENT DETAILS</div>
+
+            <div class="d-flex justify-content-between">
+              <span>Paybill</span>
+              <strong>542542</strong>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <span>Account</span>
+              <strong>608755</strong>
+            </div>
+
+            <div class="d-flex justify-content-between text-success">
+              <span>Amount</span>
+              <strong>KES {{ invoice.total_amount }}</strong>
+            </div>
+          </div>
 
         </div>
+      </div>
 
-        <!-- FOOTER -->
-        <div class="modal-footer d-flex justify-content-between">
+      <!-- FOOTER ACTIONS -->
+      <div class="modal-footer d-flex justify-content-between">
 
-          <div>
-            <button class="btn btn-success" @click="shareWhatsApp">
-              📸 Share on WhatsApp
-            </button>
+        <div class="d-flex gap-2">
 
-            <button class="btn btn-danger" @click="sendEmailPDF">
-              📄 Send PDF via Email
-            </button>
-          </div>
+          <button class="btn btn-primary" @click="downloadImage">
+            📸 Image
+          </button>
 
-          <button class="btn btn-secondary" data-bs-dismiss="modal">
-            Close
+          <button class="btn btn-dark" @click="downloadPDF">
+            📄 PDF
+          </button>
+
+          <button class="btn btn-success" @click="shareWhatsApp">
+            WhatsApp
+          </button>
+
+          <button
+            class="btn btn-outline-primary"
+            @click="sendEmail"
+            :disabled="sendingEmail"
+          >
+            📧 Email
           </button>
 
         </div>
 
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+
       </div>
+
     </div>
   </div>
+ </div>
 </template>
 
 <script>
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+
 export default {
   data() {
     return {
-      invoice: null
+      invoice: null,
+      sendingEmail: false
     };
   },
 
   methods: {
-    async shareWhatsApp() {
+
+    // =========================
+    // IMAGE DOWNLOAD
+    // =========================
+    async downloadImage() {
       const el = this.$refs.invoiceArea;
-
-      if (!el) return;
-
-      // prevent clipping from scroll containers
-      const originalOverflow = el.style.overflow;
-      el.style.overflow = "visible";
 
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: -window.scrollY
+        backgroundColor: "#fff"
       });
 
-      el.style.overflow = originalOverflow;
-
-      // IMAGE
       const image = canvas.toDataURL("image/png");
 
-      // AUTO DOWNLOAD (important for WhatsApp manual sharing)
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `invoice-${this.invoice.invoice_number}.png`;
-      link.click();
+      const a = document.createElement("a");
+      a.href = image;
+      a.download = `invoice-${this.invoice.invoice_number}.png`;
+      a.click();
+    },
 
-      // WHATSAPP MESSAGE
-      const phone = this.invoice.customer.phone;
+    // =========================
+    // PDF DOWNLOAD
+    // =========================
+    async downloadPDF() {
+      const el = this.$refs.invoiceArea;
 
-      const text =
-  `Hello ${this.invoice.customer.name},
-
-  Invoice #: ${this.invoice.invoice_number}
-  Service: ${this.invoice.service?.name}
-  Amount: KES ${this.invoice.total_amount}
-
-  Payment Details:
-  Paybill: 542542
-  Account: 608755
-
-  Kindly proceed with payment.`;
-
-      window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
-        "_blank"
-      );
-    }, 
-    async sendEmailPDF() {
-      await axios.post("/api/invoice/send-pdf", {
-        invoice_id: this.invoice.id
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#fff"
       });
 
-      alert("Invoice sent to email successfully!");
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`invoice-${this.invoice.invoice_number}.pdf`);
+    },
+
+    // =========================
+    // WHATSAPP SHARE
+    // =========================
+    shareWhatsApp() {
+
+      let phone = this.invoice.customer.phone;
+
+      if (phone.startsWith("0")) {
+        phone = "254" + phone.slice(1);
+      }
+
+      const message =
+`Hello ${this.invoice.customer.name},
+
+Invoice #: ${this.invoice.invoice_number}
+Service: ${this.invoice.service?.name}
+Amount: KES ${this.invoice.total_amount}
+
+Paybill: 542542
+Account: 608755
+
+— AlgoSpace Cyber`;
+
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+    },
+
+    async sendEmail() {
+      if (!this.invoice?.id) return;
+
+      this.sendingEmail = true;
+
+      try {
+        await axios.post("/api/invoice/send-pdf", {
+          invoice_id: this.invoice.id
+        });
+
+        alert("Invoice emailed successfully ✅");
+
+      } catch (err) {
+        console.error(err);
+        alert("Failed to send invoice ❌");
+      } finally {
+        this.sendingEmail = false;
+      }
     },    
 
+    // =========================
+    // OPEN MODAL
+    // =========================
     openInvoice(invoice) {
       this.invoice = invoice;
 
@@ -222,7 +271,6 @@ export default {
         ).show();
       });
     }
-
   }
 };
 </script>

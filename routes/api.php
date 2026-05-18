@@ -155,7 +155,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/invoices/preview', [InvoicePreviewController::class, 'preview']);
     Route::post('/invoices/preview/email', [InvoicePreviewController::class, 'email']);
     Route::get('/invoices/preview/print', [InvoicePreviewController::class, 'print']);
-
+    Route::post('/invoice/send-pdf', [InvoiceController::class, 'sendPdf']);
+    Route::get('/invoice/{id}/tracking', [InvoiceController::class, 'tracking']);
+    
     // FINAL (DB)
     Route::get('/invoices/{id}/print', [InvoiceController::class, 'print']);
     Route::post('/invoices/{invoice}/close-unpaid', [InvoiceController::class, 'closeUnpaid']);

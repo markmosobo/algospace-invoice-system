@@ -137,6 +137,8 @@
                           <i class="bi bi-eye"></i> View Invoice
                         </a>
 
+                        <div class="dropdown-divider"></div>                        
+
                         <!-- PENDING → PROCESSING -->
                         <a
                           v-if="!(item.payment_type === 'prepay' && item.payment_status !== 'paid') && item.status === 'pending'"

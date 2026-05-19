@@ -62,107 +62,107 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-<tr v-for="customer in customers" :key="customer.id">
+                          <tr v-for="customer in customers" :key="customer.id">
 
-  <!-- NAME + AVATAR -->
-  <td class="d-flex align-items-center gap-2">
+                            <!-- NAME + AVATAR -->
+                            <td class="d-flex align-items-center gap-2">
 
-    <!-- REAL IMAGE -->
-    <img
-      v-if="customer.image && customer.image !== 'null' && customer.image !== ''"
-      :src="'/storage/' + customer.image"
-      class="rounded-circle border flex-shrink-0"
-      style="width:40px; height:40px; object-fit:cover;"
-    />
+                              <!-- REAL IMAGE -->
+<img
+  v-if="customer.image && customer.image !== 'null' && customer.image !== ''"
+  :src="'/storage/' + customer.image"
+  class="rounded-circle border flex-shrink-0 customer-thumb"
+  @click="openImagePreview(customer.image)"
+/>
 
-    <!-- GOOGLE STYLE INITIALS AVATAR -->
-    <div
-      v-else
-      class="rounded-circle border d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
-      :style="{
-        width: '40px',
-        height: '40px',
-        backgroundColor: getAvatarColor(customer.name),
-        fontSize: '14px'
-      }"
-    >
-      {{ getInitials(customer.name) }}
-    </div>
+                              <!-- GOOGLE STYLE INITIALS AVATAR -->
+                              <div
+                                v-else
+                                class="rounded-circle border d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                                :style="{
+                                  width: '40px',
+                                  height: '40px',
+                                  backgroundColor: getAvatarColor(customer.name),
+                                  fontSize: '14px'
+                                }"
+                              >
+                                {{ getInitials(customer.name) }}
+                              </div>
 
-    <!-- NAME -->
-    <span>
-      {{ customer.name }}
-    </span>
+                              <!-- NAME -->
+                              <span>
+                                {{ customer.name }}
+                              </span>
 
-    <!-- RISK BADGE -->
-    <span v-if="customer.is_risky" class="badge bg-danger ms-2" title="Has unpaid invoices">
-      RISKY
-    </span>
+                              <!-- RISK BADGE -->
+                              <span v-if="customer.is_risky" class="badge bg-danger ms-2" title="Has unpaid invoices">
+                                RISKY
+                              </span>
 
-  </td>
+                            </td>
 
-  <!-- PHONE -->
-  <td>{{ customer.phone ?? "N/A" }}</td>
+                            <!-- PHONE -->
+                            <td>{{ customer.phone ?? "N/A" }}</td>
 
-  <!-- VISITS -->
-  <td>{{ customer.visits_count }}</td>
+                            <!-- VISITS -->
+                            <td>{{ customer.visits_count }}</td>
 
-  <!-- LOYALTY -->
-  <td>
-    <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
-    <span v-else class="badge bg-secondary">None</span>
-  </td>
+                            <!-- LOYALTY -->
+                            <td>
+                              <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
+                              <span v-else class="badge bg-secondary">None</span>
+                            </td>
 
-  <!-- ACTIONS -->
-  <td>
-    <div class="btn-group" role="group">
+                            <!-- ACTIONS -->
+                            <td>
+                              <div class="btn-group" role="group">
 
-      <button
-        type="button"
-        class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
-        style="background-color: darkgreen; border-color: darkgreen;"
-        data-bs-toggle="dropdown"
-      >
-        Action
-      </button>
+                                <button
+                                  type="button"
+                                  class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+                                  style="background-color: darkgreen; border-color: darkgreen;"
+                                  data-bs-toggle="dropdown"
+                                >
+                                  Action
+                                </button>
 
-      <div class="dropdown-menu">
+                                <div class="dropdown-menu">
 
-        <a @click="viewCustomer(customer)" class="dropdown-item" href="#">
-          <i class="ri-eye-fill mr-2"></i>View
-        </a>
+                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#">
+                                    <i class="ri-eye-fill mr-2"></i>View
+                                  </a>
 
-        <a
-          v-if="customer.visits_count >= 1 && !customer.loyalty_card"
-          @click="openLoyaltyModal(customer)"
-          class="dropdown-item"
-          href="#"
-        >
-          <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
-        </a>
+                                  <a
+                                    v-if="customer.visits_count >= 1 && !customer.loyalty_card"
+                                    @click="openLoyaltyModal(customer)"
+                                    class="dropdown-item"
+                                    href="#"
+                                  >
+                                    <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
+                                  </a>
 
-        <a
-          v-if="customer.loyalty_card"
-          @click="viewLoyaltyCard(customer)"
-          class="dropdown-item"
-          href="#"
-        >
-          <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
-        </a>
+                                  <a
+                                    v-if="customer.loyalty_card"
+                                    @click="viewLoyaltyCard(customer)"
+                                    class="dropdown-item"
+                                    href="#"
+                                  >
+                                    <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
+                                  </a>
 
-        <a @click="editCustomer(customer)" class="dropdown-item" href="#">
-          <i class="ri-pencil-fill mr-2"></i>Edit
-        </a>
+                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#">
+                                    <i class="ri-pencil-fill mr-2"></i>Edit
+                                  </a>
 
-        <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#">
-          <i class="ri-delete-bin-line mr-2"></i>Delete
-        </a>
+                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#">
+                                    <i class="ri-delete-bin-line mr-2"></i>Delete
+                                  </a>
 
-      </div>
-    </div>
-  </td>
+                                </div>
+                              </div>
+                            </td>
 
-</tr>
+                          </tr>
                         </tbody>
                       </table>
     
@@ -323,7 +323,11 @@
                             <input type="file" class="form-control" @change="handleImageUpload">
                           </div>
 
-                          <img v-if="imagePreview" :src="imagePreview" width="80" class="mt-2 rounded-circle border">
+                          <img
+                            v-if="imagePreview"
+                            :src="imagePreview"
+                            class="customer-preview mt-2 rounded-circle border"
+                          />
 
 
                         </form>
@@ -335,6 +339,28 @@
                         <button class="btn btn-success" @click="submit" style="background: darkgreen; border-color: darkgreen;">
                           Save
                         </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal fade" id="ImagePreviewModal" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered modal-md">
+                    <div class="modal-content">
+
+                      <div class="modal-header">
+                        <h5 class="modal-title">Customer Image</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <div class="modal-body text-center">
+                        <img
+                          v-if="previewImage"
+                          :src="previewImage"
+                          class="img-fluid rounded shadow"
+                          style="max-height: 400px; object-fit: contain;"
+                        />
                       </div>
 
                     </div>
@@ -388,7 +414,11 @@
                             <input type="file" class="form-control" @change="handleEditImageUpload">
                           </div>
 
-                          <img v-if="editImagePreview" :src="editImagePreview" width="80" class="mt-2 rounded-circle border">
+                          <img
+                            v-if="edtImagePreview"
+                            :src="editImagePreview"
+                            class="customer-preview mt-2 rounded-circle border"
+                          />
 
                         </form>
                       </div>
@@ -460,9 +490,20 @@
 
             editImageFile: null,
             editImagePreview: null,
+            previewImage: null,
+
         }
       },      
       methods: { 
+          openImagePreview(image) {
+          this.previewImage = '/storage/' + image;
+
+          const modal = new bootstrap.Modal(
+            document.getElementById('ImagePreviewModal')
+          );
+
+          modal.show();
+        },
         handleImageUpload(e) {
           const file = e.target.files[0];
           this.imageFile = file;
@@ -793,4 +834,23 @@
     </script>
     
     
-    
+    <style scoped>
+      .customer-preview {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1px solid #dee2e6;
+      }
+      .customer-thumb {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .customer-thumb:hover {
+        transform: scale(1.1);
+      }
+    </style>

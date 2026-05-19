@@ -125,6 +125,9 @@
                                   <a @click="viewInvoice(item)" class="dropdown-item" href="#">
                                     <i class="ri-eye-fill mr-2"></i>View
                                   </a>
+                                  <a @click="shareInvoice(item)" class="dropdown-item" href="#">
+                                    <i class="ri-share-line mr-2"></i>Share Invoice
+                                  </a>
                                   <a @click="editInvoice(item)" class="dropdown-item" href="#">
                                     <i class="ri-pencil-fill mr-2"></i>Edit
                                   </a>
@@ -496,8 +499,172 @@
 
                     </div>
                   </div>
-                </div>                    
+                </div>  
 
+                <!-- SHARE INVOICE MODAL (NEW) -->
+                <div class="modal fade" id="shareInvoiceModal" tabindex="-1">
+                  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+
+                      <!-- HEADER -->
+                      <div class="modal-header">
+                        <div>
+                          <h5 class="modal-title">Invoice Preview</h5>
+                          <small class="text-muted">Share / Download Invoice</small>
+                        </div>
+
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <!-- BODY -->
+                      <div class="modal-body bg-light" v-if="shareInvoiceData">
+
+                        <!-- INVOICE AREA -->
+                        <div ref="shareArea" class="bg-white p-4 rounded shadow-sm">
+
+                          <!-- BRAND -->
+                          <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+
+                            <div class="d-flex align-items-center gap-3">
+                              <img src="@/assets/algospacelogo.png" style="height:55px;" />
+
+                              <div>
+                                <div class="fw-bold">AlgoSpace Cyber</div>
+                                <div class="text-muted small">Professional Digital Services</div>
+                              </div>
+                            </div>
+
+                            <div class="text-end">
+                              <div class="text-muted small">Invoice</div>
+                              <div class="fw-bold text-primary">
+                                #{{ shareInvoiceData.invoice_number }}
+                              </div>
+                            </div>
+
+                          </div>
+
+                          <!-- CUSTOMER -->
+                          <div class="row mb-4">
+                            <div class="col-md-6">
+                              <h6 class="text-muted">Bill To</h6>
+                              <div class="fw-semibold">{{ shareInvoiceData.customer?.name }}</div>
+                              <div class="small text-muted">{{ shareInvoiceData.customer?.email }}</div>
+                              <div class="small text-muted">{{ shareInvoiceData.customer?.phone }}</div>
+                            </div>
+
+                            <div class="col-md-6 text-md-end">
+                              <h6 class="text-muted">Invoice Summary</h6>
+
+                              <div class="fw-bold">
+                                {{ formatDate(shareInvoiceData.invoice_date) }}
+                              </div>
+
+                              <div class="small mt-1">
+                                <div>
+                                  Paid:
+                                  <span class="text-success fw-semibold">
+                                    KES {{ shareInvoiceData.amount_paid }}
+                                  </span>
+                                </div>
+
+                                <div>
+                                  Balance:
+                                  <span class="text-danger fw-semibold">
+                                    KES {{ shareInvoiceData.total_amount - shareInvoiceData.amount_paid }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- ITEMS -->
+                          <table class="table table-borderless">
+                            <thead>
+                              <tr class="text-muted small">
+                                <th>Description</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Unit</th>
+                                <th class="text-end">Total</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              <tr v-for="item in shareInvoiceData.items" :key="item.id">
+                                <td>
+                                  <div class="fw-semibold">
+                                    {{ shareInvoiceData.service?.name }}
+                                  </div>
+                                  <div class="text-muted small">
+                                    {{ item.service_name }}
+                                  </div>
+                                </td>
+
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.unit_price }}</td>
+                                <td class="text-end fw-bold">{{ item.line_total }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                          <!-- TOTAL -->
+                          <div class="d-flex justify-content-end border-top pt-3">
+                            <h4 class="text-success">
+                              KES {{ shareInvoiceData.total_amount }}
+                            </h4>
+                          </div>
+
+                          <!-- PAYMENT -->
+                          <div class="mt-3 p-3 border rounded bg-light">
+                            <div class="fw-bold mb-2">PAYMENT DETAILS</div>
+
+                            <div class="d-flex justify-content-between">
+                              <span>Paybill</span>
+                              <strong>542542</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                              <span>Account</span>
+                              <strong>608755</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between text-success">
+                              <span>Amount</span>
+                              <strong>KES {{ shareInvoiceData.total_amount }}</strong>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- FOOTER ACTIONS -->
+                      <div class="modal-footer d-flex justify-content-between">
+
+                        <div class="d-flex gap-2">
+
+                          <button class="btn btn-primary" @click="downloadShareImage">
+                            📸 Image
+                          </button>
+
+                          <button class="btn btn-dark" @click="downloadSharePDF">
+                            📄 PDF
+                          </button>
+
+                          <button class="btn btn-success" @click="shareWhatsApp"
+                          :disabled="!shareInvoiceData?.customer?.phone">
+                            WhatsApp
+                          </button>
+
+                        </div>
+
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                          Close
+                        </button>
+
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
             </div>
         </section>
     </Master>
@@ -505,6 +672,8 @@
     
     <script>
     import Master from "@/components/Master.vue";
+    import InvoiceModal from "@/components/InvoiceModal.vue";
+
     import axios from "axios";
     import Swal from 'sweetalert2';
     import "jquery/dist/jquery.min.js";
@@ -512,7 +681,9 @@
     import "datatables.net-dt/css/jquery.dataTables.min.css";
     import DefaultProfile from '@/assets/img/default-profile.png'
     import $ from "jquery";
-    
+    import html2canvas from "html2canvas";
+    import jsPDF from "jspdf";
+
     const toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -552,7 +723,8 @@
               due_date: "",
               total_amount: "",
               status: "pending"
-            }
+            },
+            shareInvoiceData: null,
 
         }
       },
@@ -564,6 +736,100 @@
         }
       },      
       methods: { 
+shareWhatsApp() {
+  if (!this.shareInvoiceData) return;
+
+  let phone = this.shareInvoiceData.customer?.phone || '';
+
+  // Normalize Kenyan number
+  if (phone.startsWith("0")) {
+    phone = "254" + phone.slice(1);
+  }
+
+  const balance =
+    (Number(this.shareInvoiceData.total_amount) || 0) -
+    (Number(this.shareInvoiceData.amount_paid) || 0);
+
+  const message = `
+Hello ${this.shareInvoiceData.customer?.name || 'Customer'},
+
+We hope you are well.
+
+This is a gentle reminder regarding your pending invoice with the details below:
+
+Invoice Number: ${this.shareInvoiceData.invoice_number}
+Invoice Date: ${this.formatDate(this.shareInvoiceData.invoice_date)}
+
+Total Amount: KES ${this.shareInvoiceData.total_amount}
+Amount Paid: KES ${this.shareInvoiceData.amount_paid}
+Outstanding Balance: KES ${balance}
+
+Payment Details:
+Paybill Number: 542542
+Account Number: 608755
+
+We would appreciate your kind settlement at your earliest convenience.
+If payment has already been made, please disregard this message.
+
+Thank you for your continued support.
+
+Kind regards,  
+AlgoSpace Cyber
+`;
+
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+},     
+        async shareInvoice(invoice) {
+          try {
+            const res = await axios.get(`/api/invoices/${invoice.id}`);
+            console.log("dada", invoice)
+            this.shareInvoiceData = res.data.invoice;
+            console.log("ndugu", this.shareInvoiceData)
+
+            this.$nextTick(() => {
+              new bootstrap.Modal(
+                document.getElementById('shareInvoiceModal')
+              ).show();
+            });
+
+          } catch (error) {
+            console.error(error);
+            toast.fire('Error', 'Failed to load invoice', 'error');
+          }
+        },
+        async downloadShareImage() {
+          const canvas = await html2canvas(this.$refs.shareArea, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#fff"
+          });
+
+          const a = document.createElement("a");
+          a.href = canvas.toDataURL("image/png");
+          a.download = `invoice-${this.shareInvoiceData.invoice_number}.png`;
+          a.click();
+        },
+
+        async downloadSharePDF() {
+          const canvas = await html2canvas(this.$refs.shareArea, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#fff"
+          });
+
+          const imgData = canvas.toDataURL("image/png");
+
+          const pdf = new jsPDF("p", "mm", "a4");
+
+          const imgWidth = 210;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+          pdf.save(`invoice-${this.shareInvoiceData.invoice_number}.pdf`);
+        },
         openCloseUnpaidModal(invoice) {
           this.selectedInvoice = invoice
           this.closeNote = 'Client non-responsive after reminders'

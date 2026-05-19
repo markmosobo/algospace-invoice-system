@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\LoyaltyCard;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {

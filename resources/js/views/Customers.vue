@@ -7,18 +7,6 @@
                 <div class="col-12">
                   <div class="card top-selling overflow-auto">
     
-                    <div class="filter">
-                    <!--                       <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li class="dropdown-header text-start">
-                          <h6>Filter</h6>
-                        </li>
-    
-                        <li><a class="dropdown-item" href="#">Today</a></li>
-                        <li><a class="dropdown-item" href="#">This Month</a></li>
-                        <li><a class="dropdown-item" href="#">This Year</a></li>
-                      </ul> -->
-                    </div>
     
                     <div class="card-body pb-0">
                       <h5 class="card-title">Customers <span>| Clients who have visited AlgoSpace Cyber</span></h5>
@@ -74,42 +62,107 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="customer in customers" :key="customer.id">
-                            <td>
-                              {{ customer.name }}
-                              <span v-if="customer.is_risky" class="badge bg-danger ms-2" title="Has unpaid invoices">
-                                RISKY
-                              </span>
-                            </td>
-                            <td>{{customer.phone ?? "N/A"}}</td>
-                            <td>{{customer.visits_count}}</td>
-                            <td>
-                              <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
-                              <span v-else class="badge bg-secondary">None</span>
-                            </td>
+<tr v-for="customer in customers" :key="customer.id">
 
-                            <td>
-                              <div class="btn-group" role="group">
-                                  <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Action
-                                  </button>
-                                  <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="">
-                                  <a @click="viewCustomer(customer)" class="dropdown-item" href="#"><i class="ri-eye-fill mr-2"></i>View</a> 
-                                  <a v-if="customer.visits_count >= 1 && !customer.loyalty_card" 
-                                    @click="openLoyaltyModal(customer)" class="dropdown-item" href="#">
-                                    <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
-                                  </a>
-                                  <a v-if="customer.loyalty_card"
-                                      @click="viewLoyaltyCard(customer)" 
-                                      class="dropdown-item" href="#">
-                                      <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
-                                  </a>
-                                  <a @click="editCustomer(customer)" class="dropdown-item" href="#"><i class="ri-pencil-fill mr-2"></i>Edit</a>
-                                  <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
-                                  </div>
-                              </div>
-                            </td>
-                          </tr>
+  <!-- NAME + AVATAR -->
+  <td class="d-flex align-items-center gap-2">
+
+    <!-- REAL IMAGE -->
+    <img
+      v-if="customer.image && customer.image !== 'null' && customer.image !== ''"
+      :src="'/storage/' + customer.image"
+      class="rounded-circle border flex-shrink-0"
+      style="width:40px; height:40px; object-fit:cover;"
+    />
+
+    <!-- GOOGLE STYLE INITIALS AVATAR -->
+    <div
+      v-else
+      class="rounded-circle border d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+      :style="{
+        width: '40px',
+        height: '40px',
+        backgroundColor: getAvatarColor(customer.name),
+        fontSize: '14px'
+      }"
+    >
+      {{ getInitials(customer.name) }}
+    </div>
+
+    <!-- NAME -->
+    <span>
+      {{ customer.name }}
+    </span>
+
+    <!-- RISK BADGE -->
+    <span v-if="customer.is_risky" class="badge bg-danger ms-2" title="Has unpaid invoices">
+      RISKY
+    </span>
+
+  </td>
+
+  <!-- PHONE -->
+  <td>{{ customer.phone ?? "N/A" }}</td>
+
+  <!-- VISITS -->
+  <td>{{ customer.visits_count }}</td>
+
+  <!-- LOYALTY -->
+  <td>
+    <span v-if="customer.loyalty_card" class="badge bg-success">Issued</span>
+    <span v-else class="badge bg-secondary">None</span>
+  </td>
+
+  <!-- ACTIONS -->
+  <td>
+    <div class="btn-group" role="group">
+
+      <button
+        type="button"
+        class="btn btn-sm btn-primary rounded-pill dropdown-toggle"
+        style="background-color: darkgreen; border-color: darkgreen;"
+        data-bs-toggle="dropdown"
+      >
+        Action
+      </button>
+
+      <div class="dropdown-menu">
+
+        <a @click="viewCustomer(customer)" class="dropdown-item" href="#">
+          <i class="ri-eye-fill mr-2"></i>View
+        </a>
+
+        <a
+          v-if="customer.visits_count >= 1 && !customer.loyalty_card"
+          @click="openLoyaltyModal(customer)"
+          class="dropdown-item"
+          href="#"
+        >
+          <i class="ri-star-fill mr-2"></i>Issue Loyalty Card
+        </a>
+
+        <a
+          v-if="customer.loyalty_card"
+          @click="viewLoyaltyCard(customer)"
+          class="dropdown-item"
+          href="#"
+        >
+          <i class="ri-vip-crown-fill mr-2"></i>View Loyalty Card
+        </a>
+
+        <a @click="editCustomer(customer)" class="dropdown-item" href="#">
+          <i class="ri-pencil-fill mr-2"></i>Edit
+        </a>
+
+        <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#">
+          <i class="ri-delete-bin-line mr-2"></i>Delete
+        </a>
+
+      </div>
+    </div>
+  </td>
+
+</tr>
                         </tbody>
                       </table>
     
@@ -265,6 +318,13 @@
                             </select>
                           </div>
 
+                          <div class="col-md-6">
+                            <label class="form-label">Customer Image</label>
+                            <input type="file" class="form-control" @change="handleImageUpload">
+                          </div>
+
+                          <img v-if="imagePreview" :src="imagePreview" width="80" class="mt-2 rounded-circle border">
+
 
                         </form>
                       </div>
@@ -323,6 +383,12 @@
                             </select>
                           </div>
 
+                          <div class="col-md-6">
+                            <label class="form-label">Customer Image</label>
+                            <input type="file" class="form-control" @change="handleEditImageUpload">
+                          </div>
+
+                          <img v-if="editImagePreview" :src="editImagePreview" width="80" class="mt-2 rounded-circle border">
 
                         </form>
                       </div>
@@ -388,10 +454,56 @@
             email: "",
             phone: "",
             gender: ""
-            }
+            },
+            imageFile: null,
+            imagePreview: null,
+
+            editImageFile: null,
+            editImagePreview: null,
         }
       },      
       methods: { 
+        handleImageUpload(e) {
+          const file = e.target.files[0];
+          this.imageFile = file;
+
+          if (file) {
+            this.imagePreview = URL.createObjectURL(file);
+          }
+        },
+        getAvatarColor(name) {
+          const colors = [
+            '#1abc9c', '#2ecc71', '#3498db', '#9b59b6',
+            '#f39c12', '#e74c3c', '#16a085', '#27ae60',
+            '#2980b9', '#8e44ad', '#d35400', '#c0392b'
+          ];
+
+          let hash = 0;
+          for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+          }
+
+          return colors[Math.abs(hash) % colors.length];
+        },
+
+        getInitials(name) {
+          if (!name) return '?';
+
+          return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+        },
+        handleEditImageUpload(e) {
+          const file = e.target.files[0];
+          this.editImageFile = file;
+
+          if (file) {
+            this.editImagePreview = URL.createObjectURL(file);
+          }
+        },        
         openLoyaltyModal(customer){
             this.selectedCustomer = customer
             this.loyaltyMode = 'issue'
@@ -484,61 +596,83 @@
 
         return isValid;
         },
-        async submitChanges() {
-        if (!this.validateEditForm()) return;
+        async submit() {
+          if (!this.validateForm()) return;
 
-        this.submitting = true;
+          this.submitting = true;
 
-        try {
-            await axios.put(`/api/customers/${this.form.id}`, this.form);
+          try {
+            let formData = new FormData();
+            formData.append("name", this.data.name);
+            formData.append("email", this.data.email);
+            formData.append("phone", this.data.phone);
+            formData.append("gender", this.data.gender);
 
-            toast.fire('Success!', 'Customer updated successfully', 'success');
+            if (this.imageFile) {
+              formData.append("image", this.imageFile);
+            }
 
-            const modal = bootstrap.Modal.getInstance(
-            document.getElementById('EditCustomerModal')
-            );
-            modal.hide();
+            await axios.post('/api/customers', formData, {
+              headers: { "Content-Type": "multipart/form-data" }
+            });
 
+            toast.fire('Success!', 'Customer added successfully', 'success');
+
+            bootstrap.Modal.getInstance(
+              document.getElementById('AddCustomerModal')
+            ).hide();
+
+            this.resetAddForm();
             this.loadLists();
 
-        } catch (error) {
+          } catch (error) {
             console.error(error);
-            toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Failed to update customer',
-            'error'
-            );
-        } finally {
+            toast.fire('Error!', 'Something went wrong', 'error');
+          } finally {
             this.submitting = false;
-        }
+          }
         },
-
         addCustomer()
         {
           // Show the modal after fetching data
           const modal = new bootstrap.Modal(document.getElementById('AddCustomerModal'));
           modal.show();
         },
-        async submit() {
-            if (this.validateForm()) {
+        async submitChanges() {
+          if (!this.validateEditForm()) return;
 
-                // Start submitting process
-                this.submitting = true;
-                
-                try {
-                    // Simulate asynchronous submission process (you would replace this with your actual submission logic)
-                    await this.submitForm();
+          this.submitting = true;
 
-                    // Submission successful
-                    this.submitted = true;
-                } catch (error) {
-                    // Handle submission error
-                    console.error("Submission error:", error);
-                } finally {
-                    // End submitting process
-                    this.submitting = false;
-                }
+          try {
+            let formData = new FormData();
+            formData.append("name", this.form.name);
+            formData.append("email", this.form.email);
+            formData.append("phone", this.form.phone);
+            formData.append("gender", this.form.gender);
+            formData.append("_method", "PUT");
+
+            if (this.editImageFile) {
+              formData.append("image", this.editImageFile);
             }
+
+            await axios.post(`/api/customers/${this.form.id}`, formData, {
+              headers: { "Content-Type": "multipart/form-data" }
+            });
+
+            toast.fire('Success!', 'Customer updated successfully', 'success');
+
+            bootstrap.Modal.getInstance(
+              document.getElementById('EditCustomerModal')
+            ).hide();
+
+            this.loadLists();
+
+          } catch (error) {
+            console.error(error);
+            toast.fire('Error!', 'Update failed', 'error');
+          } finally {
+            this.submitting = false;
+          }
         },
         validateForm() {
         let isValid = true;
@@ -552,42 +686,41 @@
 
         return isValid;
         },
-        async submit() {
-        if (!this.validateForm()) return;
+        async submitChanges() {
+          if (!this.validateEditForm()) return;
 
-        this.submitting = true;
+          this.submitting = true;
 
-        try {
-            await axios.post('/api/customers', this.data);
+          try {
+            let formData = new FormData();
+            formData.append("name", this.form.name);
+            formData.append("email", this.form.email);
+            formData.append("phone", this.form.phone);
+            formData.append("gender", this.form.gender);
+            formData.append("_method", "PUT");
 
-            toast.fire('Success!', 'Customer added successfully', 'success');
+            if (this.editImageFile) {
+              formData.append("image", this.editImageFile);
+            }
 
-            const modal = bootstrap.Modal.getInstance(
-            document.getElementById('AddCustomerModal')
-            );
-            modal.hide();
+            await axios.post(`/api/customers/${this.form.id}`, formData, {
+              headers: { "Content-Type": "multipart/form-data" }
+            });
 
-            // Reset form
-            this.data = {
-            id: "",
-            name: "",
-            email: "",
-            phone: "",
-            gender: ""
-            };
+            toast.fire('Success!', 'Customer updated successfully', 'success');
+
+            bootstrap.Modal.getInstance(
+              document.getElementById('EditCustomerModal')
+            ).hide();
 
             this.loadLists();
 
-        } catch (error) {
+          } catch (error) {
             console.error(error);
-            toast.fire(
-            'Error!',
-            error.response?.data?.message || 'Something went wrong',
-            'error'
-            );
-        } finally {
+            toast.fire('Error!', 'Update failed', 'error');
+          } finally {
             this.submitting = false;
-        }
+          }
         },
         navigateTo(location){
             this.$router.push(location)

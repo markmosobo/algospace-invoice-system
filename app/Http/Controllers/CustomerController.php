@@ -32,6 +32,13 @@ class CustomerController extends Controller
         $customer->name = $request->name;
         $customer->phone = $request->phone;
         $customer->email = $request->email;
+        $customer->gender = $request->gender; 
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('customers', 'public');
+            $customer->image = $path;
+        }
+
         $customer->save();
 
         //record system log
@@ -78,15 +85,31 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string',
         ]);
 
-        $customer->update($request->only([
-            'name','email','phone','gender'
-        ]));
+        $customer = Customer::findOrFail($id);
+
+        $customer->name = $request->name;
+        $customer->email = $request->email;
+        $customer->phone = $request->phone;
+        $customer->gender = $request->gender; 
+
+        if ($request->hasFile('image')) {
+
+            // OPTIONAL: delete old image
+            if ($customer->image && Storage::disk('public')->exists($customer->image)) {
+                Storage::disk('public')->delete($customer->image);
+            }
+
+            $path = $request->file('image')->store('customers', 'public');
+            $customer->image = $path;
+        }
+
+        $customer->save();
 
         //record system log
         SystemLog::create([

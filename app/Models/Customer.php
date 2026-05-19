@@ -16,6 +16,8 @@ class Customer extends Model
         'name',
         'phone',
         'email',
+        'gender',
+        'image'
     ];
 
     // Relationships

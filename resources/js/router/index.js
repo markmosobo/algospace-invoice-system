@@ -44,6 +44,7 @@ import BookBorrowers from '@/views/BookBorrowers.vue';
 import Partners from '@/views/Partners.vue';
 import ToDos from '../views/ToDos.vue';
 import Analytics from '../views/Analytics.vue';
+import Projects from '../views/Projects.vue';
 
 const routes = [
   // Public routes
@@ -121,6 +122,20 @@ const routes = [
   { path: '/borrowers', name: 'BookBorrowers', component: BookBorrowers, meta: { requiresAuth: true } },
 
   { path: '/partners', name: 'Partners', component: Partners, meta: { requiresAuth: true } },
+
+  { path: '/projects', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
+  {
+    path: "/projects/create",
+    name: "projects.create",
+    component: () => import("@/views/projects/Create.vue"),
+    meta: { requiresAuth: true } 
+  },
+  {
+  path: "/projects/:id/progress",
+    component: () => import("@/views/projects/ProjectProgress.vue"),
+    meta: { requiresAuth: true } 
+
+  }
 ];
 
 const router = createRouter({

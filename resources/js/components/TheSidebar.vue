@@ -12,6 +12,15 @@
         </router-link>
       </li>
 
+      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+        <router-link to="/projects" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-kanban"></i>
+            <span>Projects</span>
+          </a>
+        </router-link>
+      </li>      
+
       <!-- Analytics -->
       <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
         <router-link to="/analytics" custom v-slot="{ href, navigate, isActive }">

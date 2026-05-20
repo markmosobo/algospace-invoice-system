@@ -50,6 +50,8 @@ use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\ToDoController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectProgressController;
 use App\Http\Controllers\CapitalInjectionController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
@@ -242,5 +244,18 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/cyber-requests/{id}/confirm-invoice', [CyberRequestInvoiceController::class, 'confirm']);
 
     Route::patch('/services/{id}/toggle', [ServiceController::class, 'toggleActive']);
+
+
+    Route::get('/projects', [ProjectController::class, 'index']);
+    Route::post('/projects', [ProjectController::class, 'store']);
+    Route::get('/projects/{project}', [ProjectController::class, 'show']);
+    Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+
+    // Special action
+    Route::patch('/projects/{project}/status', [ProjectController::class, 'updateStatus']);
+
+    Route::get('/projects/{project}/progress', [ProjectProgressController::class, 'index']);
+    Route::post('/projects/{project}/progress', [ProjectProgressController::class, 'store']);    
 
 });

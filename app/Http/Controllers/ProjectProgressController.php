@@ -77,20 +77,25 @@ class ProjectProgressController extends Controller
 
             $newProgress = $project->calculateProgressFromStage($stage);
 
+            // only move progress forward
             if (!is_null($newProgress)) {
                 $project->progress = max($project->progress, $newProgress);
             }
 
-            // FORCE SAFE CHECK (important: use fresh value)
-            $progress = $project->progress;
+            // 🔒 TERMINAL STATE GUARD
+            if ($project->status !== 'completed') {
 
-            if ($progress >= 100) {
-                $project->status = 'completed';
-            } elseif ($progress >= 70) {
-                $project->status = 'active';
-            } else {
-                $project->status = 'draft';
+                if ($project->progress >= 100) {
+                    $project->status = 'completed';
+                } elseif ($project->progress >= 70) {
+                    $project->status = 'active';
+                } else {
+                    $project->status = 'draft';
+                }
             }
+
+            // stage can still change (history / refinement / notes)
+            $project->current_stage = $stage;
 
             $project->save();
 

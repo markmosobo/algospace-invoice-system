@@ -50,17 +50,6 @@
                     </select>
                   </div>
 
-                  <!-- PROGRESS -->
-                  <div class="col-md-6">
-                    <label class="form-label">Progress (%)</label>
-                    <input
-                      v-model="form.progress"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="form-control"
-                    />
-                  </div>
 
                   <!-- DESCRIPTION -->
                   <div class="col-12">
@@ -164,6 +153,15 @@
 <script>
 import Master from "@/components/Master.vue";
 import axios from "axios";
+import Swal from "sweetalert2";
+
+const toast = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 2500,
+  timerProgressBar: true
+});
 
 export default {
   components: { Master },
@@ -197,7 +195,6 @@ export default {
     },
 
     async submit() {
-
       let formData = new FormData();
 
       Object.keys(this.form).forEach(key => {
@@ -215,10 +212,21 @@ export default {
           }
         });
 
-        this.$router.push("/projects");
+        toast.fire({
+          icon: "success",
+          title: "Project created successfully"
+        });
+
+        // small delay so user sees toast
+        setTimeout(() => {
+          this.$router.push("/projects");
+        }, 800);
 
       } catch (error) {
-        console.log(error);
+        toast.fire({
+          icon: "error",
+          title: "Failed to create project"
+        });
       }
     }
 

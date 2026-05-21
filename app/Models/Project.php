@@ -20,9 +20,11 @@ class Project extends Model
         'start_date',
         'end_date',
         'due_date',
+        'current_stage',
         'cover_image',
         'blocker',
         'priority',
+        'progress',
         'created_by',
     ];
 
@@ -45,6 +47,20 @@ class Project extends Model
     {
         return $this->hasMany(ProjectMedia::class);
     }
+
+    public const STAGE_PROGRESS_MAP = [
+        'ideation'    => 10,
+        'planning'    => 25,
+        'setup'       => 40,
+        'execution'   => 70,
+        'completion'  => 100,
+    ];
+
+    public function calculateProgressFromStage(string $stage): int
+    {
+        return self::STAGE_PROGRESS_MAP[$stage] ?? null;
+    }
+
 
     /* =====================
      |  Scopes (VERY USEFUL)

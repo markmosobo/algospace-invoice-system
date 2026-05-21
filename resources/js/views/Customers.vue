@@ -68,12 +68,12 @@
                             <td class="d-flex align-items-center gap-2">
 
                               <!-- REAL IMAGE -->
-<img
-  v-if="customer.image && customer.image !== 'null' && customer.image !== ''"
-  :src="'/storage/' + customer.image"
-  class="rounded-circle border flex-shrink-0 customer-thumb"
-  @click="openImagePreview(customer.image)"
-/>
+                              <img
+                                v-if="customer.image && customer.image !== 'null' && customer.image !== ''"
+                                :src="'/storage/' + customer.image"
+                                class="rounded-circle border flex-shrink-0 customer-thumb"
+                                @click="openImagePreview(customer.image)"
+                              />
 
                               <!-- GOOGLE STYLE INITIALS AVATAR -->
                               <div

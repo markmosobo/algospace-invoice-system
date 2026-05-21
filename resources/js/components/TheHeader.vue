@@ -5,7 +5,7 @@
       <div class="d-flex align-items-center justify-content-between">
         <a href="/" class="logo d-flex align-items-center gap-2" title="Back to AlgoSpace Cyber Website">
           <img src="@/assets/img/algospacelogo.png" alt="AlgoSpace Cyber Logo" />
-          <span class="logo-text small opacity-75">
+          <span class="logo-text fs-6 opacity-75">
             Back to website
           </span>
         </a>

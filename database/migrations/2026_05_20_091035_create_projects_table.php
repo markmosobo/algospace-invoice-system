@@ -13,7 +13,9 @@ return new class extends Migration {
             // Core info
             $table->string('title');
             $table->text('description')->nullable();
-
+            $table->string('current_stage')->nullable();
+            $table->unsignedTinyInteger('progress')->default(0);  
+                      
             // Classification
             $table->enum('type', [
                 'business',
@@ -36,7 +38,7 @@ return new class extends Migration {
                 'completed',
                 'archived'
             ])->default('draft');
-            
+
             $table->string('cover_image')->nullable();
 
             // Planning

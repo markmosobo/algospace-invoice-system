@@ -101,59 +101,25 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         $validated = $request->validate([
-            'title'       => 'sometimes|string|max:255',
+            'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
+            'type' => 'sometimes|in:business,personal,asset,training',
+            'board_type' => 'nullable|in:admin,public',
+            'status' => 'sometimes|in:draft,active,blocked,abandoned,milestone,completed,archived',
 
-            'type' => ['sometimes', Rule::in([
-                'business','personal','asset','training'
-            ])],
-
-            'board_type' => ['nullable', Rule::in([
-                'admin','public'
-            ])],
-
-            'status' => ['sometimes', Rule::in([
-                'draft','active','blocked','abandoned','milestone','completed','archived'
-            ])],
-
-            // ✅ FIXED: handle real file upload
-            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-
-            'start_date' => 'nullable|date',
-            'end_date'   => 'nullable|date|after_or_equal:start_date',
-            'due_date'   => 'nullable|date',
-
-            'blocker'  => 'nullable|string|max:255',
-            'priority' => 'nullable|integer|min:1|max:5',
+            'cover_image' => 'nullable|image|max:5120',
         ]);
 
-        /**
-         * ==============================
-         * HANDLE COVER IMAGE UPLOAD
-         * ==============================
-         */
         if ($request->hasFile('cover_image')) {
-
-            // (Optional but recommended) delete old image
-            if ($project->cover_image && Storage::disk('public')->exists($project->cover_image)) {
-                Storage::disk('public')->delete($project->cover_image);
-            }
-
-            // store new image
             $validated['cover_image'] = $request->file('cover_image')
                 ->store('projects/covers', 'public');
         }
 
-        /**
-         * ==============================
-         * UPDATE PROJECT
-         * ==============================
-         */
         $project->update($validated);
 
         return response()->json([
-            'message' => 'Project updated successfully',
-            'data'    => $project->load('media')
+            'message' => 'Project updated',
+            'data' => $project->load('media')
         ]);
     }
 
@@ -189,4 +155,18 @@ class ProjectController extends Controller
             'message' => 'Project deleted successfully'
         ]);
     }
+
+    public function toggleBoardType(Project $project)
+    {
+        $project->board_type = $project->board_type === 'admin'
+            ? 'public'
+            : 'admin';
+
+        $project->save();
+
+        return response()->json([
+            'message' => 'Board type updated',
+            'board_type' => $project->board_type
+        ]);
+    }    
 }

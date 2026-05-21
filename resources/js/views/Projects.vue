@@ -30,7 +30,7 @@
               </div>
 
               <!-- TABLE -->
-              <table class="table table-borderless">
+              <table id="ProjectsTable" class="table table-borderless">
 
                 <thead>
                   <tr>
@@ -112,15 +112,18 @@
                         </button>
 
                         <div class="dropdown-menu">
-                          <a class="dropdown-item" @click="viewProject(project)">View</a>
-                          <a class="dropdown-item" @click="editProject(project)">Edit</a>
+                          <!-- <a class="dropdown-item" @click="viewProject(project)">View</a>
+                          <a class="dropdown-item" @click="editProject(project)">Edit</a> -->
                           <a
                             class="dropdown-item text-success"
                             @click="$router.push(`/projects/${project.id}/progress`)"
                             >
-                            Add Progress
+                            View Progress
                           </a>
-                          <a class="dropdown-item text-danger" @click="deleteProject(project.id)">Delete</a>
+                          <a class="dropdown-item text-success" @click="toggleBoard(project)">
+                            Switch to {{ project.board_type === 'admin' ? 'Public' : 'Admin' }} Board
+                          </a>
+                          <a class="dropdown-item text-danger" v-if="project.status === 'draft'" @click="deleteProject(project.id)">Delete</a>
                         </div>
                       </div>
                     </td>
@@ -143,6 +146,19 @@
 <script>
 import Master from "@/components/Master.vue";
 import axios from "axios";
+import "jquery/dist/jquery.min.js";
+import "datatables.net-dt/js/dataTables.dataTables";
+import "datatables.net-dt/css/jquery.dataTables.min.css";
+import $ from "jquery";
+import Swal from 'sweetalert2';
+const toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+});
+
+window.toast = toast;
 
 export default {
   components: { Master },
@@ -156,7 +172,18 @@ export default {
   },
 
   methods: {
+    toggleBoard(project) {
+      axios.patch(`/api/projects/${project.id}/toggle-board`)
+        .then(res => {
+          project.board_type = res.data.board_type;
 
+          toast.fire({
+            icon: "success",
+            title: "Board updated",
+            text: `Now: ${res.data.board_type}`
+          });
+        });
+    },
     loadProjects() {
       this.initializing = true;
 
@@ -167,6 +194,9 @@ export default {
       })
       .then(res => {
         this.projects = res.data.data;
+        // setTimeout(() => {
+        //   $("#ProjectsTable").DataTable();
+        // }, 10);        
       })
       .finally(() => {
         this.initializing = false;
@@ -186,8 +216,37 @@ export default {
     },
 
     deleteProject(id) {
-      axios.delete(`/api/projects/${id}`)
-        .then(() => this.loadProjects());
+      Swal.fire({
+        title: "Are you sure?",
+        text: "This project will be permanently deleted",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios.delete(`/api/projects/${id}`)
+            .then(() => {
+              this.loadProjects();
+
+              toast.fire({
+                icon: "success",
+                title: "Deleted",
+                text: "Project removed successfully",
+                timer: 1500,
+                showConfirmButton: false
+              });
+            })
+            .catch(() => {
+              Swal.fire({
+                icon: "error",
+                title: "Failed",
+                text: "Could not delete project"
+              });
+            });
+        }
+      });
     },
 
     getInitials(title) {

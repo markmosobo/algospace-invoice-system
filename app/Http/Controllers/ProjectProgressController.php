@@ -29,63 +29,84 @@ class ProjectProgressController extends Controller
     /**
      * Store a new progress update
      */
-    public function store(Request $request, Project $project)
+
+
+    public function progress(Project $project)
+    {
+        return response()->json([
+            'project' => $project->load('media'),
+            'progress' => $project->media()
+                ->latest()
+                ->get()
+        ]);
+    }
+
+    public function storeProgress(Request $request, Project $project)
     {
         $validated = $request->validate([
-            'note'               => 'nullable|string',
-            'progress_increment' => 'nullable|integer|min:1|max:100',
-            'images.*'           => 'nullable|image|max:5120'
+            'notes' => 'nullable|string',
+            'stage' => 'nullable|string',
+            'images.*' => 'nullable|image|max:5120'
         ]);
 
-        DB::transaction(function () use ($request, $project, $validated) {
+        DB::beginTransaction();
 
-            // 🔁 Update project progress if increment provided
-            if (!empty($validated['progress_increment'])) {
-                $project->progress = min(
-                    100,
-                    ($project->progress ?? 0) + $validated['progress_increment']
-                );
+        try {
 
-                // Auto-complete if 100%
-                if ($project->progress >= 100) {
-                    $project->status = 'completed';
-                }
+            $stage = $validated['stage'] ?? 'ideation';
 
-                $project->save();
-            }
+            $project->current_stage = $stage;
 
-            // 📸 Store each uploaded image as progress evidence
+            // save media
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
+                foreach ($request->file('images') as $file) {
 
-                    $path = $image->store('project-progress', 'public');
+                    $path = $file->store('project_media', 'public');
 
                     ProjectMedia::create([
                         'project_id' => $project->id,
                         'file_path'  => $path,
+                        'file_name'  => $file->getClientOriginalName(),
                         'type'       => 'image',
-                        'notes'      => $validated['note'] ?? null,
+                        'notes'      => $validated['notes'] ?? null,
+                        'stage'      => $stage,
                         'uploaded_by'=> auth()->id(),
                     ]);
                 }
             }
 
-            // 📝 If no image but note exists, still record progress
-            if (
-                !$request->hasFile('images') &&
-                !empty($validated['note'])
-            ) {
-                ProjectMedia::create([
-                    'project_id' => $project->id,
-                    'type'       => 'document',
-                    'notes'      => $validated['note'],
-                    'uploaded_by'=> auth()->id(),
-                ]);
-            }
-        });
+            $newProgress = $project->calculateProgressFromStage($stage);
 
-        return response()->json([
-            'message' => 'Progress added successfully'
-        ], 201);
+            if (!is_null($newProgress)) {
+                $project->progress = max($project->progress, $newProgress);
+            }
+
+            // FORCE SAFE CHECK (important: use fresh value)
+            $progress = $project->progress;
+
+            if ($progress >= 100) {
+                $project->status = 'completed';
+            } elseif ($progress >= 70) {
+                $project->status = 'active';
+            } else {
+                $project->status = 'draft';
+            }
+
+            $project->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Progress updated successfully',
+                'data' => $project
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -256,6 +256,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/projects/{project}/status', [ProjectController::class, 'updateStatus']);
 
     Route::get('/projects/{project}/progress', [ProjectProgressController::class, 'index']);
-    Route::post('/projects/{project}/progress', [ProjectProgressController::class, 'store']);    
-
+    Route::post('/projects/{project}/progress', [ProjectProgressController::class, 'storeProgress']);   
+     
+    Route::patch('/projects/{project}/toggle-board', [ProjectController::class, 'toggleBoardType']);
 });

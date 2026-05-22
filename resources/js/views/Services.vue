@@ -11,38 +11,67 @@
                       <h5 class="card-title">Services <span>| Services offered at AlgoSpace Cyber</span></h5>
                       <p class="card-text">
                         <div class="row">
-                          <div class="col d-flex">
-                   
-                   
-                                <a
-                                  :href="href"
-                                  :class="{ active: isActive }"
-                                  class="btn btn-sm btn-primary rounded-pill me-2"
-                                  style="background-color: darkgreen; border-color: darkgreen;"
-                                  @click="addService()"
-                                >
-                                  Add Service
-                                </a>
+                          <!-- LEFT SIDE: SEARCH + ACTION BUTTONS -->
+                          <div class="d-flex flex-column">
 
-                                <button
-                                  class="btn btn-sm btn-info rounded-pill"
-                                  @click="exportToPDF"
-                                >
-                                  Export PDF
-                                </button>
-                          </div>
-                          <div class="col-auto d-flex justify-content-end">
-                          <div class="btn-group" role="group">
-                              <button id="btnGroupDrop1" type="button" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm btn-primary rounded-pill dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="ri-add-line"></i>
-                              </button>
-                              <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                     <a @click="navigateTo('/clients' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Clients</a>
-                                    <a @click="navigateTo('/savings' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Savings</a>
-                                    <a @click="navigateTo('/loans' )" class="dropdown-item" href="#"><i class="ri-user-fill mr-2"></i>Loans</a>
-                                </div>
+                            <!-- SEARCH + CLEAR ROW -->
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+
+                              <!-- SEARCH -->
+                              <div class="d-flex flex-column me-2">
+                                <input
+                                  type="text"
+                                  v-model="searchQuery"
+                                  class="form-control form-control-sm"
+                                  placeholder="Search services..."
+                                  style="max-width: 220px;"
+                                />
+
+                                <small class="text-muted mt-1">
+                                  Tip: type <b>remote</b> for online + in-store, or <b>walkin</b> for in-store only
+                                </small>
                               </div>
+
+                              <!-- CLEAR -->
+                              <button
+                                v-if="searchQuery"
+                                class="btn btn-sm btn-outline-secondary"
+                                @click="clearFilters"
+                              >
+                                Clear
+                              </button>
+
                             </div>
+
+                            <!-- ACTION BUTTONS ROW (BELOW SEARCH) -->
+                            <div class="d-flex flex-wrap gap-2">
+
+                              <a
+                                class="btn btn-sm btn-primary rounded-pill"
+                                style="background-color: darkgreen; border-color: darkgreen;"
+                                @click="addService()"
+                              >
+                                Add Service
+                              </a>
+
+                              <button
+                                class="btn btn-sm btn-info rounded-pill"
+                                @click="exportToPDF('all')"
+                              >
+                                Export Full PDF
+                              </button>
+
+                              <button
+                                class="btn btn-sm btn-warning rounded-pill"
+                                @click="exportToPDF('filtered')"
+                              >
+                                Print Search Results
+                              </button>
+
+                            </div>
+
+                          </div>
+
                         </div>   
             
                       </p>
@@ -69,14 +98,14 @@
                           </tr>
                         </tbody>
                         <tbody v-else>
-                          <tr v-for="item in services" :key="item.id">
+                          <tr v-for="item in filteredServicesList" :key="item.id">
                             <td>{{item.name}}</td>
                             <td>{{item.category ?? "N/A"}}</td>
                             <td>{{item.price ?? "N/A"}}</td>
                             <td>{{item.unit ?? "N/A"}}</td>
                             <td>
                               <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
-                                  {{ item.is_active ? 'Available Online' : 'Walk-in Only' }}
+                                  {{ item.is_active ? 'In-Store + Remote' : 'In-Store Only' }}
                               </span>
                             </td>
                            
@@ -91,7 +120,7 @@
                                   <a @click="toggleService(item)" class="dropdown-item" href="#">
                                       <i class="ri-toggle-line mr-2"></i>
 
-                                      {{ item.is_active ? 'Move to Walk-in Only' : 'Publish Online' }}
+                                      {{ item.is_active ? 'Move to In-Store Only' : 'Enable Remote + In-Store' }}
                                   </a>
                                   <a @click="deleteService(item.id)" class="dropdown-item" href="#"><i class="ri-delete-bin-line mr-2"></i>Delete</a>
                                   </div>
@@ -284,11 +313,7 @@
     import Master from "@/components/Master.vue";
     import axios from "axios";
     import Swal from 'sweetalert2';
-    import "jquery/dist/jquery.min.js";
-    import "datatables.net-dt/js/dataTables.dataTables";
-    import "datatables.net-dt/css/jquery.dataTables.min.css";
-    import DefaultProfile from '@/assets/img/default-profile.png'
-    import $ from "jquery";
+
     import html2canvas from "html2canvas";
     import jsPDF from "jspdf";
 
@@ -328,10 +353,36 @@
                 price: "",
                 unit: "",
                 is_bundle: false
-            }
+            },
+            searchQuery: "",
         }
       },  
       computed: {
+        filteredServicesList() {
+          let list = this.services;
+
+          const q = (this.searchQuery || "").toLowerCase().trim();
+
+          // no search
+          if (!q) return list;
+
+          // STATUS FILTER (robust)
+        if (q.includes("remote")) {
+          return list.filter(s => Number(s.is_active) === 1);
+        }
+
+        if (q.includes("walkin")) {
+          return list.filter(s => Number(s.is_active) === 0);
+        }
+
+          // normal search
+          return list.filter(s =>
+            (s.name || "").toLowerCase().includes(q) ||
+            (s.category || "").toLowerCase().includes(q) ||
+            String(s.price || "").includes(q) ||
+            (s.unit || "").toLowerCase().includes(q)
+          );
+        },       
         groupedServices() {
           const groups = {};
 
@@ -362,6 +413,25 @@
         }        
       },          
       methods: { 
+        clearFilters() {
+          this.searchQuery = "";
+        },        
+        getPdfGroups(data) {
+          const grouped = {};
+
+          data.forEach(service => {
+            const category = service.category || "Uncategorized";
+
+            if (!grouped[category]) grouped[category] = [];
+
+            grouped[category].push(service);
+          });
+
+          return Object.entries(grouped).map(([category, items]) => ({
+            category,
+            items
+          }));
+        },        
         getChunks(array, size) {
           const chunks = [];
           for (let i = 0; i < array.length; i += size) {
@@ -369,172 +439,171 @@
           }
           return chunks;
         },         
-async exportToPDF() {
-  const pdf = new jsPDF("p", "mm", "a4");
+        async exportToPDF(type = "all") {
+          const pdf = new jsPDF("p", "mm", "a4");
 
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
 
-  let y = 10;
+          let y = 10;
 
-  // ===== FORMAT DATE TO dd/mm/yyyy =====
-  const formatDate = (date) => {
-    const d = new Date(date);
+          // ===== DATA SOURCE (THIS IS THE KEY FIX) =====
+          const data =
+            type === "filtered"
+              ? this.filteredServicesList   // 👈 NOW MATCHES TABLE SEARCH
+              : this.services;
 
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
+          const groups = this.getPdfGroups(data);
 
-    return `${day}/${month}/${year}`;
-  };
+          // ===== FORMAT DATE dd/mm/yyyy =====
+          const formatDate = (date) => {
+            const d = new Date(date);
 
-  const printDate = formatDate(this.printDate || new Date());
+            return `${String(d.getDate()).padStart(2, "0")}/${
+              String(d.getMonth() + 1).padStart(2, "0")
+            }/${d.getFullYear()}`;
+          };
 
-  // ===== HEADER =====
-  pdf.setFontSize(18);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("ALGOSPACE CYBER", pageWidth / 2, y, { align: "center" });
+          const printDate = formatDate(new Date());
 
-  y += 8;
+          // ===== HEADER =====
+          pdf.setFontSize(18);
+          pdf.setFont("helvetica", "bold");
+          pdf.text("ALGOSPACE CYBER", pageWidth / 2, y, { align: "center" });
 
-  pdf.setFontSize(12);
-  pdf.text("SERVICES & PRICE LIST", pageWidth / 2, y, { align: "center" });
+          y += 8;
 
-  y += 6;
+          pdf.setFontSize(12);
+          pdf.text("SERVICES & PRICE LIST", pageWidth / 2, y, { align: "center" });
 
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(`PRICE LIST AS OF: ${printDate}`, pageWidth / 2, y, {
-    align: "center"
-  });
+          y += 6;
 
-  y += 10;
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.text(`PRICE LIST AS OF: ${printDate}`, pageWidth / 2, y, {
+            align: "center"
+          });
 
-  // ===== LEGEND =====
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("LEGEND:", 12, y);
+          y += 10;
 
-  y += 5;
+          // ===== LEGEND =====
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "bold");
+          pdf.text("LEGEND:", 12, y);
 
-  pdf.setFontSize(9);
-  pdf.setFont("helvetica", "normal");
-  pdf.text("• ONLINE + IN-STORE = Can be requested remotely or done in shop", 12, y);
-  y += 5;
-  pdf.text("• IN-STORE ONLY = Must be done physically at AlgoSpace Cyber", 12, y);
+          y += 5;
 
-  y += 8;
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "normal");
+          pdf.text("• ORDER ONLINE / IN-SHOP = You can send requests online or visit us", 12, y);
+          y += 5;
+          pdf.text("• IN-SHOP ONLY = You must visit the shop to get this service", 12, y);
 
-  pdf.setDrawColor(200);
-  pdf.line(12, y, pageWidth - 12, y);
+          y += 8;
 
-  y += 8;
+          pdf.setDrawColor(200);
+          pdf.line(12, y, pageWidth - 12, y);
 
-  // ===== CONTACT =====
-  pdf.setFontSize(9);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("CONTACT:", 12, y);
+          y += 8;
 
-  y += 5;
+          // ===== CONTACT =====
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "normal");
+          pdf.text("Phone: +254112514440", 12, y); y += 5;
+          pdf.text("Website: algospacecyber.co.ke", 12, y); y += 5;
+          pdf.text("Email: info@algospacecyber.co.ke", 12, y);
 
-  pdf.setFont("helvetica", "normal");
-  pdf.text("Phone: +254112514440", 12, y); y += 5;
-  pdf.text("Website: algospacecyber.co.ke", 12, y); y += 5;
-  pdf.text("Email: info@algospacecyber.co.ke", 12, y); y += 8;
+          y += 10;
 
-  pdf.line(12, y, pageWidth - 12, y);
-  y += 10;
+          const totalPagesExp = "{total_pages_count_string}";
 
-  // ===== PAGE SYSTEM =====
-  const totalPagesExp = "{total_pages_count_string}";
+          const addFooter = () => {
+            const pageCurrent = pdf.internal.getCurrentPageInfo().pageNumber;
+            const footerY = pageHeight - 10;
 
-  const addFooter = () => {
-    const pageCurrent = pdf.internal.getCurrentPageInfo().pageNumber;
-    const footerY = pageHeight - 10;
+            pdf.setFontSize(8);
+            pdf.setTextColor(120);
 
-    pdf.setFontSize(8);
-    pdf.setTextColor(120);
+            pdf.text(
+              "AlgoSpace Cyber, Villa Nova Building, Shop 1, Kapsokwony, Mt. Elgon, Kenya",
+              pageWidth / 2,
+              footerY,
+              { align: "center" }
+            );
 
-    pdf.text(
-      "AlgoSpace Cyber, Villa Nova Building, Ground Floor – Shop 1, Kapsokwony–Kaptama Road, Bungoma County, Kenya.",
-      pageWidth / 2,
-      footerY,
-      { align: "center" }
-    );
+            pdf.text(
+              `Page ${pageCurrent} of ${totalPagesExp}`,
+              pageWidth - 12,
+              footerY - 6,
+              { align: "right" }
+            );
 
-    pdf.text(
-      `Page ${pageCurrent} of ${totalPagesExp}`,
-      pageWidth - 12,
-      footerY - 6,
-      { align: "right" }
-    );
+            pdf.setTextColor(0);
+          };
 
-    pdf.setTextColor(0);
-  };
+          // ===== CONTENT =====
+          for (const group of groups) {
 
-  // ===== CONTENT =====
-  for (const group of this.pdfGroups) {
+            if (y > pageHeight - 30) {
+              addFooter();
+              pdf.addPage();
+              y = 15;
+            }
 
-    if (y > pageHeight - 30) {
-      addFooter();
-      pdf.addPage();
-      y = 15;
-    }
+            pdf.setFillColor(220, 220, 220);
+            pdf.rect(10, y - 5, pageWidth - 20, 8, "F");
 
-    // CATEGORY
-    pdf.setFillColor(220, 220, 220);
-    pdf.rect(10, y - 5, pageWidth - 20, 8, "F");
+            pdf.setFontSize(11);
+            pdf.setFont("helvetica", "bold");
+            pdf.text(group.category.toUpperCase(), 12, y);
 
-    pdf.setFontSize(11);
-    pdf.setFont("helvetica", "bold");
-    pdf.text(group.category.toUpperCase(), 12, y);
+            y += 10;
 
-    y += 10;
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "bold");
 
-    // TABLE HEADER
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", "bold");
+            pdf.text("SERVICE", 12, y);
+            pdf.text("PRICE", 80, y);
+            pdf.text("UNIT", 110, y);
+            pdf.text("STATUS", 140, y);
 
-    pdf.text("SERVICE", 12, y);
-    pdf.text("PRICE", 80, y);
-    pdf.text("UNIT", 110, y);
-    pdf.text("STATUS", 140, y);
+            y += 6;
 
-    y += 6;
+            pdf.setFont("helvetica", "normal");
 
-    pdf.setFont("helvetica", "normal");
+            group.items.forEach(item => {
 
-    group.items.forEach(item => {
+              if (y > pageHeight - 20) {
+                addFooter();
+                pdf.addPage();
+                y = 15;
+              }
 
-      if (y > pageHeight - 20) {
-        addFooter();
-        pdf.addPage();
-        y = 15;
-      }
+              pdf.text(String(item.name || "").toUpperCase(), 12, y);
+              pdf.text(String(item.price || "").toUpperCase(), 80, y);
+              pdf.text(String(item.unit || "").toUpperCase(), 110, y);
 
-      pdf.text(String(item.name || "").toUpperCase(), 12, y);
-      pdf.text(String(item.price || "").toUpperCase(), 80, y);
-      pdf.text(String(item.unit || "").toUpperCase(), 110, y);
+              const status = item.is_active
+                ? "ORDER ONLINE / IN-SHOP"
+                : "IN-SHOP ONLY";
 
-      const status = item.is_active
-        ? "ONLINE + IN-STORE"
-        : "IN-STORE ONLY";
+              pdf.text(status, 140, y);
 
-      pdf.text(status, 140, y);
+              y += 6;
+            });
 
-      y += 6;
-    });
+            y += 5;
+          }
 
-    y += 5;
-  }
+          addFooter();
+          pdf.putTotalPages(totalPagesExp);
 
-  // ===== FINAL FOOTER =====
-  addFooter();
-
-  pdf.putTotalPages(totalPagesExp);
-
-  pdf.save("ALGOSPACE_SERVICES.pdf");
-},               
+          pdf.save(
+            type === "filtered"
+              ? "ALGOSPACE_FILTERED_SERVICES.pdf"
+              : "ALGOSPACE_SERVICES.pdf"
+          );
+        },               
         viewService(item)
         {
           console.log(this.selectedService)
@@ -744,9 +813,7 @@ async exportToPDF() {
               this.services = response.data;
               console.log(response)
 
-              setTimeout(() => {
-                $("#ServicesTable").DataTable();
-              }, 10);
+
             })
             .catch((error) => {
               console.error('Error fetching services list:', error);

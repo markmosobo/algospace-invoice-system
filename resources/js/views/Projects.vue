@@ -60,6 +60,7 @@
                         v-if="project.cover_image"
                         :src="'/storage/' + project.cover_image"
                         class="project-thumb"
+                        @click="openImagePreview(project.cover_image)"
                       />
 
                       <div v-else class="project-placeholder">
@@ -140,6 +141,37 @@
 
       </div>
     </section>
+
+    <!-- IMAGE PREVIEW MODAL -->
+    <div
+      class="modal fade"
+      id="ImagePreviewModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title">Project Image</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <div class="modal-body text-center">
+            <img
+              :src="previewImage"
+              class="img-fluid rounded"
+              style="max-height: 70vh;"
+            />
+          </div>
+
+        </div>
+      </div>
+    </div>
   </Master>
 </template>
 
@@ -167,11 +199,21 @@ export default {
     return {
       projects: [],
       initializing: true,
-      filterStatus: "all"
+      filterStatus: "all",
+      previewImage: null
     };
   },
 
   methods: {
+    openImagePreview(image) {
+      this.previewImage = '/storage/' + image;
+
+      const modal = new bootstrap.Modal(
+        document.getElementById('ImagePreviewModal')
+      );
+
+      modal.show();
+    },
     toggleBoard(project) {
       axios.patch(`/api/projects/${project.id}/toggle-board`)
         .then(res => {

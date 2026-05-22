@@ -69,6 +69,7 @@
                 v-if="p.file_path"
                 :src="'/storage/' + p.file_path"
                 class="progress-img"
+                @click="openImagePreview(p)"
               />
 
               <div class="card-body">
@@ -143,6 +144,62 @@
 
       </div>
 
+    <!-- IMAGE PREVIEW MODAL -->
+    <div
+      class="modal fade"
+      id="ImagePreviewModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title">Project Image</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+
+            <!-- IMAGE -->
+            <div class="text-center mb-3">
+              <img
+                :src="previewImage"
+                class="img-fluid rounded"
+                style="max-height: 65vh;"
+              />
+            </div>
+
+            <!-- META INFO -->
+            <div v-if="previewProgress" class="px-2">
+
+              <p class="mb-1">
+                <strong>Notes:</strong><br>
+                {{ previewProgress.notes || '—' }}
+              </p>
+
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="badge bg-success">
+                  {{ previewProgress.stage }}
+                </span>
+
+                <small class="text-muted">
+                  {{ formatDate(previewProgress.created_at) }}
+                </small>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>      
+
     </section>
   </Master>
 </template>
@@ -159,6 +216,8 @@ export default {
       project: {},
       progress: [],
       showModal: false,
+      previewImage: null,
+      previewProgress: null,
 
       STAGES: [
         { key: "ideation", label: "Ideation" },
@@ -174,7 +233,7 @@ export default {
         note: "",
         progress_increment: null,
         images: [],
-        stage: ""
+        stage: "",
       }
     };
   },
@@ -200,7 +259,18 @@ export default {
   },
 
   methods: {
+    openImagePreview(p) {
+      this.previewProgress = p;
+      this.previewImage = p.file_path
+        ? '/storage/' + p.file_path
+        : null;
 
+      const modal = new bootstrap.Modal(
+        document.getElementById('ImagePreviewModal')
+      );
+
+      modal.show();
+    },
     load() {
       axios
         .get(`/api/projects/${this.$route.params.id}/progress`)
@@ -248,14 +318,14 @@ export default {
         });
     },
 
-formatDate(d) {
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(new Date(d));
-}
+    formatDate(d) {
+      return new Intl.DateTimeFormat('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(new Date(d));
+    }
   },
 
   mounted() {

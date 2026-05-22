@@ -58,7 +58,7 @@ class Project extends Model
 
     public function calculateProgressFromStage(string $stage): int
     {
-        return self::STAGE_PROGRESS_MAP[$stage] ?? null;
+        return self::STAGE_PROGRESS_MAP[$stage] ?? 0;
     }
 
 

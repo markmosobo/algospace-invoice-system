@@ -17,12 +17,19 @@
                                 <a
                                   :href="href"
                                   :class="{ active: isActive }"
-                                  class="btn btn-sm btn-primary rounded-pill"
+                                  class="btn btn-sm btn-primary rounded-pill me-2"
                                   style="background-color: darkgreen; border-color: darkgreen;"
                                   @click="addService()"
                                 >
                                   Add Service
                                 </a>
+
+                                <button
+                                  class="btn btn-sm btn-info rounded-pill"
+                                  @click="exportToPDF"
+                                >
+                                  Export PDF
+                                </button>
                           </div>
                           <div class="col-auto d-flex justify-content-end">
                           <div class="btn-group" role="group">
@@ -93,7 +100,7 @@
                           </tr>
                         </tbody>
                       </table>
-    
+   
                     </div>
     
                   </div>
@@ -205,7 +212,7 @@
                 </div>
 
 
-                <!-- EDIT Customer MODAL -->
+                <!-- EDIT Service MODAL -->
                 <div class="modal fade" id="EditServiceModal" tabindex="-1" aria-labelledby="EditServiceModalLabel" aria-hidden="true">
                   <div class="modal-dialog modal-lg">
                     <div class="modal-content">
@@ -282,7 +289,9 @@
     import "datatables.net-dt/css/jquery.dataTables.min.css";
     import DefaultProfile from '@/assets/img/default-profile.png'
     import $ from "jquery";
-    
+    import html2canvas from "html2canvas";
+    import jsPDF from "jspdf";
+
     const toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -300,6 +309,8 @@
             errors: {},
             initializing: true,
             submitting: false,
+            logoUrl: window.location.origin + "/algospacelogo.png",
+            printDate: new Date().toLocaleDateString(),
 
             data: {        // ADD service
                 id: "",
@@ -319,8 +330,211 @@
                 is_bundle: false
             }
         }
-      },      
-      methods: {                
+      },  
+      computed: {
+        groupedServices() {
+          const groups = {};
+
+          this.services.forEach(service => {
+            const category = service.category || "Uncategorized";
+
+            if (!groups[category]) {
+              groups[category] = [];
+            }
+
+            groups[category].push(service);
+          });
+
+          return groups;
+        },
+        pdfGroups() {
+          const groups = [];
+
+          for (const [category, items] of Object.entries(this.groupedServices)) {
+            groups.push({
+              type: "category",
+              category,
+              items
+            });
+          }
+
+          return groups;
+        }        
+      },          
+      methods: { 
+        getChunks(array, size) {
+          const chunks = [];
+          for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+          }
+          return chunks;
+        },         
+async exportToPDF() {
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  let y = 10;
+
+  // ===== FORMAT DATE TO dd/mm/yyyy =====
+  const formatDate = (date) => {
+    const d = new Date(date);
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  };
+
+  const printDate = formatDate(this.printDate || new Date());
+
+  // ===== HEADER =====
+  pdf.setFontSize(18);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("ALGOSPACE CYBER", pageWidth / 2, y, { align: "center" });
+
+  y += 8;
+
+  pdf.setFontSize(12);
+  pdf.text("SERVICES & PRICE LIST", pageWidth / 2, y, { align: "center" });
+
+  y += 6;
+
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(`PRICE LIST AS OF: ${printDate}`, pageWidth / 2, y, {
+    align: "center"
+  });
+
+  y += 10;
+
+  // ===== LEGEND =====
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("LEGEND:", 12, y);
+
+  y += 5;
+
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "normal");
+  pdf.text("• ONLINE + IN-STORE = Can be requested remotely or done in shop", 12, y);
+  y += 5;
+  pdf.text("• IN-STORE ONLY = Must be done physically at AlgoSpace Cyber", 12, y);
+
+  y += 8;
+
+  pdf.setDrawColor(200);
+  pdf.line(12, y, pageWidth - 12, y);
+
+  y += 8;
+
+  // ===== CONTACT =====
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("CONTACT:", 12, y);
+
+  y += 5;
+
+  pdf.setFont("helvetica", "normal");
+  pdf.text("Phone: +254112514440", 12, y); y += 5;
+  pdf.text("Website: algospacecyber.co.ke", 12, y); y += 5;
+  pdf.text("Email: info@algospacecyber.co.ke", 12, y); y += 8;
+
+  pdf.line(12, y, pageWidth - 12, y);
+  y += 10;
+
+  // ===== PAGE SYSTEM =====
+  const totalPagesExp = "{total_pages_count_string}";
+
+  const addFooter = () => {
+    const pageCurrent = pdf.internal.getCurrentPageInfo().pageNumber;
+    const footerY = pageHeight - 10;
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(120);
+
+    pdf.text(
+      "AlgoSpace Cyber, Villa Nova Building, Ground Floor – Shop 1, Kapsokwony–Kaptama Road, Bungoma County, Kenya.",
+      pageWidth / 2,
+      footerY,
+      { align: "center" }
+    );
+
+    pdf.text(
+      `Page ${pageCurrent} of ${totalPagesExp}`,
+      pageWidth - 12,
+      footerY - 6,
+      { align: "right" }
+    );
+
+    pdf.setTextColor(0);
+  };
+
+  // ===== CONTENT =====
+  for (const group of this.pdfGroups) {
+
+    if (y > pageHeight - 30) {
+      addFooter();
+      pdf.addPage();
+      y = 15;
+    }
+
+    // CATEGORY
+    pdf.setFillColor(220, 220, 220);
+    pdf.rect(10, y - 5, pageWidth - 20, 8, "F");
+
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(group.category.toUpperCase(), 12, y);
+
+    y += 10;
+
+    // TABLE HEADER
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+
+    pdf.text("SERVICE", 12, y);
+    pdf.text("PRICE", 80, y);
+    pdf.text("UNIT", 110, y);
+    pdf.text("STATUS", 140, y);
+
+    y += 6;
+
+    pdf.setFont("helvetica", "normal");
+
+    group.items.forEach(item => {
+
+      if (y > pageHeight - 20) {
+        addFooter();
+        pdf.addPage();
+        y = 15;
+      }
+
+      pdf.text(String(item.name || "").toUpperCase(), 12, y);
+      pdf.text(String(item.price || "").toUpperCase(), 80, y);
+      pdf.text(String(item.unit || "").toUpperCase(), 110, y);
+
+      const status = item.is_active
+        ? "ONLINE + IN-STORE"
+        : "IN-STORE ONLY";
+
+      pdf.text(status, 140, y);
+
+      y += 6;
+    });
+
+    y += 5;
+  }
+
+  // ===== FINAL FOOTER =====
+  addFooter();
+
+  pdf.putTotalPages(totalPagesExp);
+
+  pdf.save("ALGOSPACE_SERVICES.pdf");
+},               
         viewService(item)
         {
           console.log(this.selectedService)
@@ -557,6 +771,5 @@
       }
     }
     </script>
-    
     
     

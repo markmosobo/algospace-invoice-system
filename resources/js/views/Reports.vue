@@ -50,12 +50,10 @@
         <div class="card">
             <div class="card-body">
             <h5>Profit Trend</h5>
-            <apexchart
-                type="line"
-                height="350"
-                :options="chartOptions"
-                :series="chartSeries"
-            />
+              <ProfitLineChart
+                v-if="monthlyProfit.length"
+                :monthlyProfit="monthlyProfit"
+              />
             </div>
         </div>
         </div>
@@ -174,7 +172,7 @@
     import Master from "@/components/Master.vue";
     import axios from "axios";
     import Swal from "sweetalert2";
-    import VueApexCharts from "vue3-apexcharts";
+    import ProfitLineChart from "@/components/charts/ProfitLineChart.vue";
 
     const toast = Swal.mixin({
     toast: true,
@@ -188,7 +186,7 @@
     export default {
     components: {
         Master,
-        VueApexCharts,
+        ProfitLineChart,
     },
 
     data() {
@@ -316,39 +314,48 @@
           const year = d.getFullYear();
           return `${day}/${month}/${year}`;
         },
-        async loadReport() {
-        this.initializing = true;
+async loadReport() {
+  this.initializing = true;
 
-        try {
-            const response = await axios.get("/api/reports/profit", {
-            params: this.filters,
-            });
+  try {
+    const response = await axios.get("/api/reports/profit", {
+      params: this.filters,
+    });
 
-            this.summary = response.data.summary;
-            this.monthlyProfit = response.data.monthly;
-            this.details = response.data.details;
+    this.summary = response.data.summary;
+    this.monthlyProfit = response.data.monthly;
+    this.details = response.data.details;
 
-            this.updateChart();
-        } catch (error) {
-            console.error(error);
-            toast.fire("Error!", "Failed to load report", "error");
-        } finally {
-            this.initializing = false;
-        }
-        },
+    // ✅ wait Vue DOM update BEFORE touching chart
+    this.$nextTick(() => {
+      this.updateChart();
+    });
 
-        updateChart() {
-        const categories = this.monthlyProfit.map((m) => m.month);
-        const profitData = this.monthlyProfit.map((m) => m.profit);
+  } catch (error) {
+    console.error(error);
+    toast.fire("Error!", "Failed to load report", "error");
+  } finally {
+    this.initializing = false;
+  }
+},
 
-        this.chartOptions.xaxis.categories = categories;
-        this.chartSeries = [
-            {
-            name: "Profit",
-            data: profitData,
-            },
-        ];
-        },
+updateChart() {
+  if (!this.monthlyProfit || !this.monthlyProfit.length) return;
+
+  const categories = this.monthlyProfit.map(m => m.month);
+  const profits = this.monthlyProfit.map(m => Number(m.profit));
+
+  // ✅ mutate instead of replace
+  this.chartOptions.xaxis.categories = categories;
+
+  // IMPORTANT: force Vue to see change safely
+  this.chartSeries = [
+    {
+      name: "Profit",
+      data: profits,
+    },
+  ];
+},
 
         applyFilter() {
         this.loadReport();

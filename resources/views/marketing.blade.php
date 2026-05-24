@@ -170,7 +170,7 @@
                                     <span>Client Portal</span>
                                 </a>
 
-                                <a href="#" class="btn-main fx-slide">
+                                <a href="{{ route('services.export-pdf') }}" class="btn-main fx-slide">
                                     <span>See Our Prices</span>
                                 </a>
 

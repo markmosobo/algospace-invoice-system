@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ServiceController extends Controller
 {
@@ -136,5 +137,26 @@ class ServiceController extends Controller
             'message' => 'Service status updated',
             'is_active' => $service->is_active
         ]);
+    }
+    
+
+    public function exportPdf()
+    {
+        $services = Service::all();
+        // dd($services);
+
+        $grouped = $services->groupBy(function ($service) {
+            return $service->category ?? 'Uncategorized';
+        });
+
+        $data = [
+            'grouped' => $grouped,
+            'printDate' => now()->format('d/m/Y'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.services', $data)
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('ALGOSPACE_SERVICES.pdf');
     }    
 }

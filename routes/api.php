@@ -63,8 +63,8 @@ use App\Models\User;
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login2', [AuthController::class, 'login'])->name('login');
-
-/*
+Route::get('/services/export-pdf', [ServiceController::class, 'exportPdf'])
+    ->name('services.export-pdf');/*
 |--------------------------------------------------------------------------
 | EMAIL VERIFICATION (CUSTOM JWT-FRIENDLY)
 |--------------------------------------------------------------------------

@@ -727,42 +727,22 @@
 
         return isValid;
         },
-        async submitChanges() {
-          if (!this.validateEditForm()) return;
+        resetAddForm() {
+          this.data = {
+            id: "",
+            name: "",
+            email: "",
+            phone: "",
+            gender: ""
+          };
 
-          this.submitting = true;
+          this.imageFile = null;
+          this.imagePreview = null;
 
-          try {
-            let formData = new FormData();
-            formData.append("name", this.form.name);
-            formData.append("email", this.form.email);
-            formData.append("phone", this.form.phone);
-            formData.append("gender", this.form.gender);
-            formData.append("_method", "PUT");
-
-            if (this.editImageFile) {
-              formData.append("image", this.editImageFile);
-            }
-
-            await axios.post(`/api/customers/${this.form.id}`, formData, {
-              headers: { "Content-Type": "multipart/form-data" }
-            });
-
-            toast.fire('Success!', 'Customer updated successfully', 'success');
-
-            bootstrap.Modal.getInstance(
-              document.getElementById('EditCustomerModal')
-            ).hide();
-
-            this.loadLists();
-
-          } catch (error) {
-            console.error(error);
-            toast.fire('Error!', 'Update failed', 'error');
-          } finally {
-            this.submitting = false;
-          }
-        },
+          // Optional: clear file input visually
+          const fileInput = document.querySelector('input[type="file"]');
+          if (fileInput) fileInput.value = "";
+        },        
         navigateTo(location){
             this.$router.push(location)
         },

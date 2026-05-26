@@ -436,9 +436,22 @@ export default {
       userRole: ''
     };
   },
+  methods: {
+    loadUser() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      this.userRole = user?.role || "";
+    }
+  },
+
   mounted() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    this.userRole = user?.role || '';
+    this.loadUser();
+
+    // 🔥 LIVE UPDATE when account changes
+    window.addEventListener("auth-changed", this.loadUser);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("auth-changed", this.loadUser);
   }
 };
 </script>

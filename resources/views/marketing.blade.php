@@ -155,7 +155,7 @@
 
                                 <li><a class="menu-item" href="#">Guides</a></li>
 
-                                <li><a class="menu-item" href="#">Get in Touch</a></li>
+                                <li><a class="menu-item" href="{{ url('/contact') }}">Get in Touch</a></li>
 
                             </ul>
 

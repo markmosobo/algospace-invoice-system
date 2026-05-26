@@ -53,6 +53,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectProgressController;
 use App\Http\Controllers\CapitalInjectionController;
+use App\Http\Controllers\ContactController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -64,7 +65,9 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login2', [AuthController::class, 'login'])->name('login');
 Route::get('/services/export-pdf', [ServiceController::class, 'exportPdf'])
-    ->name('services.export-pdf');/*
+    ->name('services.export-pdf');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+/*
 |--------------------------------------------------------------------------
 | EMAIL VERIFICATION (CUSTOM JWT-FRIENDLY)
 |--------------------------------------------------------------------------

@@ -32,5 +32,10 @@ class MarketingController extends Controller
             'servicesCount',
             'monthsServing'
         ));
-    }    
+    } 
+    
+    public function contact()
+    {
+        return view('contact');
+    }
 }

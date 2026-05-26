@@ -21,6 +21,8 @@ Route::get('/submit-job', [CyberRequestController::class, 'create'])
     ->name('submit.job');
 Route::post('/cyber-request', [CyberRequestController::class, 'store'])
     ->name('cyber.requests.store');
+Route::get('/contact', [MarketingController::class, 'contact']);
+
 /*
 |--------------------------------------------------------------------------
 | Vue SPA (Dashboard)

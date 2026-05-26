@@ -181,7 +181,33 @@
 
     </header>
 
-    
+        <!-- content begin -->
+        <div class="no-bottom no-top" id="content">
+            <div id="top"></div>
+            <section id="subheader" class="section-dark bg-dark text-light relative jarallax">
+                <div class="gradient-edge-top"></div>
+                <img src="{{ asset('templates/marketing_site/images/background/5.webp') }}" class="jarallax-img" alt="Contact">
+                <div class="container relative z-2">
+                    <div class="row gy-4 gx-5 align-items-center">
+                        <div class="spacer-double sm-hide"></div>
+
+                        <div class="col-lg-6">
+                            <h1 class="mb-0 wow fadeInUp" data-wow-delay=".2s">
+                                Contact                </h1>
+
+                            <ul class="crumb wow fadeInUp">
+                                <li><a href="index.php.html">Home</a></li>
+                                <li class="active">Contact</li>
+                            </ul>   
+                        </div>
+
+                        <div class="col-lg-6 text-lg-end sm-hide">
+                            <h3>
+                                "Prevention is cheaper than a breach"                </h3>
+                        </div>
+                    </div>
+                </div>
+            </section>    
 
 
     <!-- MAIN CONTENT -->

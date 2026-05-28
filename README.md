@@ -23,8 +23,7 @@
   <h3 align="center"> algospace-invoice-system</h3>
 
   <p align="center">
-    (Rent Deposit and Refund Management System) a web app to manage deposit refunds and trackings plus corresponding finances
-    especially for a manager or landlord bored with manual record keeping
+    AlgoSpace Cyber code - a marketing website, invoice generator
     <br />
 
   </p>
@@ -33,7 +32,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 Here’s what your completed application will look like:
-<img width="1228" height="621" alt="algospace-invoice-system" src="https://github.com/user-attachments/assets/dd6ce0be-e8db-4974-9180-d922b5babff7" />
+<img width="942" height="416" alt="cyber" src="https://github.com/user-attachments/assets/22fbd114-7d41-430b-8029-46da42db09cf" />
+
 
 
 

@@ -45,6 +45,7 @@ import Partners from '@/views/Partners.vue';
 import ToDos from '../views/ToDos.vue';
 import Analytics from '../views/Analytics.vue';
 import Projects from '../views/Projects.vue';
+import AdminNotifications from '../views/AdminNotifications.vue';
 
 const routes = [
   // Public routes
@@ -135,7 +136,9 @@ const routes = [
     component: () => import("@/views/projects/ProjectProgress.vue"),
     meta: { requiresAuth: true } 
 
-  }
+  },
+  { path: '/notifications', name: 'Notifications', component: AdminNotifications, meta: { requiresAuth: true } },
+
 ];
 
 const router = createRouter({

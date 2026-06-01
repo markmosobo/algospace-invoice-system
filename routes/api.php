@@ -174,6 +174,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/reminders/overview', [DiaryEntryController::class, 'remindersOverview']);
     Route::put('/diary-entries/{id}/done', [DiaryEntryController::class, 'markDone']);
 
+    // Contact messages as notifications
+    Route::get('/admin/notifications', [ContactController::class, 'index']);
+    Route::post('/notifications/{id}/read', [ContactController::class, 'markAsRead']);
+    Route::post('/notifications/{id}/reply', [ContactController::class, 'reply']);
+    
     // Logout user
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 

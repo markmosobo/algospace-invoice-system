@@ -18,6 +18,11 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->text('message');
             $table->boolean('is_read')->default(false);
+            $table->timestamp('replied_at')->nullable();
+            $table->foreignId('replied_by')
+            ->nullable()
+            ->constrained('users')
+            ->nullOnDelete();
             $table->timestamps();
         });
     }

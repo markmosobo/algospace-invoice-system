@@ -248,6 +248,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::patch('/services/{id}/toggle', [ServiceController::class, 'toggleActive']);
 
+    Route::get('/contacts', [ContactController::class, 'index']);
+    Route::post('/contacts', [ContactController::class, 'store']);
+    Route::patch('/contacts/{id}/read', [ContactController::class, 'markAsRead']);
+    Route::delete('/contacts/{id}', [ContactController::class, 'destroy']);
 
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);

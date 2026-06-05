@@ -193,11 +193,12 @@
 
                         <div class="col-lg-6">
                             <h1 class="mb-0 wow fadeInUp" data-wow-delay=".2s">
-                                Contact                </h1>
+                                @yield('page-title')
+                            </h1>
 
                             <ul class="crumb wow fadeInUp">
                                 <li><a href="index.php.html">Home</a></li>
-                                <li class="active">Contact</li>
+                                <li class="active">@yield('page-title')</li>
                             </ul>   
                         </div>
 

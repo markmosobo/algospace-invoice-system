@@ -38,4 +38,9 @@ class MarketingController extends Controller
     {
         return view('contact');
     }
+
+    public function about()
+    {
+        return view('about');
+    }    
 }

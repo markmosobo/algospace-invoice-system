@@ -134,7 +134,7 @@
                                 <li>
                                     <a class="menu-item" href="#">About</a>
                                     <ul>
-                                        <li><a href="#">About AlgoSpace</a></li>
+                                        <li><a href="{{ url('/about') }}">About AlgoSpace</a></li>
                                         <li><a href="#">What We Offer</a></li>
                                         <li><a href="#">Why Choose Us</a></li>
                                         <li><a href="#">Our Setup</a></li>
@@ -1158,7 +1158,9 @@
             <div class="social-icons mb-sm-30">
             <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
             <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="https://wa.me/254112514440?text=Hello%20I%20found%20you%20via%20your%20website" target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp"></i>
+            </a>
             <a href="#"><i class="fa-brands fa-instagram"></i></a>
             <a href="#"><i class="fa-brands fa-youtube"></i></a>
             </div>

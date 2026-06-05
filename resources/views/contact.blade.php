@@ -1,5 +1,7 @@
 @extends('layouts.branch')
 
+@section('page-title', 'Contact Us')
+
 @section('content')
 <section data-bgimage="url(images/background/6.webp) top">
     <div class="container">

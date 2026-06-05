@@ -19,6 +19,15 @@
             <span>Projects</span>
           </a>
         </router-link>
+      </li> 
+      
+      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+        <router-link to="/notifications" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-envelope"></i>
+            <span>Notifications</span>
+          </a>
+        </router-link>
       </li>      
 
       <!-- Analytics -->

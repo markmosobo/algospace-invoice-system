@@ -67,7 +67,7 @@
 
                 <!-- Sender -->
                 <td>
-                  <strong>{{ n.title }}</strong>
+                  <strong>{{ n.name }}</strong>
                 </td>
 
                 <!-- Message -->

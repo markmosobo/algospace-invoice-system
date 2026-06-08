@@ -196,12 +196,7 @@ export default {
                 showConfirmButton: false
             })
 
-            // ✅ ROUTE CONTROL
-            if (user.role === 'office') {
-                this.$router.push('/login2')   // your special page
-            } else {
-                this.$router.push('/dashboard')
-            }
+            this.$router.push('/dashboard')
         }
         } else {
         Swal.fire({

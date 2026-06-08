@@ -63,7 +63,7 @@ use App\Models\User;
 // Public routes
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/login2', [AuthController::class, 'login'])->name('login');
+Route::post('/login2', [AuthController::class, 'login'])->name('login2');
 Route::get('/services/export-pdf', [ServiceController::class, 'exportPdf'])
     ->name('services.export-pdf');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');

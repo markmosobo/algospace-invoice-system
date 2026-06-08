@@ -12,11 +12,13 @@
                 Whether it’s printing documents, writing and formatting CVs, submitting KUCCPS, KRA or HELB applications, or handling basic computer and website support, we focus on making technology simple and accessible for everyone.
             </p>
             <div class="social-icons mb-sm-30">
-            <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
-            <a href="#"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#"><i class="fa-brands fa-youtube"></i></a>
+            <!-- <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#"><i class="fa-brands fa-x-twitter"></i></a> -->
+            <a href="https://wa.me/254112514440?text=Hello%20I%20found%20you%20via%20your%20website" target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp"></i>
+            </a>
+            <!-- <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-youtube"></i></a> -->
             </div>
         </div>
 

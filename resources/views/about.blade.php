@@ -251,7 +251,7 @@
 
             <div class="col-md-2">
                 <a class="btn-main fx-slide btn-line wow fadeInLeft"
-                   href="appointment.php.html">
+                   href="{{ url('/submit-job') }}">
                     <span>Start For Free</span>
                 </a>
             </div>

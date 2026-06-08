@@ -1,6 +1,6 @@
 @extends('layouts.branch')
 
-@section('page_title', 'Submit a Digital Request Online')
+@section('page-title', 'Submit a Digital Request Online')
 
 @section('content')
 <section class="section-dark jarallax">

@@ -115,6 +115,15 @@
               </option>
             </select>
 
+            <input
+              type="date"
+              class="form-control mb-2"
+              v-model="form.created_at"
+            />
+            <small class="text-muted">
+              Leave empty to use today
+            </small>
+
             <textarea
               v-model="form.note"
               class="form-control mb-2"
@@ -135,8 +144,12 @@
               Cancel
             </button>
 
-            <button class="btn btn-success" @click="submitProgress">
-              Save Progress
+            <button
+              class="btn btn-success"
+              :disabled="isSaving"
+              @click="submitProgress"
+            >
+              {{ isSaving ? "Saving..." : "Save Progress" }}
             </button>
           </div>
 
@@ -207,6 +220,15 @@
 <script>
 import Master from "@/components/Master.vue";
 import axios from "axios";
+import Swal from 'sweetalert2'
+const toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+});
+
+window.toast = toast;
 
 export default {
   components: { Master },
@@ -234,7 +256,9 @@ export default {
         progress_increment: null,
         images: [],
         stage: "",
-      }
+        created_at: ""
+      },
+      isSaving: false
     };
   },
 
@@ -291,13 +315,28 @@ export default {
     handleFiles(e) {
       this.form.images = e.target.files;
     },
-
+    resetForm() {
+      this.form = {
+        note: "",
+        progress_increment: null,
+        stage: "",
+        images: [],
+        created_at: ""
+      };
+      this.closeModal();
+    },    
     submitProgress() {
+      this.isSaving = true;
+
       const fd = new FormData();
 
       fd.append("notes", this.form.note || "");
       fd.append("progress_increment", this.form.progress_increment || 0);
       fd.append("stage", this.form.stage);
+
+      if (this.form.created_at) {
+        fd.append("created_at", this.form.created_at);
+      }
 
       for (let f of this.form.images) {
         fd.append("images[]", f);
@@ -306,15 +345,21 @@ export default {
       axios
         .post(`/api/projects/${this.$route.params.id}/progress`, fd)
         .then(() => {
-          this.form = {
-            note: "",
-            progress_increment: null,
-            stage: "",
-            images: []
-          };
-
-          this.closeModal();
+          toast.fire({
+            icon: "success",
+            title: "Progress saved successfully"
+          });
+          this.resetForm();
           this.load();
+        })
+        .catch(() => {
+          toast.fire({
+            icon: "error",
+            title: "Failed to save progress"
+          });
+        })
+        .finally(() => {
+          this.isSaving = false;
         });
     },
 

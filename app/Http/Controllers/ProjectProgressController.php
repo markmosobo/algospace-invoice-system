@@ -8,6 +8,7 @@ use App\Models\ProjectMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ProjectProgressController extends Controller
 {
@@ -56,6 +57,9 @@ class ProjectProgressController extends Controller
             $stage = $validated['stage'] ?? 'ideation';
 
             $project->current_stage = $stage;
+            $createdAt = request('created_at')
+                ? Carbon::parse(request('created_at'))
+                : now();
 
             // save media
             if ($request->hasFile('images')) {
@@ -70,6 +74,7 @@ class ProjectProgressController extends Controller
                         'type'       => 'image',
                         'notes'      => $validated['notes'] ?? null,
                         'stage'      => $stage,
+                        'created_at' => $createdAt,
                         'uploaded_by'=> auth()->id(),
                     ]);
                 }

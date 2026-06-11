@@ -113,25 +113,24 @@
                                 <li>
                                     <a class="menu-item" href="#">Services</a>
                                     <ul>
-                                        <li><a href="#">Printing & Copying</a></li>
-                                        <li><a href="#">Typing & Documents</a></li>
-                                        <li><a href="#">Online Applications</a></li>
-                                        <li><a href="#">Internet & Computer Use</a></li>
-                                        <li><a href="#">Design & Branding</a></li>
-                                        <li><a href="#">IT Support & Repairs</a></li>
-                                        <li><a href="#">Web & App Development</a></li>
-                                        <li><a href="#">Pricing</a></li>
+                                        @foreach($servicesCategories as $category)
+                                            <li>
+                                                <a href="{{ route('services.byCategory', $category) }}">
+                                                    {{ $category }}
+                                                </a>
+                                            </li>
+                                        @endforeach
                                     </ul>
                                 </li>
 
                                 <li>
                                     <a class="menu-item" href="#">About</a>
                                     <ul>
-                                        <li><a href="#">About AlgoSpace</a></li>
+                                        <li><a href="{{ url('/about') }}">About AlgoSpace</a></li>
                                         <li><a href="#">What We Offer</a></li>
                                         <li><a href="#">Why Choose Us</a></li>
                                         <li><a href="#">Our Setup</a></li>
-                                        <li><a href="#">Contact Us</a></li>
+                                        <li><a href="{{ url('/contact') }}">Contact Us</a></li>
                                     </ul>
                                 </li>
 
@@ -184,9 +183,19 @@
         <!-- content begin -->
         <div class="no-bottom no-top" id="content">
             <div id="top"></div>
+            @php
+                $subheaderImages = [
+                    'background/1.webp',
+                    'background/2.webp',
+                    'background/5.webp',
+                    'background/7.webp',
+                ];
+
+                $randomImage = $subheaderImages[array_rand($subheaderImages)];
+            @endphp
             <section id="subheader" class="section-dark bg-dark text-light relative jarallax">
                 <div class="gradient-edge-top"></div>
-                <img src="{{ asset('templates/marketing_site/images/background/5.webp') }}" class="jarallax-img" alt="Contact">
+                <img src="{{ asset('templates/marketing_site/images/' . $randomImage) }}" class="jarallax-img" alt="Contact">
                 <div class="container relative z-2">
                     <div class="row gy-4 gx-5 align-items-center">
                         <div class="spacer-double sm-hide"></div>
@@ -201,10 +210,26 @@
                                 <li class="active">@yield('page-title')</li>
                             </ul>   
                         </div>
+                        @php
+                            $techQuotes = [
+                                "Any sufficiently advanced technology is indistinguishable from magic.",
+                                "Security is not a product, but a process.",
+                                "The weakest link in security is always people.",
+                                "Cybersecurity is everyone’s responsibility.",
+                                "Your data is only as safe as your defenses.",
+                                "Hope is not a security strategy.",
+                                "In cyber, silence often means compromise.",
+                                "Attackers never sleep — neither should your defenses.",
+                                "Security done right is invisible.",
+                                "The cost of protection is less than the cost of recovery.",
+                            ];
 
+                            $randomQuote = $techQuotes[array_rand($techQuotes)];
+                        @endphp
                         <div class="col-lg-6 text-lg-end sm-hide">
                             <h3>
-                                "Prevention is cheaper than a breach"                </h3>
+                                "{{ $randomQuote }}"
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -264,11 +289,11 @@
                     <div class="widget">
                         <h5>Quick Links</h5>
                         <ul>
-                            <li><a href="#">Home</a></li>
-                            <li><a href="#">Services</a></li>
-                            <li><a href="#">About Us</a></li>                        
-                            <li><a href="#">Pricing</a></li>
-                            <li><a href="#">Contact</a></li>
+                            <li><a href="{{ url('/') }}">Home</a></li>
+                            <li><a href="{{ url('/') }}">Services</a></li>
+                            <li><a href="{{ url('/about') }}">About Us</a></li>                        
+                            <li><a href="{{ url('/') }}">Pricing</a></li>
+                            <li><a href="{{ url('/contact') }}">Contact</a></li>
                         </ul>
                     </div>
                 </div>

@@ -25,22 +25,48 @@ class MarketingController extends Controller
         $monthsServing = $firstActivity
             ? Carbon::parse($firstActivity)->diffInMonths(now())
             : 0;
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('marketing', compact(
             'documentsProcessed',
             'customersCount',
             'servicesCount',
-            'monthsServing'
+            'monthsServing',
+            'servicesCategories'
         ));
     } 
     
     public function contact()
     {
-        return view('contact');
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('contact', compact('servicesCategories'));
     }
 
     public function about()
     {
-        return view('about');
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('about', compact('servicesCategories'));
+    }  
+    
+    public function byCategory($category)
+    {
+        $services = Service::where('category', $category)->get();
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('services.category', compact('services', 'category', 'servicesCategories'));
+    }
+
+    public function showService($id)
+    {
+        $service = Service::findOrFail($id);
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+        $relatedServices = Service::where('category', $service->category)
+                ->where('id', '!=', $service->id)
+                ->where('is_active', true)
+                ->get();
+
+        return view('services.service', compact('service', 'servicesCategories', 'relatedServices'));
     }    
 }

@@ -7,7 +7,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AlgoSpaceCyber offers professional cyber services.">
-    <meta name="keywords" content="cyber, software development, antivirus, data protection">
+    <meta name="keywords" content="cyber, software development, printing, online applications">
     <meta name="author" content="AlgoSpace">
 
     <!-- Favicon -->
@@ -116,18 +116,16 @@
                                 <li>
                                     <a class="menu-item" href="{{ url('/') }}">Home</a>
                                 </li>
-
                                 <li>
                                     <a class="menu-item" href="#">Services</a>
                                     <ul>
-                                        <li><a href="#">Printing & Copying</a></li>
-                                        <li><a href="#">Typing & Documents</a></li>
-                                        <li><a href="#">Online Applications</a></li>
-                                        <li><a href="#">Internet & Computer Use</a></li>
-                                        <li><a href="#">Design & Branding</a></li>
-                                        <li><a href="#">IT Support & Repairs</a></li>
-                                        <li><a href="#">Web & App Development</a></li>
-                                        <li><a href="#">Pricing</a></li>
+                                        @foreach($servicesCategories as $category)
+                                            <li>
+                                                <a href="{{ route('services.byCategory', $category) }}">
+                                                    {{ $category }}
+                                                </a>
+                                            </li>
+                                        @endforeach
                                     </ul>
                                 </li>
 

@@ -23,7 +23,9 @@ Route::post('/cyber-request', [CyberRequestController::class, 'store'])
     ->name('cyber.requests.store');
 Route::get('/contact', [MarketingController::class, 'contact']);
 Route::get('/about', [MarketingController::class, 'about']);
-
+Route::get('/services/category/{category}', [MarketingController::class, 'byCategory'])
+    ->name('services.byCategory');
+Route::get('/services/{id}', [MarketingController::class, 'showService']);    
 /*
 |--------------------------------------------------------------------------
 | Vue SPA (Dashboard)

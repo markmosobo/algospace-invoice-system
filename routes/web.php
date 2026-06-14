@@ -25,7 +25,20 @@ Route::get('/contact', [MarketingController::class, 'contact']);
 Route::get('/about', [MarketingController::class, 'about']);
 Route::get('/services/category/{category}', [MarketingController::class, 'byCategory'])
     ->name('services.byCategory');
-Route::get('/services/{id}', [MarketingController::class, 'showService']);    
+Route::get('/services/{id}', [MarketingController::class, 'showService']);
+Route::prefix('work')->group(function () {
+
+    Route::get('/', [MarketingController::class, 'work'])
+        ->name('work.index');
+
+    Route::get('/{type}', [MarketingController::class, 'byType'])
+        ->whereIn('type', ['business', 'personal', 'assets', 'training'])
+        ->name('work.type');
+
+    Route::get('/project/{project}', [MarketingController::class, 'show'])
+        ->name('work.show');
+
+});    
 /*
 |--------------------------------------------------------------------------
 | Vue SPA (Dashboard)

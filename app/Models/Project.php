@@ -45,7 +45,8 @@ class Project extends Model
 
     public function media()
     {
-        return $this->hasMany(ProjectMedia::class);
+        return $this->hasMany(ProjectMedia::class)
+        ->orderBy('id', 'asc');
     }
 
     public const STAGE_PROGRESS_MAP = [

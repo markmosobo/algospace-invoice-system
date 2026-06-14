@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Service;
+use App\Models\Project;
 use Carbon\Carbon;
 
 class MarketingController extends Controller
@@ -68,5 +69,41 @@ class MarketingController extends Controller
                 ->get();
 
         return view('services.service', compact('service', 'servicesCategories', 'relatedServices'));
+    } 
+    
+    public function work()
+    {
+        $projects = Project::where('board_type', 'public')
+            ->whereIn('status', ['milestone', 'completed'])
+            ->latest()
+            ->get();
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('work.index', compact('projects', 'servicesCategories'));
+    }
+
+    public function byType(string $type)
+    {
+        $projects = Project::where('board_type', 'public')
+            ->where('type', $type)
+            ->whereIn('status', ['milestone', 'completed'])
+            ->latest()
+            ->get();
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('work.type', compact('projects', 'type', 'servicesCategories'));
+    }
+
+    public function show(Project $project)
+    {
+        abort_if(
+            $project->board_type !== 'public' ||
+            !in_array($project->status, ['milestone', 'completed']),
+            404
+        );
+        $project->load('media');
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('work.show', compact('project', 'servicesCategories'));
     }    
 }

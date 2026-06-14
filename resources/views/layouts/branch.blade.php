@@ -137,11 +137,10 @@
                                 <li>
                                     <a class="menu-item" href="#">Our Work</a>
                                     <ul>
-                                        <li><a href="#">Web Projects</a></li>
-                                        <li><a href="#">App Projects</a></li>
-                                        <li><a href="#">Design Work</a></li>
-                                        <li><a href="#">Client Jobs</a></li>
-                                        <li><a href="#">Project Details</a></li>
+                                        <li><a href="{{ url('/work') }}">All Projects</a></li>
+                                        <li><a href="{{ url('/work/business') }}">Business Projects</a></li>
+                                        <li><a href="{{ url('/work/assets') }}">Assets & Infrastructure</a></li>
+                                        <li><a href="{{ url('/work/training') }}">Training & Research</a></li>
                                     </ul>
                                 </li>
 

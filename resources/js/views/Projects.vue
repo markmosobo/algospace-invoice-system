@@ -56,6 +56,7 @@
                     <!-- PROJECT INFO -->
                     <td class="d-flex align-items-center gap-2">
 
+                      <!-- Thumbnail / Placeholder -->
                       <img
                         v-if="project.cover_image"
                         :src="'/storage/' + project.cover_image"
@@ -67,9 +68,26 @@
                         {{ getInitials(project.title) }}
                       </div>
 
-                      <div>
-                        <strong>{{ project.title }}</strong><br>
-                        <small>{{ project.description }}</small>
+                      <!-- Project Text -->
+                      <div class="project-text">
+
+                        <!-- TITLE + BOARD BADGE -->
+                        <div class="d-flex align-items-center gap-2">
+                          <strong>{{ project.title }}</strong>
+
+                          <span
+                            class="badge rounded-pill"
+                            :class="boardClass(project.board_type)"
+                          >
+                            {{ project.board_type === 'admin' ? 'Admin Board' : 'Public Board' }}
+                          </span>
+                        </div>
+
+                        <!-- DESCRIPTION -->
+                        <small class="text-muted">
+                          {{ project.description }}
+                        </small>
+
                       </div>
 
                     </td>
@@ -205,6 +223,12 @@ export default {
   },
 
   methods: {
+    boardClass(boardType) {
+      return {
+        'bg-dark text-white': boardType === 'admin',
+        'bg-light text-dark border': boardType === 'public'
+      }
+    },
     openImagePreview(image) {
       this.previewImage = '/storage/' + image;
 
@@ -325,6 +349,19 @@ export default {
 /* =========================
    PROJECT TABLE STYLING
 ========================= */
+.project-text strong {
+  font-size: 0.95rem;
+}
+
+.project-text .badge {
+  font-size: 0.65rem;
+  padding: 4px 8px;
+}
+
+.project-text small {
+  display: block;
+  margin-top: 2px;
+}
 
 .project-thumb {
   width: 45px;

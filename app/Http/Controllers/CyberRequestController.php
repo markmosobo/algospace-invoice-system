@@ -17,8 +17,9 @@ class CyberRequestController extends Controller
         $services = Service::where('is_active', true)
             ->orderBy('name')
             ->get();
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
-        return view('submit-job', compact('services'));
+        return view('submit-job', compact('services', 'servicesCategories'));
     }
 
     public function store(Request $request)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\LoyaltyCard;
 use App\Models\SystemLog;
+use App\Models\CustomerHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -42,6 +43,12 @@ class CustomerController extends Controller
 
         $customer->save();
 
+        CustomerHistory::create([
+            'customer_id' => $customer->id,
+            'action' => 'Customer Created',
+            'description' => 'Customer profile created'
+        ]);
+
         //record system log
         SystemLog::create([
             'user_id' => auth('api')->user()->id,
@@ -57,8 +64,15 @@ class CustomerController extends Controller
     public function show($id)
     {
         // Fetch customer with total visits count
-        $customer = Customer::withCount('visits')->findOrFail($id);
-
+        $customer = Customer::with([
+            'notes',
+            'history',
+            'loyaltyCards',
+            'visits'
+        ])
+        ->withCount('visits')
+        ->findOrFail($id);
+        
         // Fetch active loyalty card only
         $activeCard = LoyaltyCard::where('customer_id', $customer->id)
             ->where('status', 'active')
@@ -69,6 +83,7 @@ class CustomerController extends Controller
             'name' => $customer->name,
             'phone' => $customer->phone,
             'email' => $customer->email,
+            'image' => $customer->image,
             'created_at' => $customer->created_at,
             'updated_at' => $customer->updated_at,
 
@@ -80,6 +95,10 @@ class CustomerController extends Controller
             'cardIssued' => $activeCard ? true : false,
             'card_serial' => $activeCard ? $activeCard->serial : null,
             'status' => $activeCard ? $activeCard->status : null,
+
+            'notes' => $customer->notes,
+
+            'history' => $customer->history
         ]);
     }
 
@@ -111,6 +130,12 @@ class CustomerController extends Controller
         }
 
         $customer->save();
+
+        CustomerHistory::create([
+            'customer_id' => $customer->id,
+            'action' => 'Profile Updated',
+            'description' => 'Customer details updated'
+        ]);
 
         //record system log
         SystemLog::create([

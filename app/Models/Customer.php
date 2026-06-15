@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Invoice;
 use App\Models\FootTraffic;
 use App\Models\LoyaltyCard;
+use App\Models\CustomerNote;
+use App\Models\CustomerHistory;
 
 class Customer extends Model
 {
@@ -36,6 +38,17 @@ class Customer extends Model
     {
         return $this->hasMany(LoyaltyCard::class);
     }
+
+    public function notes()
+    {
+        return $this->hasMany(CustomerNote::class);
+    }
+
+    public function history()
+    {
+        return $this->hasMany(CustomerHistory::class)
+            ->latest();
+    }    
 
     // Convenience method to get the active card
     public function activeCard()

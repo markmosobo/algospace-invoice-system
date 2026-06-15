@@ -241,29 +241,236 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="modal-body" v-if="selectedCustomer">
+<div class="modal-body" v-if="selectedCustomer">
 
-                      <div class="row g-3">
+  <ul class="nav nav-tabs mb-4">
 
-                        <!-- BASIC INFO -->
-                        <div class="col-md-6" v-if="selectedCustomer.name">
-                          <strong>Full Name:</strong> <br> {{ selectedCustomer.name }}
-                        </div>
+    <li class="nav-item">
+      <button
+        class="nav-link active"
+        data-bs-toggle="tab"
+        data-bs-target="#profileTab">
+        Profile
+      </button>
+    </li>
 
-                        <div class="col-md-6" v-if="selectedCustomer.email">
-                          <strong>Email:</strong> <br> {{ selectedCustomer.email }}
-                        </div>
+    <li class="nav-item">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#notesTab">
+        Notes
+      </button>
+    </li>
 
-                        <div class="col-md-6" v-if="selectedCustomer.phone">
-                          <strong>Phone:</strong> <br> {{ selectedCustomer.phone }}
-                        </div>
+    <li class="nav-item">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#historyTab">
+        History
+      </button>
+    </li>
 
-                        <div class="col-md-6" v-if="selectedCustomer.gender">
-                          <strong>Gender:</strong> <br> {{ selectedCustomer.gender }}
-                        </div>
+  </ul>
 
-                      </div>
-                    </div>
+  <div class="tab-content">
+
+    <!-- PROFILE -->
+
+    <div
+      class="tab-pane fade show active"
+      id="profileTab">
+
+      <div class="row">
+
+        <div class="col-md-4 text-center">
+
+          <img
+            v-if="selectedCustomer.image"
+            :src="'/storage/' + selectedCustomer.image"
+            class="profile-photo"
+          >
+
+          <div
+            v-else
+            class="profile-avatar"
+            :style="{
+              backgroundColor:
+              getAvatarColor(selectedCustomer.name)
+            }"
+          >
+            {{ getInitials(selectedCustomer.name) }}
+          </div>
+
+        </div>
+
+        <div class="col-md-8">
+
+          <table class="table table-bordered">
+
+            <tr>
+              <th width="200">Customer ID</th>
+              <td>
+                CUST-{{
+                  String(selectedCustomer.id)
+                    .padStart(5,'0')
+                }}
+              </td>
+            </tr>
+
+            <tr>
+              <th>Name</th>
+              <td>{{ selectedCustomer.name }}</td>
+            </tr>
+
+            <tr>
+              <th>Email</th>
+              <td>{{ selectedCustomer.email || 'N/A' }}</td>
+            </tr>
+
+            <tr>
+              <th>Phone</th>
+              <td>{{ selectedCustomer.phone || 'N/A' }}</td>
+            </tr>
+
+            <tr>
+              <th>Gender</th>
+              <td>{{ selectedCustomer.gender || 'N/A' }}</td>
+            </tr>
+
+            <tr>
+              <th>Total Visits</th>
+              <td>{{ selectedCustomer.total_visits }}</td>
+            </tr>
+
+            <tr>
+              <th>Loyalty Card</th>
+              <td>
+
+                <span
+                  v-if="selectedCustomer.loyalty_card"
+                  class="badge bg-success">
+
+                  {{
+                    selectedCustomer.loyalty_card.serial
+                  }}
+
+                </span>
+
+                <span
+                  v-else
+                  class="badge bg-secondary">
+
+                  Not Issued
+
+                </span>
+
+              </td>
+            </tr>
+
+            <tr>
+              <th>Customer Since</th>
+              <td>
+                {{
+                  new Date(
+                    selectedCustomer.created_at
+                  ).toLocaleDateString()
+                }}
+              </td>
+            </tr>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- NOTES -->
+
+    <div
+      class="tab-pane fade"
+      id="notesTab">
+
+      <div
+        v-if="selectedCustomer.notes">
+
+        <div
+          class="card mb-2"
+          v-for="note in selectedCustomer.notes"
+          :key="note.id">
+
+          <div class="card-body">
+
+            {{ note.note }}
+
+            <div class="small text-muted mt-2">
+              {{ note.created_at }}
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        v-else
+        class="alert alert-info">
+
+        No notes available.
+
+      </div>
+
+    </div>
+
+    <!-- HISTORY -->
+
+    <div
+      class="tab-pane fade"
+      id="historyTab">
+
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr
+            v-for="item in (selectedCustomer.history || [])"
+            :key="item.id">
+
+            <td>
+              {{ item.created_at }}
+            </td>
+
+            <td>
+              {{ item.action }}
+            </td>
+
+            <td>
+              {{ item.description }}
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
 
                     <div class="modal-footer">
                       <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -464,7 +671,11 @@
       data() {
         return {
             customers: [],
-            selectedCustomer: {},
+            selectedCustomer: {
+                name: '',
+                notes: [],
+                history: []
+            },
             errors: {},
             initializing: true,
             submitting: false,
@@ -602,13 +813,32 @@
           return 'CYB-' + String(customer.id).padStart(4, '0');
         }, 
               
-        viewCustomer(customer)
+        async viewCustomer(customer)
         {
-          console.log(this.selectedCustomer)
-          this.selectedCustomer = customer;
-          // Show the modal after fetching data
-          const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
-          modal.show();
+          try {
+
+            const response = await axios.get(
+              `/api/customers/${customer.id}`
+            );
+
+            this.selectedCustomer = response.data;
+
+            const modal = new bootstrap.Modal(
+              document.getElementById('viewCustomerModal')
+            );
+
+            modal.show();
+
+          } catch(error) {
+
+            console.error(error);
+
+            toast.fire({
+              icon: 'error',
+              title: 'Failed to load customer'
+            });
+
+          }
         },
         editCustomer(customer) {
         this.form = {
@@ -832,5 +1062,25 @@
 
       .customer-thumb:hover {
         transform: scale(1.1);
+      }
+
+      .profile-photo{
+        width:250px;
+        height:250px;
+        object-fit:cover;
+        border-radius:10px;
+        border:1px solid #ddd;
+      }
+
+      .profile-avatar{
+        width:250px;
+        height:250px;
+        border-radius:10px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-size:80px;
+        font-weight:bold;
       }
     </style>

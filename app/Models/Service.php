@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InvoiceItem;
+use App\Models\Enrollment;
 
 class Service extends Model
 {
@@ -23,5 +24,10 @@ class Service extends Model
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
+    } 
+    
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
     }    
 }

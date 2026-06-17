@@ -28,6 +28,24 @@
             <span>Notifications</span>
           </a>
         </router-link>
+      </li>   
+      
+      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+        <router-link to="/enrollments" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-mortarboard"></i>
+            <span>Enrollments</span>
+          </a>
+        </router-link>
+      </li>
+      
+      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+        <router-link to="/courses" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span>Courses</span>
+          </a>
+        </router-link>
       </li>      
 
       <!-- Analytics -->

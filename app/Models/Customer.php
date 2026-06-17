@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\FootTraffic;
 use App\Models\LoyaltyCard;
 use App\Models\CustomerNote;
+use App\Models\Enrollment;
 use App\Models\CustomerHistory;
 
 class Customer extends Model
@@ -55,4 +56,9 @@ class Customer extends Model
     {
         return $this->hasOne(LoyaltyCard::class)->where('status', 'active');
     }
+
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }    
 }

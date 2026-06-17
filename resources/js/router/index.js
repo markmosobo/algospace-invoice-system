@@ -46,6 +46,8 @@ import ToDos from '../views/ToDos.vue';
 import Analytics from '../views/Analytics.vue';
 import Projects from '../views/Projects.vue';
 import AdminNotifications from '../views/AdminNotifications.vue';
+import Enrollments from '../views/Enrollments.vue';
+import Courses from '../views/Courses.vue';
 
 const routes = [
   // Public routes
@@ -138,6 +140,9 @@ const routes = [
 
   },
   { path: '/notifications', name: 'Notifications', component: AdminNotifications, meta: { requiresAuth: true } },
+
+  { path: '/enrollments', name: 'Enrollments', component: Enrollments, meta: { requiresAuth: true } },
+  { path: '/courses', name: 'Courses', component: Courses, meta: { requiresAuth: true } },
 
 ];
 

@@ -35,6 +35,9 @@ class ServiceController extends Controller
             'category'  => 'required|string|max:255',
             'price'     => 'required|numeric|min:0',
             'unit'      => 'required|string|max:50',
+            'type' => 'sometimes|in:service,course',
+            'tier' => 'nullable|string|max:50',
+            'duration_days' => 'nullable|integer|min:1',
             'is_bundle' => 'sometimes|boolean',
         ]);
 
@@ -43,6 +46,9 @@ class ServiceController extends Controller
             'category'  => $request->category,
             'price'     => $request->price,
             'unit'      => $request->unit,
+            'type'      => $request->type ?? 'service',
+            'tier'      => $request->tier ?? null,
+            'duration_days' => $request->duration_days ?? null,
             'is_bundle' => $request->is_bundle ?? false,
         ]);
 
@@ -82,6 +88,9 @@ class ServiceController extends Controller
             'category'  => 'required|string|max:255',
             'price'     => 'required|numeric|min:0',
             'unit'      => 'required|string|max:50',
+            'type' => 'sometimes|in:service,course',
+            'tier' => 'nullable|string|max:50',
+            'duration_days' => 'nullable|integer|min:1',
             'is_bundle' => 'sometimes|boolean',
         ]);
 
@@ -91,6 +100,9 @@ class ServiceController extends Controller
             'category'  => $request->category,
             'price'     => $request->price,
             'unit'      => $request->unit,
+            'type' => $request->type ?? $service->type,
+            'tier' => $request->tier ?? $service->tier,
+            'duration_days' => $request->duration_days ?? $service->duration_days,
             'is_bundle' => $request->is_bundle ?? $service->is_bundle,
         ]);
 
@@ -158,5 +170,18 @@ class ServiceController extends Controller
             ->setPaper('a4', 'portrait');
 
         return $pdf->download('ALGOSPACE_SERVICES.pdf');
+    } 
+    
+    public function courses()
+    {
+        $courses = Service::where('category', 'Training')
+            ->where('is_active', 1)
+            ->select('id', 'name', 'price', 'unit', 'category')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => $courses
+        ]);
     }    
 }

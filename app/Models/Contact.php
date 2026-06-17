@@ -15,6 +15,9 @@ class Contact extends Model
         'is_read',
         'replied_at',
         'replied_by',
+        'type',
+        'tier',
+        'duration_days',
     ];
 
     protected $casts = [

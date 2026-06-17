@@ -206,6 +206,7 @@
                               <option value="Typing & Documents">Typing & Documents</option>
                               <option value="Online Applications">Online Applications</option>
                               <option value="Internet & Computer Use">Internet & Computer Use</option>
+                              <option value="Training">Training</option>
                               <option value="Internet">Internet</option>
                               <option value="Other Services">Other Services</option>
                               <option value="Bundles">Bundles</option>
@@ -222,6 +223,32 @@
                           <div class="col-md-6">
                             <label class="form-label">Unit</label>
                             <input type="text" class="form-control" v-model="data.unit">
+                          </div>
+
+                          <!-- TYPE (only for Training) -->
+                          <div class="col-md-6" v-if="data.category === 'Training'">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" v-model="data.type">
+                              <option value="course">Course</option>
+                              <option value="service">Service</option>
+                            </select>
+                          </div>
+
+                          <!-- TIER (only for Training) -->
+                          <div class="col-md-6" v-if="data.category === 'Training'">
+                            <label class="form-label">Tier</label>
+                            <select class="form-select" v-model="data.tier">
+                              <option value="basic">Basic</option>
+                              <option value="practical">Practical</option>
+                              <option value="coding">Coding</option>
+                              <option value="bootcamp">Bootcamp</option>
+                            </select>
+                          </div>
+
+                          <!-- DURATION (only for Training) -->
+                          <div class="col-md-6" v-if="data.category === 'Training'">
+                            <label class="form-label">Duration (Days)</label>
+                            <input type="number" class="form-control" v-model="data.duration_days">
                           </div>
 
 
@@ -269,6 +296,7 @@
                               <option value="Typing & Documents">Typing & Documents</option>
                               <option value="Online Applications">Online Applications</option>
                               <option value="Internet">Internet</option>
+                              <option value="Training">Training</option>
                               <option value="Internet & Computer Use">Internet & Computer Use</option>
                               <option value="Other Services">Other Services</option>
                               <option value="Bundles">Bundles</option>
@@ -286,6 +314,32 @@
                             <label class="form-label">Unit</label>
                             <input type="text" class="form-control" v-model="form.unit">
                           </div>
+
+                          <!-- TYPE -->
+                          <div class="col-md-6" v-if="form.category === 'Training'">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" v-model="form.type">
+                              <option value="course">Course</option>
+                              <option value="service">Service</option>
+                            </select>
+                          </div>
+
+                          <!-- TIER -->
+                          <div class="col-md-6" v-if="form.category === 'Training'">
+                            <label class="form-label">Tier</label>
+                            <select class="form-select" v-model="form.tier">
+                              <option value="basic">Basic</option>
+                              <option value="practical">Practical</option>
+                              <option value="coding">Coding</option>
+                              <option value="bootcamp">Bootcamp</option>
+                            </select>
+                          </div>
+
+                          <!-- DURATION -->
+                          <div class="col-md-6" v-if="form.category === 'Training'">
+                            <label class="form-label">Duration (Days)</label>
+                            <input type="number" class="form-control" v-model="form.duration_days">
+                          </div>                          
 
 
                         </form>
@@ -343,7 +397,10 @@
                 category: "",
                 price: "",
                 unit: "",
-                is_bundle: false
+                is_bundle: false,
+                type: 'service',
+                tier: '',
+                duration_days: null,
             },
 
             form: {        // EDIT service
@@ -352,7 +409,10 @@
                 category: "",
                 price: "",
                 unit: "",
-                is_bundle: false
+                is_bundle: false,
+                type: '',
+                tier: '',
+                duration_days: null,
             },
             searchQuery: "",
         }
@@ -411,7 +471,24 @@
 
           return groups;
         }        
-      },          
+      },   
+      watch: {
+        'data.category'(val) {
+          if (val !== 'Training') {
+            this.data.type = 'service'
+            this.data.tier = ''
+            this.data.duration_days = null
+          }
+        },
+
+        'form.category'(val) {
+          if (val !== 'Training') {
+            this.form.type = 'service'
+            this.form.tier = ''
+            this.form.duration_days = null
+          }
+        }
+      },             
       methods: { 
         clearFilters() {
           this.searchQuery = "";

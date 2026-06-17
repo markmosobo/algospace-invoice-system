@@ -54,6 +54,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectProgressController;
 use App\Http\Controllers\CapitalInjectionController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EnrollmentController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -141,6 +142,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('worker-tasks', FarmWorkerTaskController::class);
     Route::apiResource('farm-assets', FarmAssetController::class);
 
+    Route::get('/services/courses', [ServiceController::class, 'courses']);
+    Route::get('/enrollments', [EnrollmentController::class, 'index']);
+    Route::post('/enrollments', [EnrollmentController::class, 'store']);
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/quick-sales', [ListController::class, 'quickSales']);

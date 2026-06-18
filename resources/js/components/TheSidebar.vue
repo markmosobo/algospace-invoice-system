@@ -12,6 +12,32 @@
         </router-link>
       </li>
 
+<li v-show="userRole === 'office'" class="nav-item">
+  <a class="nav-link collapsed" data-bs-toggle="collapse" href="#operations-nav">
+    <i class="bi bi-briefcase"></i>
+    <span>Operations</span>
+    <i class="bi bi-chevron-down ms-auto"></i>
+  </a>
+
+  <ul id="operations-nav" class="nav-content collapse">
+    <li>
+      <RouterLink to="/quick-sale" class="nav-link">
+        <i class="bi bi-lightning-charge"></i> Quick Sale
+      </RouterLink>
+    </li>
+    <li>
+      <RouterLink to="/enrollments" class="nav-link">
+        <i class="bi bi-mortarboard"></i> Enrollments
+      </RouterLink>
+    </li>
+    <li>
+      <RouterLink to="/courses" class="nav-link">
+        <i class="bi bi-journal-bookmark-fill"></i> Courses
+      </RouterLink>
+    </li>
+  </ul>
+</li>      
+
       <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
         <router-link to="/projects" custom v-slot="{ href, navigate, isActive }">
           <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">

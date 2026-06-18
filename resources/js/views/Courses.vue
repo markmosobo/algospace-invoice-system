@@ -12,14 +12,14 @@
                 Courses <span>| Training Programs</span>
               </h5>
 
-              <div class="mb-3">
+              <!-- <div class="mb-3">
                 <button
                   class="btn btn-sm btn-primary rounded-pill"
                   @click="openCourseModal"
                 >
                   New Course
                 </button>
-              </div>
+              </div> -->
 
               <!-- TABLE -->
               <table id="CoursesTable" class="table table-borderless">

@@ -77,6 +77,7 @@ class MarketingController extends Controller
             ->whereIn('status', ['milestone', 'completed'])
             ->latest()
             ->get();
+            // dd($projects);
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('work.index', compact('projects', 'servicesCategories'));

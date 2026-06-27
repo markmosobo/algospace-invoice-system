@@ -561,11 +561,11 @@
                         <i class="p-3 circle bg-color text-light fs-34 d-inline-block mb-3 icofont-badge"></i>
 
                         <h3 class="fs-48 fw-bold mb-1 lh-1">
-                            <span class="timer" data-to="{{$monthsServing}}" data-speed="3000">0</span>+
+                            <span class="timer" data-to="{{$yearsServing }}" data-speed="3000">0</span>@if($hasExtraMonths)+@endif
                         </h3>
 
                         <p class="mb-0 opacity-75">
-                            Months Serving the Community
+                            Years Serving the Community
                         </p>
 
                     </div>

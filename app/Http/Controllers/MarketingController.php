@@ -17,22 +17,28 @@ class MarketingController extends Controller
         // or InvoiceItem::count()
         $customersCount = Customer::count();
         $servicesCount = Service::count();
+$firstActivity = collect([
+    Invoice::min('created_at'),
+    Customer::min('created_at'),
+])->filter()->sort()->first();
 
-        $firstActivity = collect([
-            Invoice::min('created_at'),
-            Customer::min('created_at'),
-        ])->filter()->sort()->first();
+$yearsServing = 0;
+$hasExtraMonths = false;
 
-        $monthsServing = $firstActivity
-            ? Carbon::parse($firstActivity)->diffInMonths(now())
-            : 0;
+if ($firstActivity) {
+    $months = Carbon::parse($firstActivity)->diffInMonths(now());
+    $yearsServing = max(1, intdiv($months, 12));
+    $hasExtraMonths = ($months % 12) > 0;
+}
+
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('marketing', compact(
             'documentsProcessed',
             'customersCount',
             'servicesCount',
-            'monthsServing',
+            'yearsServing',
+            'hasExtraMonths',
             'servicesCategories'
         ));
     } 
@@ -47,8 +53,28 @@ class MarketingController extends Controller
     public function about()
     {
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+        $firstActivity = collect([
+            Invoice::min('created_at'),
+            Customer::min('created_at'),
+        ])->filter()->sort()->first();
 
-        return view('about', compact('servicesCategories'));
+        $yearsServing = 0;
+        $yearsLabel   = '0';
+
+        if ($firstActivity) {
+            $months = Carbon::parse($firstActivity)->diffInMonths(now());
+            $years  = intdiv($months, 12);
+
+            // Minimum display logic
+            $yearsServing = max(1, $years);
+
+            // Add "+" only if extra months exist
+            $yearsLabel = ($months % 12 > 0)
+                ? $yearsServing . '+'
+                : (string) $yearsServing;
+        }
+
+        return view('about', compact('servicesCategories', 'yearsLabel'));
     }  
     
     public function byCategory($category)

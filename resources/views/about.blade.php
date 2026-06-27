@@ -33,14 +33,14 @@
             <div class="col-lg-6">
                 <div class="relative">
                     <div class="p-4 mt-3 bg-white text-dark abs abs-centered rounded-1 text-center z-2 wow fadeIn">
-                        <h1 class="fs-72 mb-1">7+</h1>
+                        <h1 class="fs-72 mb-1">{{ $yearsLabel }}</h1>
                         <div class="fs-16 lh-1-5">Years of Service</div>
                     </div>
 
                     <div class="row g-4">
                         <div class="col-lg-6 wow fadeInRight">
                             <div class="relative rounded-1 overflow-hidden">
-                                <img src="{{ asset('templates/marketing_site/images/misc/p1.webp') }}"
+                                <img src="{{ asset('templates/marketing_site/images/misc/p3.webp') }}"
                                      class="w-100"
                                      alt="Cyber Café Workspace">
                             </div>
@@ -48,7 +48,7 @@
 
                         <div class="col-lg-6 wow fadeInRight" data-wow-delay=".3s">
                             <div class="relative rounded-1 overflow-hidden">
-                                <img src="{{ asset('templates/marketing_site/images/misc/p2.webp') }}"
+                                <img src="{{ asset('templates/marketing_site/images/misc/p4.webp') }}"
                                      class="w-100"
                                      alt="Printing Services Area">
                             </div>
@@ -106,13 +106,13 @@
                     </div>
 
                     <div class="rounded-1 w-90 overflow-hidden wow zoomIn">
-                        <img src="{{ asset('templates/marketing_site/images/misc/l1.webp') }}"
+                        <img src="{{ asset('templates/marketing_site/images/misc/l4.webp') }}"
                              class="w-100 wow scaleIn"
                              alt="Cyber Café Services">
                     </div>
 
                     <div class="rounded-1 w-50 abs mb-min-50 end-0 bottom-0 z-2 overflow-hidden shadow-soft wow zoomIn">
-                        <img src="{{ asset('templates/marketing_site/images/misc/s1.webp') }}"
+                        <img src="{{ asset('templates/marketing_site/images/misc/s4.webp') }}"
                              class="w-100 wow scaleIn"
                              alt="Printing Station">
                     </div>

@@ -211,16 +211,16 @@
                         </div>
                         @php
                             $techQuotes = [
-                                "Any sufficiently advanced technology is indistinguishable from magic.",
-                                "We are stuck with technology when what we really want is just stuff that works.",
-                                "The internet is a great way to get on the net.",
                                 "Men have become the tools of their tools.",
-                                "The real problem is not whether machines think but whether men do.",
-                                "People who are really serious about software should make their own hardware.",
-                                "The internet is the most important sinle development in the history of human communication since the invention of call waiting.",
-                                "Cell phones, mobile e-mail, and all other cool and slick gadgets can cause massive losses in our creative output and overall productivity.",
-                                "A satellite has no conscience.",
-                                "Technology is a gift of God. After the gift of life it is perhaps the greatest of God's gifts. It is the mother of civilizations, of arts and of sciences",
+                                "Technology should serve people, not rule them.",
+                                "Simple tech beats clever tech.",
+                                "Power lies in useful technology.",
+                                "The best technology disappears.",
+                                "Tools shape how we think.",
+                                "Innovation is clarity, not complexity.",
+                                "Good technology feels invisible.",
+                                "Machines work best when humans think.",
+                                "Technology should make life lighter.",
                             ];
 
                             $randomQuote = $techQuotes[array_rand($techQuotes)];

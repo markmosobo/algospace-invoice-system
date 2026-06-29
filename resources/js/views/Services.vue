@@ -241,14 +241,41 @@
                               <option value="basic">Basic</option>
                               <option value="practical">Practical</option>
                               <option value="coding">Coding</option>
-                              <option value="bootcamp">Bootcamp</option>
+                              <option value="refresher">Refresher </option>
                             </select>
                           </div>
 
-                          <!-- DURATION (only for Training) -->
                           <div class="col-md-6" v-if="data.category === 'Training'">
-                            <label class="form-label">Duration (Days)</label>
-                            <input type="number" class="form-control" v-model="data.duration_days">
+                            <label class="form-label">Schedule</label>
+                            <select class="form-select" v-model="data.schedule_type">
+                              <option value="saturday">Saturday Only</option>
+                              <option value="weekday">Weekday</option>
+                              <option value="custom">Custom</option>
+                            </select>
+                          </div>
+
+                          <div class="col-md-6" v-if="data.category === 'Training'">
+                            <label class="form-label">Duration (Saturdays)</label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0.5"
+                              class="form-control"
+                              v-model="data.duration_units"
+                              placeholder="e.g. 0.5, 1, 3, 4"
+                            >
+                          </div>
+
+                          <div class="col-md-6" v-if="data.category === 'Training'">
+                            <label class="form-label">Session Hours</label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0.5"
+                              class="form-control"
+                              v-model="data.session_hours"
+                              placeholder="Default: 1.5"
+                            >
                           </div>
 
 
@@ -330,16 +357,43 @@
                             <select class="form-select" v-model="form.tier">
                               <option value="basic">Basic</option>
                               <option value="practical">Practical</option>
+                              <option value="refresher">Refresher</option>
                               <option value="coding">Coding</option>
-                              <option value="bootcamp">Bootcamp</option>
+                             </select>
+                          </div>
+
+                          <div class="col-md-6" v-if="form.category === 'Training'">
+                            <label class="form-label">Schedule</label>
+                            <select class="form-select" v-model="form.schedule_type">
+                              <option value="saturday">Saturday Only</option>
+                              <option value="weekday">Weekday</option>
+                              <option value="custom">Custom</option>
                             </select>
                           </div>
 
-                          <!-- DURATION -->
                           <div class="col-md-6" v-if="form.category === 'Training'">
-                            <label class="form-label">Duration (Days)</label>
-                            <input type="number" class="form-control" v-model="form.duration_days">
-                          </div>                          
+                            <label class="form-label">Duration (Saturdays)</label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0.5"
+                              class="form-control"
+                              v-model="form.duration_units"
+                              placeholder="e.g. 0.5, 1, 3, 4"
+                            >
+                          </div>
+
+                          <div class="col-md-6" v-if="form.category === 'Training'">
+                            <label class="form-label">Session Hours</label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0.5"
+                              class="form-control"
+                              v-model="form.session_hours"
+                              placeholder="Default: 1.5"
+                            >
+                          </div>
 
 
                         </form>
@@ -400,7 +454,9 @@
                 is_bundle: false,
                 type: 'service',
                 tier: '',
-                duration_days: null,
+                duration_units: null,
+                session_hours: null,
+                schedule_type: 'saturday',
             },
 
             form: {        // EDIT service
@@ -412,7 +468,9 @@
                 is_bundle: false,
                 type: '',
                 tier: '',
-                duration_days: null,
+                duration_units: null,
+                session_hours: null,
+                schedule_type: 'saturday',
             },
             searchQuery: "",
         }

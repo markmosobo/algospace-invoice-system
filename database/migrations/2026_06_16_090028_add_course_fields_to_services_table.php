@@ -20,9 +20,19 @@ return new class extends Migration
                 ->nullable()
                 ->after('type'); // basic, practical, coding, bootcamp
 
-            $table->integer('duration_days')
+             // Number of Saturdays / sessions
+            $table->decimal('duration_units', 4, 1)
                 ->nullable()
+                ->comment('number of saturday sessions, e.g. 0.5, 1, 3, 4')
                 ->after('tier');
+
+            $table->enum('schedule_type', ['saturday', 'weekday', 'custom'])
+            ->default('saturday')
+            ->after('duration_units');  
+            
+            $table->decimal('session_hours', 3, 1)
+            ->default(1.5)
+            ->after('schedule_type');
                     
         });
     }

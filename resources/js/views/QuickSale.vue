@@ -249,7 +249,9 @@
                                 class="d-flex align-items-center gap-3 mt-3 p-2 border rounded"
                             >
                                 <img
-                                :src="selectedCustomer.image || '/images/avatar.png'"
+                                :src="selectedCustomer.image 
+                                    ? `/storage/${selectedCustomer.image}` 
+                                    : '/images/avatar.png'"
                                 alt="Customer photo"
                                 class="rounded-circle"
                                 style="width:60px;height:60px;object-fit:cover"

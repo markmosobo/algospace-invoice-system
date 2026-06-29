@@ -35,20 +35,34 @@ class ServiceController extends Controller
             'category'  => 'required|string|max:255',
             'price'     => 'required|numeric|min:0',
             'unit'      => 'required|string|max:50',
+
+            // Training-specific
             'type' => 'sometimes|in:service,course',
-            'tier' => 'nullable|string|max:50',
-            'duration_days' => 'nullable|integer|min:1',
+            'tier' => 'nullable| string',
+            'schedule_type' => 'nullable|in:saturday,weekday,custom',
+            'duration_units' => 'nullable|numeric|min:0.5',
+            'session_hours' => 'nullable|numeric|min:0.5',
+
             'is_bundle' => 'sometimes|boolean',
         ]);
+
+        // Defaults for non-training services
+        $type = $request->category === 'Training'
+            ? ($request->type ?? 'course')
+            : 'service';
 
         $service = Service::create([
             'name'      => $request->name,
             'category'  => $request->category,
             'price'     => $request->price,
             'unit'      => $request->unit,
-            'type'      => $request->type ?? 'service',
-            'tier'      => $request->tier ?? null,
-            'duration_days' => $request->duration_days ?? null,
+
+            'type'      => $type,
+            'tier'      => $request->tier,
+            'schedule_type' => $request->schedule_type ?? 'saturday',
+            'duration_units' => $request->duration_units,
+            'session_hours' => $request->session_hours ?? 1.5,
+
             'is_bundle' => $request->is_bundle ?? false,
         ]);
 
@@ -88,23 +102,55 @@ class ServiceController extends Controller
             'category'  => 'required|string|max:255',
             'price'     => 'required|numeric|min:0',
             'unit'      => 'required|string|max:50',
+
+            // Training-related
             'type' => 'sometimes|in:service,course',
-            'tier' => 'nullable|string|max:50',
-            'duration_days' => 'nullable|integer|min:1',
+            'tier' => 'nullable| string',
+            'schedule_type' => 'nullable|in:saturday,weekday,custom',
+            'duration_units' => 'nullable|numeric|min:0.5',
+            'session_hours' => 'nullable|numeric|min:0.5',
+
             'is_bundle' => 'sometimes|boolean',
         ]);
 
-        // Update service
+        // Determine correct type
+        $type = $request->category === 'Training'
+            ? ($request->type ?? $service->type ?? 'course')
+            : 'service';
+
+        // Update service (only overwrite when value is present)
         $service->update([
             'name'      => $request->name,
             'category'  => $request->category,
             'price'     => $request->price,
             'unit'      => $request->unit,
-            'type' => $request->type ?? $service->type,
-            'tier' => $request->tier ?? $service->tier,
-            'duration_days' => $request->duration_days ?? $service->duration_days,
-            'is_bundle' => $request->is_bundle ?? $service->is_bundle,
+
+            'type'      => $type,
+            'tier'      => $request->filled('tier') ? $request->tier : $service->tier,
+            'schedule_type' => $request->filled('schedule_type')
+                ? $request->schedule_type
+                : $service->schedule_type,
+
+            'duration_units' => $request->filled('duration_units')
+                ? $request->duration_units
+                : $service->duration_units,
+
+            'session_hours' => $request->filled('session_hours')
+                ? $request->session_hours
+                : $service->session_hours,
+
+            'is_bundle' => $request->has('is_bundle')
+                ? $request->is_bundle
+                : $service->is_bundle,
         ]);
+
+        // Optional: enforce refresher rules
+        if ($service->tier === 'refresher') {
+            $service->update([
+                'duration_units' => 1,
+                'session_hours' => 1,
+            ]);
+        }
 
         // System log
         SystemLog::create([

@@ -184,10 +184,10 @@
             <div id="top"></div>
             @php
                 $subheaderImages = [
-                    'background/1.webp',
-                    'background/2.webp',
+                    'background/developer.webp',
+                    /*'background/2.webp',
                     'background/5.webp',
-                    'background/7.webp',
+                    'background/7.webp',*/
                 ];
 
                 $randomImage = $subheaderImages[array_rand($subheaderImages)];

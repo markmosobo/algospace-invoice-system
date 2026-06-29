@@ -736,52 +736,52 @@
         }
       },      
       methods: { 
-shareWhatsApp() {
-  if (!this.shareInvoiceData) return;
+        shareWhatsApp() {
+          if (!this.shareInvoiceData) return;
 
-  let phone = this.shareInvoiceData.customer?.phone || '';
+          let phone = this.shareInvoiceData.customer?.phone || '';
 
-  // Normalize Kenyan number
-  if (phone.startsWith("0")) {
-    phone = "254" + phone.slice(1);
-  }
+          // Normalize Kenyan number
+          if (phone.startsWith("0")) {
+            phone = "254" + phone.slice(1);
+          }
 
-  const balance =
-    (Number(this.shareInvoiceData.total_amount) || 0) -
-    (Number(this.shareInvoiceData.amount_paid) || 0);
+          const balance =
+            (Number(this.shareInvoiceData.total_amount) || 0) -
+            (Number(this.shareInvoiceData.amount_paid) || 0);
 
-  const message = `
-Hello ${this.shareInvoiceData.customer?.name || 'Customer'},
+          const message = `
+        Hello ${this.shareInvoiceData.customer?.name || 'Customer'},
 
-We hope you are well.
+        We hope you are well.
 
-This is a gentle reminder regarding your pending invoice with the details below:
+        This is a gentle reminder regarding your pending invoice with the details below:
 
-Invoice Number: ${this.shareInvoiceData.invoice_number}
-Invoice Date: ${this.formatDate(this.shareInvoiceData.invoice_date)}
+        Invoice Number: ${this.shareInvoiceData.invoice_number}
+        Invoice Date: ${this.formatDate(this.shareInvoiceData.invoice_date)}
 
-Total Amount: KES ${this.shareInvoiceData.total_amount}
-Amount Paid: KES ${this.shareInvoiceData.amount_paid}
-Outstanding Balance: KES ${balance}
+        Total Amount: KES ${this.shareInvoiceData.total_amount}
+        Amount Paid: KES ${this.shareInvoiceData.amount_paid}
+        Outstanding Balance: KES ${balance}
 
-Payment Details:
-Paybill Number: 542542
-Account Number: 608755
+        Payment Details:
+        Paybill Number: 542542
+        Account Number: 608755
 
-We would appreciate your kind settlement at your earliest convenience.
-If payment has already been made, please disregard this message.
+        We would appreciate your kind settlement at your earliest convenience.
+        If payment has already been made, please disregard this message.
 
-Thank you for your continued support.
+        Thank you for your continued support.
 
-Kind regards,  
-AlgoSpace Cyber
-`;
+        Kind regards,  
+        AlgoSpace Cyber
+        `;
 
-  window.open(
-    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-    "_blank"
-  );
-},     
+          window.open(
+            `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+            "_blank"
+          );  
+        },     
         async shareInvoice(invoice) {
           try {
             const res = await axios.get(`/api/invoices/${invoice.id}`);

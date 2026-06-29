@@ -243,6 +243,24 @@
                             {{ c.is_risky ? ' ⚠️ RISKY' : '' }}
                             </option>
                         </select>
+
+                            <div
+                                v-if="selectedCustomer"
+                                class="d-flex align-items-center gap-3 mt-3 p-2 border rounded"
+                            >
+                                <img
+                                :src="selectedCustomer.image || '/images/avatar.png'"
+                                alt="Customer photo"
+                                class="rounded-circle"
+                                style="width:60px;height:60px;object-fit:cover"
+                                />
+
+                                <div>
+                                <div class="fw-bold">{{ selectedCustomer.name }}</div>
+                                <small class="text-muted">{{ selectedCustomer.email || 'No email' }}</small><br>
+                                <small class="text-muted">{{ selectedCustomer.phone || 'No phone' }}</small>
+                                </div>
+                            </div>
                         </div>
 
 
@@ -1531,6 +1549,11 @@ export default {
 
   },
   computed: {
+    selectedCustomer() {
+        return this.customers.find(
+        c => c.id === this.customerForm.customer_id
+        ) || null;
+    },
     filteredCustomers() {
 
         const s = this.search ? this.search.toLowerCase() : '';

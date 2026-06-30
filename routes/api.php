@@ -275,4 +275,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/projects/{project}/progress', [ProjectProgressController::class, 'storeProgress']);   
      
     Route::patch('/projects/{project}/toggle-board', [ProjectController::class, 'toggleBoardType']);
+
+    Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote']);
 });

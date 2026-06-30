@@ -154,6 +154,14 @@
                                     <i class="ri-pencil-fill mr-2"></i>Edit
                                   </a>
 
+                                  <a
+                                    href="#"
+                                    class="dropdown-item"
+                                    @click="openAddNote(customer)"
+                                  >
+                                    <i class="ri-sticky-note-fill mr-2"></i>Add Note
+                                  </a>
+
                                   <a @click="deleteCustomer(customer.id)" class="dropdown-item" href="#">
                                     <i class="ri-delete-bin-line mr-2"></i>Delete
                                   </a>
@@ -171,65 +179,95 @@
                   </div>
                 </div><!-- End Top Selling -->
 
-                <div class="modal fade" id="LoyaltyCardModal" tabindex="-1">
-                  <div class="modal-dialog modal-md">
-                    <div class="modal-content">
+              <div class="modal fade" id="LoyaltyCardModal" tabindex="-1">
+                <div class="modal-dialog modal-md">
+                  <div class="modal-content">
 
-                      <div class="modal-header">
-                        <h5 class="modal-title">
-                          {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
+                    <div class="modal-header">
+                      <h5 class="modal-title">
+                        {{ loyaltyMode === 'issue' ? 'Issue Loyalty Card' : 'View Loyalty Card' }}
+                      </h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
-                      <div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedCustomer">
 
-                        <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
+                      <p><strong>Customer:</strong> {{ selectedCustomer.name }}</p>
 
-                        <p>
-                          <strong>Card Serial:</strong>
-                          {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
-                        </p>
+                      <p>
+                        <strong>Card Serial:</strong>
+                        {{ selectedCustomer.card_serial ?? generateSerial(selectedCustomer) }}
+                      </p>
 
-                        <div class="d-flex flex-wrap">
-                          <div
-                            v-for="n in 10"
-                            :key="n"
-                            class="p-2 m-1 border text-center"
-                            :style="{
-                              width: '32px',
-                              height: '32px',
-                              backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
-                              color: n <= selectedCustomer.visits_count ? 'white' : 'black'
-                            }"
-                          >
-                            {{ n }}
-                          </div>
-                        </div>
-
-                        <p class="mt-2">
-                          <small>Each visit punches a box. Complete 10 visits for a reward!</small>
-                        </p>
-
-                      </div>
-
-                      <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
-                        <button
-                          v-if="loyaltyMode === 'issue'"
-                          class="btn btn-success"
-                          @click="confirmIssueCard(selectedCustomer)"
-                          style="background: darkgreen; border-color: darkgreen;"
+                      <div class="d-flex flex-wrap">
+                        <div
+                          v-for="n in 10"
+                          :key="n"
+                          class="p-2 m-1 border text-center"
+                          :style="{
+                            width: '32px',
+                            height: '32px',
+                            backgroundColor: n <= selectedCustomer.visits_count ? 'darkgreen' : '#f1f1f1',
+                            color: n <= selectedCustomer.visits_count ? 'white' : 'black'
+                          }"
                         >
-                          Issue Card
-                        </button>
-
+                          {{ n }}
+                        </div>
                       </div>
+
+                      <p class="mt-2">
+                        <small>Each visit punches a box. Complete 10 visits for a reward!</small>
+                      </p>
 
                     </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                      <button
+                        v-if="loyaltyMode === 'issue'"
+                        class="btn btn-success"
+                        @click="confirmIssueCard(selectedCustomer)"
+                        style="background: darkgreen; border-color: darkgreen;"
+                      >
+                        Issue Card
+                      </button>
+
+                    </div>
+
                   </div>
                 </div>
+              </div>
+
+              <!-- Add Note Modal -->
+              <div class="modal fade" id="AddCustomerNoteModal">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+
+                    <div class="modal-header">
+                      <h5 class="modal-title">Add Customer Note</h5>
+                      <button class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                      <textarea
+                        class="form-control"
+                        rows="4"
+                        v-model="noteForm.note"
+                        placeholder="Type note about this customer..."
+                      ></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button class="btn btn-primary" @click="saveNote">
+                        Save Note
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
 
               <!-- View Customer Modal -->
               <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
@@ -241,236 +279,282 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-<div class="modal-body" v-if="selectedCustomer">
+                    <div class="modal-body" v-if="selectedCustomer">
 
-  <ul class="nav nav-tabs mb-4">
+                      <ul class="nav nav-tabs mb-4">
 
-    <li class="nav-item">
-      <button
-        class="nav-link active"
-        data-bs-toggle="tab"
-        data-bs-target="#profileTab">
-        Profile
-      </button>
-    </li>
+                        <li class="nav-item">
+                          <button
+                            class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#profileTab">
+                            Profile
+                          </button>
+                        </li>
 
-    <li class="nav-item">
-      <button
-        class="nav-link"
-        data-bs-toggle="tab"
-        data-bs-target="#notesTab">
-        Notes
-      </button>
-    </li>
+                        <li class="nav-item">
+                          <button
+                            class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#notesTab">
+                            Notes
+                          </button>
+                        </li>
 
-    <li class="nav-item">
-      <button
-        class="nav-link"
-        data-bs-toggle="tab"
-        data-bs-target="#historyTab">
-        History
-      </button>
-    </li>
+                        <li class="nav-item">
+                          <button
+                            class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#historyTab">
+                            History
+                          </button>
+                        </li>
 
-  </ul>
+                        <li class="nav-item">
+                          <button
+                            class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#visitsTab">
+                            Visits
+                          </button>
+                        </li>
 
-  <div class="tab-content">
+                      </ul>
 
-    <!-- PROFILE -->
+                      <div class="tab-content">
 
-    <div
-      class="tab-pane fade show active"
-      id="profileTab">
+                        <!-- PROFILE -->
 
-      <div class="row">
+                        <div
+                          class="tab-pane fade show active"
+                          id="profileTab">
 
-        <div class="col-md-4 text-center">
+                          <div class="row">
 
-          <img
-            v-if="selectedCustomer.image"
-            :src="'/storage/' + selectedCustomer.image"
-            class="profile-photo"
-          >
+                            <div class="col-md-4 text-center">
 
-          <div
-            v-else
-            class="profile-avatar"
-            :style="{
-              backgroundColor:
-              getAvatarColor(selectedCustomer.name)
-            }"
-          >
-            {{ getInitials(selectedCustomer.name) }}
-          </div>
+                              <img
+                                v-if="selectedCustomer.image"
+                                :src="'/storage/' + selectedCustomer.image"
+                                class="profile-photo"
+                              >
 
-        </div>
+                              <div
+                                v-else
+                                class="profile-avatar"
+                                :style="{
+                                  backgroundColor:
+                                  getAvatarColor(selectedCustomer.name)
+                                }"
+                              >
+                                {{ getInitials(selectedCustomer.name) }}
+                              </div>
 
-        <div class="col-md-8">
+                            </div>
 
-          <table class="table table-bordered">
+                            <div class="col-md-8">
 
-            <tr>
-              <th width="200">Customer ID</th>
-              <td>
-                CUST-{{
-                  String(selectedCustomer.id)
-                    .padStart(5,'0')
-                }}
-              </td>
-            </tr>
+                              <table class="table table-bordered">
 
-            <tr>
-              <th>Name</th>
-              <td>{{ selectedCustomer.name }}</td>
-            </tr>
+                                <tr>
+                                  <th width="200">Customer ID</th>
+                                  <td>
+                                    CUST-{{
+                                      String(selectedCustomer.id)
+                                        .padStart(5,'0')
+                                    }}
+                                  </td>
+                                </tr>
 
-            <tr>
-              <th>Email</th>
-              <td>{{ selectedCustomer.email || 'N/A' }}</td>
-            </tr>
+                                <tr>
+                                  <th>Name</th>
+                                  <td>{{ selectedCustomer.name }}</td>
+                                </tr>
 
-            <tr>
-              <th>Phone</th>
-              <td>{{ selectedCustomer.phone || 'N/A' }}</td>
-            </tr>
+                                <tr>
+                                  <th>Email</th>
+                                  <td>{{ selectedCustomer.email || 'N/A' }}</td>
+                                </tr>
 
-            <tr>
-              <th>Gender</th>
-              <td>{{ selectedCustomer.gender || 'N/A' }}</td>
-            </tr>
+                                <tr>
+                                  <th>Phone</th>
+                                  <td>{{ selectedCustomer.phone || 'N/A' }}</td>
+                                </tr>
 
-            <tr>
-              <th>Total Visits</th>
-              <td>{{ selectedCustomer.total_visits }}</td>
-            </tr>
+                                <tr>
+                                  <th>Gender</th>
+                                  <td>{{ selectedCustomer.gender || 'N/A' }}</td>
+                                </tr>
 
-            <tr>
-              <th>Loyalty Card</th>
-              <td>
+                                <tr>
+                                  <th>Total Visits</th>
+                                  <td>{{ selectedCustomer.total_visits }}</td>
+                                </tr>
 
-                <span
-                  v-if="selectedCustomer.loyalty_card"
-                  class="badge bg-success">
+                                <tr>
+                                  <th>Loyalty Card</th>
+                                  <td>
 
-                  {{
-                    selectedCustomer.loyalty_card.serial
-                  }}
+                                    <span
+                                      v-if="selectedCustomer.loyalty_card"
+                                      class="badge bg-success">
 
-                </span>
+                                      {{
+                                        selectedCustomer.loyalty_card.serial
+                                      }}
 
-                <span
-                  v-else
-                  class="badge bg-secondary">
+                                    </span>
 
-                  Not Issued
+                                    <span
+                                      v-else
+                                      class="badge bg-secondary">
 
-                </span>
+                                      Not Issued
 
-              </td>
-            </tr>
+                                    </span>
 
-            <tr>
-              <th>Customer Since</th>
-              <td>
-                {{
-                  new Date(
-                    selectedCustomer.created_at
-                  ).toLocaleDateString()
-                }}
-              </td>
-            </tr>
+                                  </td>
+                                </tr>
 
-          </table>
+                                <tr>
+                                  <th>Customer Since</th>
+                                  <td>{{ formatDate(selectedCustomer.created_at) }}</td>
+                                </tr>
 
-        </div>
+                              </table>
 
-      </div>
+                            </div>
 
-    </div>
+                          </div>
 
-    <!-- NOTES -->
+                        </div>
 
-    <div
-      class="tab-pane fade"
-      id="notesTab">
+                        <!-- NOTES -->
 
-      <div
-        v-if="selectedCustomer.notes">
+                        <div
+                          class="tab-pane fade"
+                          id="notesTab">
 
-        <div
-          class="card mb-2"
-          v-for="note in selectedCustomer.notes"
-          :key="note.id">
+                          <div
+                            v-if="selectedCustomer.notes">
 
-          <div class="card-body">
+                            <div
+                              class="card mb-2"
+                              v-for="note in selectedCustomer.notes"
+                              :key="note.id">
 
-            {{ note.note }}
+                              <div class="card-body">
 
-            <div class="small text-muted mt-2">
-              {{ note.created_at }}
-            </div>
+                                {{ note.note }}
 
-          </div>
+                                <div class="small text-muted mt-2">
+                                  {{ formatDateTime(note.created_at) }}
+                                </div>
 
-        </div>
+                              </div>
 
-      </div>
+                            </div>
 
-      <div
-        v-else
-        class="alert alert-info">
+                          </div>
 
-        No notes available.
+                          <div
+                            v-else
+                            class="alert alert-info">
 
-      </div>
+                            No notes available.
 
-    </div>
+                          </div>
 
-    <!-- HISTORY -->
+                        </div>
 
-    <div
-      class="tab-pane fade"
-      id="historyTab">
+                        <!-- HISTORY -->
 
-      <table class="table table-striped">
+                        <div
+                          class="tab-pane fade"
+                          id="historyTab">
 
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Action</th>
-            <th>Description</th>
-          </tr>
-        </thead>
+                          <table class="table table-striped">
 
-        <tbody>
+                            <thead>
+                              <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                              </tr>
+                            </thead>
 
-          <tr
-            v-for="item in (selectedCustomer.history || [])"
-            :key="item.id">
+                            <tbody>
 
-            <td>
-              {{ item.created_at }}
-            </td>
+                              <tr
+                                v-for="item in (selectedCustomer.history || [])"
+                                :key="item.id">
 
-            <td>
-              {{ item.action }}
-            </td>
+                                <td>{{ formatDateTime(item.created_at) }}</td>
 
-            <td>
-              {{ item.description }}
-            </td>
+                                <td>
+                                  {{ item.action }}
+                                </td>
 
-          </tr>
+                                <td>
+                                  {{ item.description }}
+                                </td>
 
-        </tbody>
+                              </tr>
 
-      </table>
+                            </tbody>
 
-    </div>
+                          </table>
 
-  </div>
+                        </div>
 
-</div>
+                        <!-- VISITS -->
+
+                        <div
+                          class="tab-pane fade"
+                          id="visitsTab">
+
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>#</th>
+                                <th>Arrival Time</th>
+                                <th>Invoice</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              <tr
+                                v-for="(visit, index) in (selectedCustomer.visits || [])"
+                                :key="visit.id">
+
+                                <td>{{ index + 1 }}</td>
+
+                                <td>{{ formatDateTime(visit.arrival_time) }}</td>
+
+                                <td>
+                                  <span v-if="visit.invoice_id">
+                                    INV-{{ String(visit.invoice_id).padStart(5,'0') }}
+                                  </span>
+                                  <span v-else class="text-muted">
+                                    —
+                                  </span>
+                                </td>
+
+                              </tr>
+
+                              <tr v-if="!selectedCustomer.visits?.length">
+                                <td colspan="3" class="text-center text-muted">
+                                  No visits recorded
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                        </div>                        
+
+                      </div>
+
+                    </div>
 
                     <div class="modal-footer">
                       <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -676,6 +760,9 @@
                 notes: [],
                 history: []
             },
+            noteForm: {
+              note: ''
+            },
             errors: {},
             initializing: true,
             submitting: false,
@@ -706,7 +793,50 @@
         }
       },      
       methods: { 
-          openImagePreview(image) {
+        formatDate(date) {
+          if (!date) return '—'
+          return new Date(date).toLocaleDateString('en-KE', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
+        },
+
+        formatDateTime(date) {
+          if (!date) return '—'
+          return new Date(date).toLocaleString('en-KE', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        },        
+        openAddNote(customer) {
+          this.selectedCustomer = customer
+
+          // Ensure notes array exists (important)
+          if (!this.selectedCustomer.notes) {
+            this.selectedCustomer.notes = []
+          }
+
+          const modal = new bootstrap.Modal(
+            document.getElementById('AddCustomerNoteModal')
+          )
+
+          modal.show()
+        },        
+        saveNote() {
+          axios.post(
+            `/api/customers/${this.selectedCustomer.id}/notes`,
+            this.noteForm
+          ).then(res => {
+            this.noteForm.note = ''
+            this.selectedCustomer.notes.push(res.data.note)
+            $('#AddCustomerNoteModal').modal('hide')
+          })
+        },        
+        openImagePreview(image) {
           this.previewImage = '/storage/' + image;
 
           const modal = new bootstrap.Modal(

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\LoyaltyCard;
 use App\Models\SystemLog;
 use App\Models\CustomerHistory;
+use App\Models\CustomerNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -90,7 +91,8 @@ class CustomerController extends Controller
             // Visits
             'total_visits' => $customer->visits_count,           // all visits ever
             'loyalty_visits' => $activeCard ? $activeCard->visits : 0,  // only active card
-
+            'visits' => $customer->visits,
+            
             // Active card info
             'cardIssued' => $activeCard ? true : false,
             'card_serial' => $activeCard ? $activeCard->serial : null,
@@ -161,4 +163,26 @@ class CustomerController extends Controller
         ]);         
         return response()->json(['message' => 'Deleted']);
     }
+
+    public function storeNote(Request $request, $customerId)
+    {
+        $request->validate([
+            'note' => 'required|string|min:3',
+        ]);
+
+        $note = CustomerNote::create([
+            'customer_id' => $customerId,
+            'note' => $request->note,
+        ]);
+
+        SystemLog::create([
+            'user_id' => auth('api')->id(),
+            'description' => auth('api')->user()->name.' added note to customer #'.$customerId,
+        ]);
+
+        return response()->json([
+            'message' => 'Note added',
+            'note' => $note,
+        ]);
+    }    
 }

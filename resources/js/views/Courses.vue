@@ -194,9 +194,9 @@ export default {
     async loadCourses() {
       this.loading = true;
 
-      const res = await axios.get("/api/services/courses");
-      console.log("Courses loaded:", res);
-      this.courses = res.data.courses || [];
+      const res = await axios.get("/api/courses");
+      console.log("Courses loaded:", res.data);
+      this.courses = res.data.data || [];
 
       this.loading = false;
 

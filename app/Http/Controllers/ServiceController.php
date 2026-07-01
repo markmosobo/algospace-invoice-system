@@ -221,9 +221,16 @@ class ServiceController extends Controller
     public function courses()
     {
         $courses = Service::where('category', 'Training')
-            ->where('is_active', 1)
-            ->select('id', 'name', 'price', 'unit', 'category')
-            ->orderBy('name')
+            ->where('type', 'course')
+            ->select(
+                'id',
+                'name',
+                'price',
+                'tier',
+                'created_at',
+                'is_active'
+            )
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([

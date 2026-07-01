@@ -142,7 +142,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('worker-tasks', FarmWorkerTaskController::class);
     Route::apiResource('farm-assets', FarmAssetController::class);
 
-    Route::get('/services/courses', [ServiceController::class, 'courses']);
+    Route::get('/courses', [ServiceController::class, 'courses']);
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::post('/enrollments', [EnrollmentController::class, 'store']);
 

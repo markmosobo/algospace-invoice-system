@@ -150,13 +150,17 @@ if ($firstActivity) {
 
         $courses = $query
             ->orderBy('tier')
-            ->orderBy('title') // optional, nicer display
-            ->get();
+            ->paginate(6) // 👈 IMPORTANT
+            ->withQueryString(); // keeps ?tier=basic during pagination
 
-        return view('training.index', [
-            'courses'    => $courses,
-            'activeTier' => $request->tier
-        ]);
+        $servicesCategories = Service::select('category')
+            ->distinct()
+            ->pluck('category');
+
+        return view('training.index', compact(
+            'courses',
+            'servicesCategories'
+        ));
     }
 
     /**
@@ -170,10 +174,11 @@ if ($firstActivity) {
             $course->type !== 'course',
             404
         );
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('training.show', [
             'course' => $course
-        ]);
+        ], compact('servicesCategories'));
     }
 
     /**
@@ -188,9 +193,11 @@ if ($firstActivity) {
             ->orderBy('title')
             ->get();
 
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
         return view('training.schedule', [
             'courses' => $courses
-        ]);
+        ], compact('servicesCategories'));
     }    
 
 }

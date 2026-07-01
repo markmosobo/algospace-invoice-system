@@ -23,6 +23,11 @@ Route::post('/cyber-request', [CyberRequestController::class, 'store'])
     ->name('cyber.requests.store');
 Route::get('/contact', [MarketingController::class, 'contact']);
 Route::get('/about', [MarketingController::class, 'about']);
+// Public training pages
+Route::get('/training-courses', [MarketingController::class, 'trainingCourses']);
+Route::get('/training-courses/schedule', [MarketingController::class, 'schedule']);
+Route::get('/training-courses/{course:slug}', [MarketingController::class, 'showCourse'])->name('training-courses.show');
+
 Route::get('/services/category/{category}', [MarketingController::class, 'byCategory'])
     ->name('services.byCategory');
 Route::get('/services/{id}', [MarketingController::class, 'showService']);

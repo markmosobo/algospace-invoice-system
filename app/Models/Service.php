@@ -84,4 +84,9 @@ class Service extends Model
         return $this->duration_units * $this->session_hours;
     }
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
 }

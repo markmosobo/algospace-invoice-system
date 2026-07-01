@@ -84,9 +84,14 @@ class Service extends Model
         return $this->duration_units * $this->session_hours;
     }
 
-    public function getRouteKeyName()
+    public function getTierImageAttribute()
     {
-        return 'slug';
+        return [
+            'basic'     => 'courses/basic.webp',
+            'practical' => 'courses/practical.webp',
+            'refresher' => 'courses/refresher.webp',
+            'coding'    => 'courses/coding.webp',
+        ][$this->tier] ?? 'courses/default.webp';
     }
 
 }

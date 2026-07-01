@@ -26,7 +26,14 @@ Route::get('/about', [MarketingController::class, 'about']);
 // Public training pages
 Route::get('/training-courses', [MarketingController::class, 'trainingCourses']);
 Route::get('/training-courses/schedule', [MarketingController::class, 'schedule']);
-Route::get('/training-courses/{course:slug}', [MarketingController::class, 'showCourse'])->name('training-courses.show');
+Route::get(
+    '/training-courses/{course}',
+    [MarketingController::class, 'showCourse']
+)->name('training-courses.show');
+Route::get(
+    '/training-courses/{course}/enroll',
+    [MarketingController::class, 'enroll']
+)->name('training.enroll');
 
 Route::get('/services/category/{category}', [MarketingController::class, 'byCategory'])
     ->name('services.byCategory');

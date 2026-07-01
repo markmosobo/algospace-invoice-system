@@ -140,18 +140,19 @@ if ($firstActivity) {
      */
     public function trainingCourses(Request $request)
     {
+        $activeTier = $request->query('tier');
+
         $query = Service::where('category', 'Training')
             ->where('type', 'course');
 
-        // Optional tier filter
-        if ($request->filled('tier')) {
-            $query->where('tier', $request->tier);
+        if ($activeTier) {
+            $query->where('tier', $activeTier);
         }
 
         $courses = $query
             ->orderBy('tier')
-            ->paginate(6) // 👈 IMPORTANT
-            ->withQueryString(); // keeps ?tier=basic during pagination
+            ->paginate(6)
+            ->withQueryString();
 
         $servicesCategories = Service::select('category')
             ->distinct()
@@ -159,7 +160,8 @@ if ($firstActivity) {
 
         return view('training.index', compact(
             'courses',
-            'servicesCategories'
+            'servicesCategories',
+            'activeTier'
         ));
     }
 
@@ -168,17 +170,25 @@ if ($firstActivity) {
      */
     public function showCourse(Service $course)
     {
-        // Ensure it's really a training course
         abort_if(
             $course->category !== 'Training' ||
-            $course->type !== 'course',
+            $course->type !== 'course' ||
+            !$course->is_active,
             404
         );
-        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
-        return view('training.show', [
-            'course' => $course
-        ], compact('servicesCategories'));
+        $servicesCategories = Service::select('category')
+            ->distinct()
+            ->pluck('category');
+            
+        $relatedCourses = Service::where('category', 'Training')
+            ->where('type', 'course')
+            ->where('id', '!=', $course->id)
+            ->where('tier', $course->tier) // same tier = higher relevance
+            ->limit(5)
+            ->get();    
+
+        return view('training.show', compact('course', 'servicesCategories', 'relatedCourses'));
     }
 
     /**

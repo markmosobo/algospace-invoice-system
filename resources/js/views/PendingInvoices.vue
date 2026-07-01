@@ -736,52 +736,33 @@
         }
       },      
       methods: { 
-        shareWhatsApp() {
-          if (!this.shareInvoiceData) return;
+shareWhatsApp() {
+  let phone = this.shareInvoiceData.customer?.phone || '';
 
-          let phone = this.shareInvoiceData.customer?.phone || '';
+  if (phone.startsWith('0')) {
+    phone = '254' + phone.slice(1);
+  }
 
-          // Normalize Kenyan number
-          if (phone.startsWith("0")) {
-            phone = "254" + phone.slice(1);
-          }
+  const balance =
+    Number(this.shareInvoiceData.total_amount) -
+    Number(this.shareInvoiceData.amount_paid);
 
-          const balance =
-            (Number(this.shareInvoiceData.total_amount) || 0) -
-            (Number(this.shareInvoiceData.amount_paid) || 0);
+  const message =
+`Hello ${this.shareInvoiceData.customer?.name || 'Customer'},
 
-          const message = `
-        Hello ${this.shareInvoiceData.customer?.name || 'Customer'},
+Invoice #: ${this.shareInvoiceData.invoice_number}
+Balance: KES ${balance.toLocaleString()}
 
-        We hope you are well.
+Paybill: 542542
+Account: 608755
 
-        This is a gentle reminder regarding your pending invoice with the details below:
+AlgoSpace Cyber`;
 
-        Invoice Number: ${this.shareInvoiceData.invoice_number}
-        Invoice Date: ${this.formatDate(this.shareInvoiceData.invoice_date)}
-
-        Total Amount: KES ${this.shareInvoiceData.total_amount}
-        Amount Paid: KES ${this.shareInvoiceData.amount_paid}
-        Outstanding Balance: KES ${balance}
-
-        Payment Details:
-        Paybill Number: 542542
-        Account Number: 608755
-
-        We would appreciate your kind settlement at your earliest convenience.
-        If payment has already been made, please disregard this message.
-
-        Thank you for your continued support.
-
-        Kind regards,  
-        AlgoSpace Cyber
-        `;
-
-          window.open(
-            `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-            "_blank"
-          );  
-        },     
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+    '_blank'
+  );
+},     
         async shareInvoice(invoice) {
           try {
             const res = await axios.get(`/api/invoices/${invoice.id}`);

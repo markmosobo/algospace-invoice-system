@@ -238,10 +238,10 @@
                           <div class="col-md-6" v-if="data.category === 'Training'">
                             <label class="form-label">Tier</label>
                             <select class="form-select" v-model="data.tier">
-                              <option value="basic">Basic</option>
-                              <option value="practical">Practical</option>
-                              <option value="coding">Coding</option>
-                              <option value="refresher">Refresher </option>
+                              <option value="basic">Basic – Computer Fundamentals</option>
+                              <option value="practical">Practical – Office & Cyber Skills</option>
+                              <option value="coding">Coding – Programming & Logic</option>
+                              <option value="refresher">Refresher – Skills Update</option>
                             </select>
                           </div>
 
@@ -355,10 +355,10 @@
                           <div class="col-md-6" v-if="form.category === 'Training'">
                             <label class="form-label">Tier</label>
                             <select class="form-select" v-model="form.tier">
-                              <option value="basic">Basic</option>
-                              <option value="practical">Practical</option>
-                              <option value="refresher">Refresher</option>
-                              <option value="coding">Coding</option>
+                              <option value="basic">Basic – Computer Fundamentals</option>
+                              <option value="practical">Practical – Office & Cyber Skills</option>
+                              <option value="refresher">Refresher – Skills Update</option>
+                              <option value="coding">Coding – Programming & Logic</option>
                              </select>
                           </div>
 

@@ -222,19 +222,23 @@ class ServiceController extends Controller
     {
         $courses = Service::where('category', 'Training')
             ->where('type', 'course')
-            ->select(
-                'id',
-                'name',
-                'price',
-                'tier',
-                'created_at',
-                'is_active'
-            )
             ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
             'data' => $courses
         ]);
+    }  
+    
+    public function pdf()
+    {
+        $courses = Service::where('category', 'Training')
+            ->where('type', 'course')
+            ->orderBy('tier')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.courses', compact('courses'));
+
+        return $pdf->stream('AlgoSpace-Saturday-Courses.pdf');
     }    
 }

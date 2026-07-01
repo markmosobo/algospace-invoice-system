@@ -132,5 +132,65 @@ if ($firstActivity) {
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('work.show', compact('project', 'servicesCategories'));
+    } 
+
+    /**
+     * Show all training courses (public)
+     * Optional tier filter via ?tier=
+     */
+    public function trainingCourses(Request $request)
+    {
+        $query = Service::where('category', 'Training')
+            ->where('type', 'course');
+
+        // Optional tier filter
+        if ($request->filled('tier')) {
+            $query->where('tier', $request->tier);
+        }
+
+        $courses = $query
+            ->orderBy('tier')
+            ->orderBy('title') // optional, nicer display
+            ->get();
+
+        return view('training.index', [
+            'courses'    => $courses,
+            'activeTier' => $request->tier
+        ]);
+    }
+
+    /**
+     * Show a single course by slug
+     */
+    public function showCourse(Service $course)
+    {
+        // Ensure it's really a training course
+        abort_if(
+            $course->category !== 'Training' ||
+            $course->type !== 'course',
+            404
+        );
+
+        return view('training.show', [
+            'course' => $course
+        ]);
+    }
+
+    /**
+     * Saturday timetable / schedule view
+     */
+    public function schedule()
+    {
+        $courses = Service::where('category', 'Training')
+            ->where('type', 'course')
+            ->whereNotNull('schedule')
+            ->orderBy('tier')
+            ->orderBy('title')
+            ->get();
+
+        return view('training.schedule', [
+            'courses' => $courses
+        ]);
     }    
+
 }

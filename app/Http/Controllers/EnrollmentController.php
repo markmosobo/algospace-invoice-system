@@ -51,4 +51,61 @@ class EnrollmentController extends Controller
             'courses' => $courses
         ]);
     }
+
+    public function requestEnrollment(Request $request)
+    {
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'phone'      => 'required|string|max:20',
+            'service_id' => 'required|exists:services,id',
+        ]);
+
+        // 1. Find or create customer by phone
+        $customer = Customer::firstOrCreate(
+            ['phone' => $request->phone],
+            ['name'  => $request->name]
+        );
+
+        // 2. Prevent duplicate requests
+        $exists = Enrollment::where('customer_id', $customer->id)
+            ->where('service_id', $request->service_id)
+            ->whereIn('status', ['pending','active'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'Enrollment already exists or pending approval'
+            ], 409);
+        }
+
+        // 3. Create PENDING enrollment
+        $enrollment = Enrollment::create([
+            'customer_id' => $customer->id,
+            'service_id'  => $request->service_id,
+            'status'      => 'pending',
+        ]);
+
+        return response()->json([
+            'message' => 'Enrollment request submitted. We will contact you shortly.'
+        ]);
+    }
+    
+    public function approve($id)
+    {
+        $enrollment = Enrollment::findOrFail($id);
+
+        $enrollment->update([
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Enrollment approved']);
+    }
+
+    public function reject($id)
+    {
+        Enrollment::findOrFail($id)->delete();
+
+        return response()->json(['message' => 'Enrollment rejected']);
+    }    
 }

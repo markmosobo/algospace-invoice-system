@@ -21,15 +21,33 @@
                 </button>
               </div> -->
 
+              <button
+                class="btn btn-sm btn-outline-danger"
+                @click="downloadCoursesPdf"
+              >
+                <i class="bi bi-file-earmark-pdf"></i>
+                Download PDF
+              </button>
+
+              <button
+                class="btn btn-sm btn-outline-success ms-2"
+                @click="sendCoursesWhatsapp"
+              >
+                <i class="bi bi-whatsapp"></i>
+                Send via WhatsApp
+              </button>
+
               <!-- TABLE -->
-              <table id="CoursesTable" class="table table-borderless">
+              <table id="CoursesTable" class="table table-borderless align-middle">
                 <thead>
                   <tr>
-                    <th>Course Name</th>
-                    <th>Tier</th>
+                    <th>Course</th>
+                    <th>Level</th>
+                    <th>Schedule</th>
+                    <th>Duration</th>
+                    <th>Hours</th>
                     <th>Price (KES)</th>
                     <th>Status</th>
-                    <th>Created At</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -37,37 +55,74 @@
                 <tbody>
                   <!-- LOADING -->
                   <tr v-if="loading">
-                    <td colspan="6" class="text-center">
+                    <td colspan="8" class="text-center py-4">
                       <div class="spinner-border text-success"></div>
+                    </td>
+                  </tr>
+
+                  <!-- NO DATA -->
+                  <tr v-if="!loading && courses.length === 0">
+                    <td colspan="8" class="text-center text-muted py-4">
+                      No courses found
                     </td>
                   </tr>
 
                   <!-- DATA -->
                   <tr v-for="c in courses" :key="c.id">
-                    <td>{{ c.name }}</td>
 
+                    <!-- COURSE NAME -->
                     <td>
-                      <span class="badge bg-info">
-                        {{ c.tier || 'basic' }}
+                      <strong>{{ c.name }}</strong>
+                      <br />
+                      <small class="text-muted">{{ c.unit }}</small>
+                    </td>
+
+                    <!-- TIER -->
+                    <td>
+                      <span
+                        class="badge text-capitalize"
+                        :class="{
+                          'bg-info': c.tier === 'basic',
+                          'bg-warning': c.tier === 'intermediate',
+                          'bg-danger': c.tier === 'advanced',
+                          'bg-secondary': c.tier === 'refresher'
+                        }"
+                      >
+                        {{ c.tier }}
                       </span>
                     </td>
 
-                    <td>{{ c.price.toLocaleString() }}</td>
+                    <!-- SCHEDULE -->
+                    <td class="text-capitalize">
+                      {{ c.schedule_type }}
+                    </td>
 
+                    <!-- DURATION -->
+                    <td>
+                      {{ c.duration_units }} Saturdays
+                    </td>
+
+                    <!-- SESSION HOURS -->
+                    <td>
+                      {{ c.session_hours }} hrs
+                    </td>
+
+                    <!-- PRICE -->
+                    <td>
+                      {{ Number(c.price).toLocaleString() }}
+                    </td>
+
+                    <!-- STATUS -->
                     <td>
                       <span
                         class="badge"
-                        :class="{
-                          'bg-success': c.status === 'active',
-                          'bg-secondary': c.status === 'inactive'
-                        }"
+                        :class="c.is_active ? 'bg-success' : 'bg-secondary'"
                       >
-                        {{ c.status }}
+                        {{ c.is_active ? 'In-Store + Remote' : 'In-Store Only' }}
                       </span>
                     </td>
 
-                    <td>{{ formatDate(c.created_at) }}</td>
-
+                    <!-- ACTION -->
                     <td>
                       <div class="btn-group">
                         <button
@@ -78,26 +133,74 @@
                         </button>
 
                         <div class="dropdown-menu">
-                          <a class="dropdown-item" href="#" @click.prevent="editCourse(c)">
+                          <a
+                            class="dropdown-item"
+                            href="#"
+                            @click.prevent="viewCourse(c)"
+                          >
+                            View
+                          </a>
+                          <a
+                            class="dropdown-item"
+                            href="#"
+                            @click.prevent="editCourse(c)"
+                          >
                             Edit
                           </a>
 
                           <div class="dropdown-divider"></div>
 
-                          <a class="dropdown-item text-danger" href="#" @click.prevent="removeCourse(c)">
+                          <a
+                            class="dropdown-item text-danger"
+                            href="#"
+                            @click.prevent="removeCourse(c)"
+                          >
                             Delete
                           </a>
                         </div>
                       </div>
                     </td>
-                  </tr>
 
+                  </tr>
                 </tbody>
               </table>
 
             </div>
           </div>
         </div>
+
+        <div class="modal fade" id="viewCourseModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+              <div class="modal-header">
+                <h5 class="modal-title">Course Details</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body" v-if="selectedCourse">
+
+                <table class="table table-sm">
+                  <tr><th>Name</th><td>{{ selectedCourse.name }}</td></tr>
+                  <tr><th>Tier</th><td>{{ selectedCourse.tier }}</td></tr>
+                  <tr><th>Schedule</th><td>{{ selectedCourse.schedule_type }}</td></tr>
+                  <tr><th>Duration</th><td>{{ selectedCourse.duration_units }} Saturdays</td></tr>
+                  <tr><th>Session Hours</th><td>{{ selectedCourse.session_hours }}</td></tr>
+                  <tr><th>Price</th><td>KES {{ Number(selectedCourse.price).toLocaleString() }}</td></tr>
+                  <tr><th>Status</th>
+                    <td>
+                      <span class="badge" :class="selectedCourse.is_active ? 'bg-success' : 'bg-secondary'">
+                        {{ selectedCourse.is_active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+
+              </div>
+
+            </div>
+          </div>
+        </div>        
 
         <!-- COURSE MODAL -->
         <div class="modal fade" id="courseModal" tabindex="-1">
@@ -178,6 +281,7 @@ export default {
     return {
       courses: [],
       loading: true,
+      selectedCourse: null,
 
       courseForm: {
         id: null,
@@ -190,7 +294,37 @@ export default {
   },
 
   methods: {
+    viewCourse(course) {
+      this.selectedCourse = course;
 
+      new bootstrap.Modal(
+        document.getElementById('viewCourseModal')
+      ).show();
+    },    
+    downloadCoursesPdf() {
+      window.open('/api/courses/pdf', '_blank');
+    },
+sendCoursesWhatsapp() {
+  const pdfUrl = 'https://algospacecyber.co.ke/courses/pdf';
+
+  const message = encodeURIComponent(
+    `*Saturday Computer Classes – AlgoSpace Cyber*\n\n` +
+    `Download full course list (PDF):\n` +
+    `${pdfUrl}\n\n` +
+    `*Timetable*\n` +
+    `08:30 – 09:30  Session 1\n` +
+    `09:30 – 10:30  Session 2\n` +
+    `10:30 – 10:45  Break\n` +
+    `10:45 – 11:45  Session 3\n` +
+    `11:45 – 12:45  Session 4\n` +
+    `12:45 – 13:00  Q&A / Payments\n\n` +
+    `Location: AlgoSpace Cyber\n` +
+    `Day: Every Saturday\n\n` +
+    `Reply here to register or ask questions.`
+  );
+
+  window.open(`https://wa.me/?text=${message}`, '_blank');
+},  
     async loadCourses() {
       this.loading = true;
 

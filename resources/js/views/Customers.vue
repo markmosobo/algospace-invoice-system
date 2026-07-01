@@ -833,7 +833,12 @@
           ).then(res => {
             this.noteForm.note = ''
             this.selectedCustomer.notes.push(res.data.note)
-            $('#AddCustomerNoteModal').modal('hide')
+
+            const modalEl = document.getElementById('AddCustomerNoteModal')
+            const modal = bootstrap.Modal.getInstance(modalEl)
+              || new bootstrap.Modal(modalEl)
+
+            modal.hide()
           })
         },        
         openImagePreview(image) {

@@ -149,7 +149,17 @@
                                     </ul>
                                 </li>
 
-                                <li><a class="menu-item" href="#">Guides</a></li>
+                                <li>
+                                    <a class="menu-item" href="{{ url('/training-courses') }}">Training</a>
+                                    <ul>
+                                        <li><a href="{{ url('/training-courses') }}">All Courses</a></li>
+                                        <li><a href="{{ url('/training-courses?tier=basic') }}">Basic - Computer Fundamentals</a></li>
+                                        <li><a href="{{ url('/training-courses?tier=practical') }}">Practical – Office & Cyber Skills</a></li>
+                                        <li><a href="{{ url('/training-courses?tier=refresher') }}">Refresher - Skills Update</a></li>
+                                        <li><a href="{{ url('/training-courses?tier=coding') }}">Coding – Programming & Logic</a></li>
+                                        <li><a href="{{ url('/training-courses/schedule') }}">Saturday Timetable</a></li>
+                                    </ul>
+                                </li>
 
                                 <li><a class="menu-item" href="{{ url('/contact') }}">Get in Touch</a></li>
 

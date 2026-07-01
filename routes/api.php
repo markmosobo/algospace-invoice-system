@@ -67,6 +67,8 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login2', [AuthController::class, 'login'])->name('login2');
 Route::get('/services/export-pdf', [ServiceController::class, 'exportPdf'])
     ->name('services.export-pdf');
+Route::get('/courses/pdf', [ServiceController::class, 'pdf']);
+
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 /*
 |--------------------------------------------------------------------------
@@ -145,6 +147,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/courses', [ServiceController::class, 'courses']);
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::post('/enrollments', [EnrollmentController::class, 'store']);
+    Route::post('/enrollments/request', [EnrollmentController::class, 'requestEnrollment']);
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/quick-sales', [ListController::class, 'quickSales']);

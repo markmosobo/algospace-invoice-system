@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<h3>Saturday Cyber Training Courses</h3>
+<h3>Saturday AlgoSpace Cyber Training Courses</h3>
 
 <table>
   <thead>

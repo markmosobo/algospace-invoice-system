@@ -136,7 +136,7 @@
                                         <li><a href="#">What We Offer</a></li>
                                         <li><a href="#">Why Choose Us</a></li>
                                         <li><a href="#">Our Setup</a></li>
-                                        <li><a href="#">Contact Us</a></li>
+                                        <li><a href="{{ url('/library') }}">Community Library</a></li>
                                     </ul>
                                 </li>
                                 <li>

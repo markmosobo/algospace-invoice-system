@@ -305,11 +305,11 @@ export default {
       window.open('/api/courses/pdf', '_blank');
     },
 sendCoursesWhatsapp() {
-  const pdfUrl = 'https://algospacecyber.co.ke/courses/pdf';
+  const pdfUrl = 'https://algospacecyber.co.ke/training-courses';
 
   const message = encodeURIComponent(
     `*Saturday Computer Classes – AlgoSpace Cyber*\n\n` +
-    `Download full course list (PDF):\n` +
+    `View full course list here:\n` +
     `${pdfUrl}\n\n` +
     `*Timetable*\n` +
     `08:30 – 09:30  Session 1\n` +

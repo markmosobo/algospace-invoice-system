@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\Project;
+use App\Models\Book;
 use Carbon\Carbon;
 
 class MarketingController extends Controller
@@ -17,19 +18,19 @@ class MarketingController extends Controller
         // or InvoiceItem::count()
         $customersCount = Customer::count();
         $servicesCount = Service::count();
-$firstActivity = collect([
-    Invoice::min('created_at'),
-    Customer::min('created_at'),
-])->filter()->sort()->first();
+        $firstActivity = collect([
+            Invoice::min('created_at'),
+            Customer::min('created_at'),
+        ])->filter()->sort()->first();
 
-$yearsServing = 0;
-$hasExtraMonths = false;
+        $yearsServing = 0;
+        $hasExtraMonths = false;
 
-if ($firstActivity) {
-    $months = Carbon::parse($firstActivity)->diffInMonths(now());
-    $yearsServing = max(1, intdiv($months, 12));
-    $hasExtraMonths = ($months % 12) > 0;
-}
+        if ($firstActivity) {
+            $months = Carbon::parse($firstActivity)->diffInMonths(now());
+            $yearsServing = max(1, intdiv($months, 12));
+            $hasExtraMonths = ($months % 12) > 0;
+        }
 
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
@@ -49,6 +50,40 @@ if ($firstActivity) {
 
         return view('contact', compact('servicesCategories'));
     }
+
+    public function library()
+    {
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('library', compact('servicesCategories'));
+    }
+    
+    public function physicalBooks()
+    {
+        $servicesCategories = Service::select('category')
+            ->distinct()
+            ->pluck('category');
+
+        $books = Book::where('status', 'available')
+            ->latest()
+            ->paginate(9);
+
+        return view('library.physical-books', compact('servicesCategories', 'books'));
+    }
+
+    public function eBooks()
+    {
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('library.e-books', compact('servicesCategories'));
+    }
+
+    public function communitySpace()
+    {
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+        return view('library.community-space', compact('servicesCategories'));
+    }   
 
     public function about()
     {

@@ -23,6 +23,11 @@ Route::post('/cyber-request', [CyberRequestController::class, 'store'])
     ->name('cyber.requests.store');
 Route::get('/contact', [MarketingController::class, 'contact']);
 Route::get('/about', [MarketingController::class, 'about']);
+Route::get('/library', [MarketingController::class, 'library']);
+Route::get('/physical-books', [MarketingController::class, 'physicalBooks'])->name('physical.books');
+Route::get('/e-books', [MarketingController::class, 'eBooks'])->name('e.books');
+Route::get('/community-space', [MarketingController::class, 'communitySpace'])->name('community.space');
+
 // Public training pages
 Route::get('/training-courses', [MarketingController::class, 'trainingCourses']);
 Route::get('/training-courses/schedule', [MarketingController::class, 'schedule']);

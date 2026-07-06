@@ -18,7 +18,9 @@ class Book extends Model
         'added_by',
         'partner_id',
         'status',
-        'cover_image'
+        'cover_image',
+        'is_ebook',
+        'ebook_file'
     ];
 
     public function borrowRecords()
@@ -36,12 +38,19 @@ class Book extends Model
         return $this->belongsTo(User::class, 'partner_id');
     }
 
-    protected $appends = ['cover_url'];
+    protected $appends = ['cover_url', 'ebook_url'];
 
     public function getCoverUrlAttribute()
     {
         return $this->cover_image
             ? asset('storage/' . $this->cover_image)
+            : null;
+    }
+
+    public function getEbookUrlAttribute()
+    {
+        return $this->ebook_file
+            ? asset('storage/' . $this->ebook_file)
             : null;
     }
 }

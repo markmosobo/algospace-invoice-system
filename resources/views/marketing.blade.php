@@ -61,7 +61,7 @@
                                 <div class="topbar-widget">
                                     <a href="#">
                                         <img src="{{ asset('templates/marketing_site/images/svg-white/bell.svg') }}" alt="">
-                                        Visit 5 Times, Get Rewarded — Ask for Your Loyalty Card
+                                        Visit 10 Times, Get Rewarded — Ask for Your Loyalty Card
                                     </a>
                                 </div>
                             </div>

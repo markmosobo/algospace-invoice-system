@@ -12,77 +12,172 @@
         </router-link>
       </li>
 
-<li v-show="userRole === 'office'" class="nav-item">
-  <a class="nav-link collapsed" data-bs-toggle="collapse" href="#operations-nav">
-    <i class="bi bi-briefcase"></i>
-    <span>Operations</span>
-    <i class="bi bi-chevron-down ms-auto"></i>
-  </a>
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#operations-nav">
+          <i class="bi bi-briefcase"></i>
+          <span>Operations</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
 
-  <ul id="operations-nav" class="nav-content collapse">
-    <li>
-      <RouterLink to="/quick-sale" class="nav-link">
-        <i class="bi bi-lightning-charge"></i> Quick Sale
-      </RouterLink>
-    </li>
-    <li>
-      <RouterLink to="/enrollments" class="nav-link">
-        <i class="bi bi-mortarboard"></i> Enrollments
-      </RouterLink>
-    </li>
-    <li>
-      <RouterLink to="/courses" class="nav-link">
-        <i class="bi bi-journal-bookmark-fill"></i> Courses
-      </RouterLink>
-    </li>
-  </ul>
-</li>      
+        <ul id="operations-nav" class="nav-content collapse">
+          <li>
+            <RouterLink to="/quick-sale" class="nav-link">
+              <i class="bi bi-lightning-charge"></i> Quick Sale
+            </RouterLink>
+          </li>
+          <li v-show="userRole === 'office'" class="nav-item">
+            <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-cash-stack"></i>
+                <span>Expenses</span>
+              </a>
+            </router-link>
+          </li> 
 
-      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
-        <router-link to="/projects" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-            <i class="bi bi-kanban"></i>
-            <span>Projects</span>
-          </a>
-        </router-link>
+          <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+            <router-link to="/projects" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-kanban"></i>
+                <span>Projects</span>
+              </a>
+            </router-link>
+          </li>
+                    
+          <li v-show="userRole === 'office'" class="nav-item">
+            <router-link to="/cyber-requests" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href"
+                :class="{ active: isActive }"
+                class="nav-link"
+                @click="navigate">
+                <i class="bi bi-inbox"></i>
+                Website Orders
+              </a>
+            </router-link>
+          </li>        
+
+        </ul>
+      </li>      
+      
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#training-nav">
+          <i class="bi bi-briefcase"></i>
+          <span>Training</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+
+        <ul id="training-nav" class="nav-content collapse">  
+          <li>
+            <RouterLink to="/courses" class="nav-link">
+              <i class="bi bi-journal-bookmark-fill"></i> Courses
+            </RouterLink>
+          </li>               
+          <li>
+            <RouterLink to="/enrollments" class="nav-link">
+              <i class="bi bi-mortarboard"></i> Enrollments
+            </RouterLink>
+          </li>
+        </ul>
       </li> 
       
-      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
-        <router-link to="/notifications" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-            <i class="bi bi-envelope"></i>
-            <span>Notifications</span>
-          </a>
-        </router-link>
+      <!-- Library Section -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#library-nav">
+          <i class="bi bi-book-half"></i>
+          <span>Library</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="library-nav" class="nav-content collapse">
+          <li>
+            <RouterLink to="/book-rentals" class="nav-link">
+              <i class="bi bi-circle"></i> Book Rentals
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/books" class="nav-link">
+              <i class="bi bi-circle"></i> Books Catalog
+            </RouterLink>
+          </li>
+        </ul>
+      </li>  
+      
+      <!-- Inventory -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">
+          <i class="bi bi-boxes"></i>
+          <span>Inventory</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="supplies-nav" class="nav-content collapse">
+          <li>
+            <router-link to="/supplies" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Supplies
+              </a>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/restocks" custom v-slot="{ href, navigate, isActive }">
+              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
+                <i class="bi bi-circle"></i> Restocks
+              </a>
+            </router-link>
+          </li>
+        </ul>
       </li>   
       
-      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
-        <router-link to="/enrollments" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-            <i class="bi bi-mortarboard"></i>
-            <span>Enrollments</span>
-          </a>
-        </router-link>
-      </li>
+      <!-- People & Partners -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav">
+          <i class="bi bi-people"></i>
+          <span>People & Partners</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="users-nav" class="nav-content collapse">
+          <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
+          <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
+          <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
+          <li><RouterLink to="/partners" class="nav-link"><i class="bi bi-circle"></i> Partners</RouterLink></li>
+          <li><RouterLink to="/borrowers" class="nav-link"><i class="bi bi-circle"></i> Book Borrowers</RouterLink></li>
+        </ul>
+      </li> 
       
-      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
-        <router-link to="/courses" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-            <i class="bi bi-journal-bookmark-fill"></i>
-            <span>Courses</span>
-          </a>
-        </router-link>
-      </li>      
-
-      <!-- Analytics -->
-      <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
-        <router-link to="/analytics" custom v-slot="{ href, navigate, isActive }">
-          <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-            <i class="bi bi-graph-up-arrow"></i>
-            <span>Analytics</span>
-          </a>
-        </router-link>
-      </li>      
+      <!-- Billing -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#invoice-nav">
+          <i class="bi bi-receipt"></i>
+          <span>Billing</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="invoice-nav" class="nav-content collapse">
+          <li><RouterLink to="/pending-invoices" class="nav-link"><i class="bi bi-circle"></i> Pending Invoices</RouterLink></li>
+          <li><RouterLink to="/invoices" class="nav-link"><i class="bi bi-circle"></i> Paid Invoices</RouterLink></li>
+        </ul>
+      </li> 
+      
+      <!-- Reports & Insights -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#reports-nav">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>Reports & Insights</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="reports-nav" class="nav-content collapse">
+          <li><RouterLink to="/reports" class="nav-link"><i class="bi bi-circle"></i> Reports</RouterLink></li>
+          <li><RouterLink to="/analytics" class="nav-link"><i class="bi bi-circle"></i> Analytics</RouterLink></li>
+        </ul>
+      </li>   
+      
+      <!-- Communication -->
+      <li v-show="userRole === 'office'" class="nav-item">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#communication-nav">
+          <i class="bi bi-envelope"></i>
+          <span>Communication</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="communication-nav" class="nav-content collapse">
+          <li><RouterLink to="/notifications" class="nav-link"><i class="bi bi-circle"></i> Notifications</RouterLink></li>
+        </ul>
+      </li>                      
 
       <!-- Ledger Reports -->
       <li v-show="userRole === 'personal'" class="nav-item">
@@ -114,47 +209,6 @@
         </router-link>
       </li>
 
-
-    <li v-show="userRole === 'office'" class="nav-item">
-      <router-link to="/quick-sale" custom v-slot="{ href, navigate, isActive }">
-        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-          <i class="bi bi-lightning-charge"></i>
-          <span>Quick Sale</span>
-        </a>
-      </router-link>
-    </li>
-
-    <li v-show="userRole === 'office'" class="nav-item">
-      <router-link to="/cyber-requests" custom v-slot="{ href, navigate, isActive }">
-        <a :href="href"
-          :class="{ active: isActive }"
-          class="nav-link"
-          @click="navigate">
-          <i class="bi bi-inbox"></i>
-          Cyber Requests
-        </a>
-      </router-link>
-    </li>    
-
-    <li v-show="userRole === 'office'" class="nav-item">
-      <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
-        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-          <i class="bi bi-cash-stack"></i>
-          <span>Expenses</span>
-        </a>
-      </router-link>
-    </li>
-
-
-    <li v-show="userRole === 'office'" class="nav-item">
-      <router-link to="/reports" custom v-slot="{ href, navigate, isActive }">
-        <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-          <i class="bi bi-graph-up-arrow"></i>
-          <span>Reports</span>
-        </a>
-      </router-link>
-    </li>
-
       <!-- Payments -->
       <!-- <li v-show="userRole === 'office'" class="nav-item">
         <router-link to="/payments" custom v-slot="{ href, navigate }">
@@ -169,7 +223,7 @@
       <li v-show="userRole === 'personal'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#listing-nav">
           <i class="bi bi-gear"></i>
-          <span>Configurations</span>
+          <span>Configuration</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="listing-nav" class="nav-content collapse">
@@ -193,7 +247,7 @@
       <li v-show="userRole === 'office'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#office-config-nav">
           <i class="bi bi-gear"></i>
-          <span>Configurations</span>
+          <span>Configuration</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="office-config-nav" class="nav-content collapse">
@@ -212,12 +266,12 @@
             </router-link>
           </li>
         </ul>
-      </li>
+      </li>       
 
       <li v-show="userRole === 'farm'" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#farm-config-nav">
           <i class="bi bi-sliders"></i>
-          <span>Configurations</span>
+          <span>Configuration</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="farm-config-nav" class="nav-content collapse">
@@ -376,88 +430,24 @@
         </ul>
       </li>     
       
-      <!-- Inventory -->
+
+
+      <!-- Administration -->
       <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">
-          <i class="bi bi-boxes"></i>
-          <span>Inventory</span>
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#administration-nav">
+          <i class="bi bi-shield-lock"></i>
+          <span>Administration</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="supplies-nav" class="nav-content collapse">
-          <li>
-            <router-link to="/supplies" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i> Supplies
-              </a>
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/restocks" custom v-slot="{ href, navigate, isActive }">
-              <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
-                <i class="bi bi-circle"></i> Restocks
-              </a>
-            </router-link>
-          </li>
+        <ul id="administration-nav" class="nav-content collapse">
+          <li><RouterLink to="/system-logs" class="nav-link"><i class="bi bi-circle"></i> System Logs</RouterLink></li>
         </ul>
       </li>
 
-      <!-- Resources -->
-      <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav">
-          <i class="bi bi-people"></i>
-          <span>Resources</span>
-          <i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="users-nav" class="nav-content collapse">
-          <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
-          <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
-          <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
-          <li><RouterLink to="/partners" class="nav-link"><i class="bi bi-circle"></i> Partners</RouterLink></li>
-          <li><RouterLink to="/borrowers" class="nav-link"><i class="bi bi-circle"></i> Book Borrowers</RouterLink></li>
-        </ul>
-      </li>
 
-      <!-- Invoices -->
-      <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#invoice-nav">
-          <i class="bi bi-receipt"></i>
-          <span>Invoices</span>
-          <i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="invoice-nav" class="nav-content collapse">
-          <li><RouterLink to="/pending-invoices" class="nav-link"><i class="bi bi-circle"></i> Pending</RouterLink></li>
-          <li><RouterLink to="/invoices" class="nav-link"><i class="bi bi-circle"></i> Paid</RouterLink></li>
-        </ul>
-      </li>
 
-      <!-- Library Section -->
-      <li v-show="userRole === 'office'" class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#library-nav">
-          <i class="bi bi-book-half"></i>
-          <span>Library</span>
-          <i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="library-nav" class="nav-content collapse">
-          <li>
-            <RouterLink to="/book-rentals" class="nav-link">
-              <i class="bi bi-circle"></i> Book Rentals
-            </RouterLink>
-          </li>
-          <li>
-            <RouterLink to="/books" class="nav-link">
-              <i class="bi bi-circle"></i> Books Catalog
-            </RouterLink>
-          </li>
-        </ul>
-      </li>
 
-      <!-- Logs -->
-      <li v-show="userRole === 'office'" class="nav-item">
-        <RouterLink to="/system-logs" class="nav-link">
-          <i class="bi bi-shield-check"></i>
-          <span>System Logs</span>
-        </RouterLink>
-      </li>
+
 
       <!-- Diary -->
       <li class="nav-item mt-3">

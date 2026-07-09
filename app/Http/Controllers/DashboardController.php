@@ -46,6 +46,7 @@ class DashboardController extends Controller
                         'officeTotal'     => PersonalAccount::where('name','POCHI MPESA')
                                           ->orWhere('name','STAWISHA SACCO - SHOP')
                                           ->orWhere('name','I&M BANK')
+                                          ->orWhere('name','I&M ALGOSPACE CYBER PAYBILL')
                                           ->orWhere('name','CASH')
                                           ->sum('balance'),  
                         'officeCash'     => PersonalAccount::whereIn('name', ['CASH', 'POCHI MPESA'])->sum('balance'),  

@@ -15,6 +15,8 @@
     <link rel="icon" href="/algospace-favicon.png" type="image/x-icon">
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <!-- CSS Files -->
     <link href="{{ asset('templates/marketing_site/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('templates/marketing_site/css/plugins.css') }}" rel="stylesheet">
@@ -1195,6 +1197,10 @@
             <a href="#"><i class="fa-brands fa-x-twitter"></i></a> -->
             <a href="https://wa.me/254112514440?text=Hello%20I%20found%20you%20via%20your%20website" target="_blank" rel="noopener">
                 <i class="fa-brands fa-whatsapp"></i>
+            </a>
+            <a href="https://bsky.app/profile/YOUR_USERNAME.bsky.social"
+            target="_blank" rel="noopener">
+                <i class="fa-brands fa-bluesky"></i>
             </a>
             <!-- <a href="#"><i class="fa-brands fa-instagram"></i></a>
             <a href="#"><i class="fa-brands fa-youtube"></i></a> -->

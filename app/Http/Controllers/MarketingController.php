@@ -64,7 +64,8 @@ class MarketingController extends Controller
             ->distinct()
             ->pluck('category');
 
-        $books = Book::where('status', 'available')
+        $books = Book::where('is_ebook', false)
+            ->where('status', 'available')
             ->latest()
             ->paginate(9);
 

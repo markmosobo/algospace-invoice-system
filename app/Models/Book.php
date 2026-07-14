@@ -19,8 +19,14 @@ class Book extends Model
         'partner_id',
         'status',
         'cover_image',
-        'is_ebook',
-        'ebook_file'
+        // E-Book fields
+        'book_type',
+        'ebook_file',
+        'pages',
+        'language',
+        'download_count',
+        'file_size',
+        'description',
     ];
 
     public function borrowRecords()
@@ -38,7 +44,7 @@ class Book extends Model
         return $this->belongsTo(User::class, 'partner_id');
     }
 
-    protected $appends = ['cover_url', 'ebook_url'];
+    protected $appends = ['cover_url'];
 
     public function getCoverUrlAttribute()
     {
@@ -52,5 +58,22 @@ class Book extends Model
         return $this->ebook_file
             ? asset('storage/' . $this->ebook_file)
             : null;
+    }
+
+    public function getFileSizeHumanAttribute()
+    {
+        if (!$this->file_size) {
+            return null;
+        }
+
+        $units = ['Bytes', 'KB', 'MB', 'GB'];
+
+        $bytes = $this->file_size;
+
+        for ($i = 0; $bytes >= 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

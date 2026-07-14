@@ -49,7 +49,7 @@
                 :class="{ active: isActive }"
                 class="nav-link"
                 @click="navigate">
-                <i class="bi bi-inbox"></i>
+                <i class="bi bi-globe2"></i>
                 Website Orders
               </a>
             </router-link>

@@ -246,6 +246,22 @@ class UserController extends Controller
         return response()->json($borrower);
     }
 
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = auth()->user();
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password changed successfully.'
+        ]);
+    }   
+
 
     
 }

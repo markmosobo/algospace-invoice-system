@@ -26,7 +26,7 @@
         <div class="row g-4 gx-5 mb-5">
             <div class="col-lg-6">
                 <div class="relative">
-                    <img src="{{ asset('templates/marketing_site/images/misc/l2.webp') }}"
+                    <img src="{{ asset('templates/marketing_site/images/misc/books.webp') }}"
                          class="w-100 rounded-1 wow scaleOut"
                          data-wow-delay=".0s"
                          alt="Community Library Space">
@@ -34,7 +34,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="relative">
-                    <img src="{{ asset('templates/marketing_site/images/misc/l3.webp') }}"
+                    <img src="{{ asset('templates/marketing_site/images/misc/library.webp') }}"
                          class="w-100 rounded-1 wow scaleOut"
                          data-wow-delay=".2s"
                          alt="Reading and Study Area">
@@ -160,8 +160,9 @@
                         The Cyber Community Library is a shared resource —
                         supporting education, imagination, and lifelong learning.
                     </p>
-                    <a href="#" class="btn btn-color">
-                        Explore the Library
+                    <a class="btn-main fx-slide btn-line wow fadeInLeft"
+                    href="{{ url('/physical-books') }}">
+                        <span>Explore the Library</span>
                     </a>
                 </div>
             </div>

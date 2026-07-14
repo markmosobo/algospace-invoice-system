@@ -315,7 +315,7 @@
             <a href="https://wa.me/254112514440?text=Hello%20I%20found%20you%20via%20your%20website" target="_blank" rel="noopener">
                 <i class="fa-brands fa-whatsapp"></i>
             </a>
-            <a href="https://bsky.app/profile/YOUR_USERNAME.bsky.social"
+            <a href="https://bsky.app/profile/algospacecyber.bsky.social"
             target="_blank" rel="noopener">
                 <i class="fa-brands fa-bluesky"></i>
             </a>

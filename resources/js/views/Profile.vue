@@ -10,8 +10,9 @@
               <!-- <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle"> -->
               <h2>{{form.name}}</h2>
               <h3 v-if="form.role == 'admin'">Admin</h3>
-              <h3 v-if="form.role == 'landlord'">Landlord</h3>
-              <h3 v-if="form.role == 'caretaker'">Caretaker</h3>
+              <h3 v-if="form.role == 'staff'">Staff</h3>
+              <h3 v-if="form.role == 'office'">Office</h3>
+              <h3 v-if="form.role == 'farm'">Farm</h3>
               <h3 v-if="form.role == 'service_provider'">Service Provider</h3>
               <h3 v-if="form.role == 'tenant'">Tenant</h3>
               <!-- <div class="social-links mt-2">
@@ -152,7 +153,7 @@
                           name="password"
                           class="form-control"
                           id="yourPassword"
-                          v-model="form.new_password"
+                          v-model="form.password"
                           required
                         />
                         <span class="input-group-text" @click="togglePasswordVisibility" style="cursor: pointer;">
@@ -165,12 +166,11 @@
                       <label for="renewPassword" class="col-md-4 col-lg-6 col-form-label">Re-enter New Password</label>
                       <div class="input-group">
                         <input
-                          :type="isPasswordVisible ? 'text' : 'password'"
-                          name="password"
-                          class="form-control"
-                          id="yourPassword"
-                          v-model="form.conf_password"
-                          required
+                            :type="isPasswordVisible ? 'text' : 'password'"
+                            name="password_confirmation"
+                            class="form-control"
+                            v-model="form.password_confirmation"
+                            required
                         />
                         <span class="input-group-text" @click="togglePasswordVisibility" style="cursor: pointer;">
                           <i :class="isPasswordVisible ? 'fa fa-eye' : 'fa fa-eye-slash'"></i>
@@ -181,7 +181,8 @@
                     <div class="text-center">
                       <button type="submit" style="background-color: darkgreen; border-color: darkgreen;" class="btn btn-sm rounded-pill btn-primary">Change Password</button>
                     </div>
-                  </form><!-- End Change Password Form -->
+                  </form>
+                  <!-- End Change Password Form -->
 
                 </div>
 
@@ -220,8 +221,8 @@
                     city: '',
                     county: '',
                     address: '',
-                    new_password: '',
-                    conf_password: ''
+                    password: '',
+                    password_confirmation: ''
                 }
             }
         },
@@ -242,23 +243,30 @@
              this.$router.push('/profile')
             })
         },
-        changePassword(){
-            axios.put('api/changepassword/'+this.form.id, this.form).then(() => {
-                toast.fire(
-                'Success!',
-                'Password changed!',
-                'success'
-             )
-             this.$router.push('/profile') 
-            }).catch((error) => {
-                Swail.fire(
-                'Failed!',
-                 error,
-                'fail'
-             )
-             this.$router.push('/profile')
-            })
-        }
+changePassword() {
+    axios.put('/api/change-password', this.form)
+        .then((response) => {
+
+            toast.fire({
+                icon: 'success',
+                title: response.data.message
+            });
+
+            this.form.password = '';
+            this.form.password_confirmation = '';
+
+            this.$router.push('/profile');
+        })
+        .catch((error) => {
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed!',
+                text: error.response?.data?.message || 'Unable to change password.'
+            });
+
+        });
+}
       },
       mounted(){
         this.user = localStorage.getItem('user');

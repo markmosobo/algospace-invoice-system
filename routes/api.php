@@ -229,6 +229,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/', [BookController::class, 'store']);
         Route::put('/{book}', [BookController::class, 'update']);
         Route::delete('/{book}', [BookController::class, 'destroy']);
+
     });
 
     Route::prefix('borrow')->group(function () {
@@ -243,6 +244,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/borrowers/{id}', [UserController::class, 'updateUser']);
     Route::post('/partners', [UserController::class, 'storeUser']);
     Route::put('/partners/{id}', [UserController::class, 'updateUser']);
+    Route::put('/change-password', [UserController::class, 'changePassword']);
 
     Route::post('/ai/chat', [AiChatController::class, 'send']);
     Route::get('/ai/chat/{session}', [AiChatController::class, 'messages']); 

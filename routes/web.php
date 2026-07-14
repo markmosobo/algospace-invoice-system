@@ -5,6 +5,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CyberRequestController;
 use App\Http\Controllers\MarketingController;
+use App\Http\Controllers\BookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,16 @@ Route::get('/library', [MarketingController::class, 'library']);
 Route::get('/physical-books', [MarketingController::class, 'physicalBooks'])->name('physical.books');
 Route::get('/e-books', [MarketingController::class, 'eBooks'])->name('e.books');
 Route::get('/community-space', [MarketingController::class, 'communitySpace'])->name('community.space');
+
+Route::prefix('e-books')->group(function () {
+
+    Route::get('/{book}/download', [BookController::class, 'download'])
+        ->name('ebooks.download');
+
+    Route::get('/{book}/read', [BookController::class, 'read'])
+        ->name('ebooks.read');
+
+});
 
 // Public training pages
 Route::get('/training-courses', [MarketingController::class, 'trainingCourses']);

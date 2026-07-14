@@ -64,8 +64,8 @@ class MarketingController extends Controller
             ->distinct()
             ->pluck('category');
 
-        $books = Book::where('is_ebook', false)
-            ->where('status', 'available')
+        $books = Book::with('partner')
+            ->where('book_type', 'physical')
             ->latest()
             ->paginate(9);
 
@@ -75,8 +75,11 @@ class MarketingController extends Controller
     public function eBooks()
     {
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
-
-        return view('library.e-books', compact('servicesCategories'));
+        $books = Book::where('book_type', 'ebook')
+            ->where('status', 'available')
+            ->latest()
+            ->paginate(9);
+        return view('library.e-books', compact('servicesCategories', 'books'));
     }
 
     public function communitySpace()

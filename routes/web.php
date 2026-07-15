@@ -28,7 +28,9 @@ Route::get('/library', [MarketingController::class, 'library']);
 Route::get('/physical-books', [MarketingController::class, 'physicalBooks'])->name('physical.books');
 Route::get('/e-books', [MarketingController::class, 'eBooks'])->name('e.books');
 Route::get('/community-space', [MarketingController::class, 'communitySpace'])->name('community.space');
-
+Route::get('/library/books/{book}', [MarketingController::class, 'showBook'])
+    ->name('library.books.show');
+    
 Route::prefix('e-books')->group(function () {
 
     Route::get('/{book}/download', [BookController::class, 'download'])

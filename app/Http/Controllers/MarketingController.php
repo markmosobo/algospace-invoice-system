@@ -87,7 +87,20 @@ class MarketingController extends Controller
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    
 
         return view('library.community-space', compact('servicesCategories'));
-    }   
+    }  
+    
+    public function showBook(Book $book)
+    {
+        $book->load([
+            'partner',
+            'addedBy',
+            'borrowRecords'
+        ]);
+        $servicesCategories = Service::select('category')->distinct()->pluck('category');    
+
+
+        return view('library.book', compact('book', 'servicesCategories'));
+    }    
 
     public function about()
     {

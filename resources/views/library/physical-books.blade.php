@@ -111,9 +111,11 @@
 
                                 @if($book->status == 'available')
 
-                                    <button class="btn btn-success rounded-pill">
-                                        Available for Borrowing
-                                    </button>
+                                    <a href="{{ route('library.books.show', $book) }}"
+                                        class="btn-main fx-slide btn-line wow fadeInUp"
+                                        data-wow-delay=".7s">
+                                        <span>View Book</span>
+                                    </a>
 
                                 @else
 

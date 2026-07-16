@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BorrowRecord;
 use App\Models\User;
+use App\Models\CourseMaterial;
 
 class Book extends Model
 {
@@ -42,6 +43,11 @@ class Book extends Model
     public function partner()
     {
         return $this->belongsTo(User::class, 'partner_id');
+    }
+
+    public function courseMaterials()
+    {
+        return $this->hasMany(CourseMaterial::class);
     }
 
     protected $appends = ['cover_url'];

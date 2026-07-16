@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InvoiceItem;
 use App\Models\Enrollment;
+use App\Models\CourseMaterial;
+use App\Models\CourseOutline;
+use App\Models\CourseSession;
 
 class Service extends Model
 {
@@ -42,6 +45,23 @@ class Service extends Model
     {
         return $this->hasMany(Enrollment::class);
     } 
+
+    public function outline()
+    {
+        return $this->hasOne(CourseOutline::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(CourseSession::class)
+            ->orderBy('session_number');
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(CourseMaterial::class)
+            ->orderBy('sort_order');
+    }
     
     public function scopeCourses($query)
     {

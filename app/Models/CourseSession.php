@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Service;
+use App\Models\CourseSessionTopic;
+
+class CourseSession extends Model
+{
+    protected $fillable = [
+        'service_id',
+        'session_number',
+        'title',
+        'description',
+        'duration_hours',
+        'sort_order',
+    ];
+
+    protected $casts = [
+        'duration_hours' => 'decimal:2',
+    ];
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function topics()
+    {
+        return $this->hasMany(CourseSessionTopic::class)
+            ->orderBy('sort_order');
+    }
+}

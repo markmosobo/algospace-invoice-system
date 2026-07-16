@@ -22,7 +22,7 @@
               </div> -->
 
               <button
-                class="btn btn-sm btn-outline-danger"
+                class="btn btn-sm btn-outline-danger mb-2"
                 @click="downloadCoursesPdf"
               >
                 <i class="bi bi-file-earmark-pdf"></i>
@@ -30,7 +30,7 @@
               </button>
 
               <button
-                class="btn btn-sm btn-outline-success ms-2"
+                class="btn btn-sm btn-outline-success ms-2 mb-2"
                 @click="sendCoursesWhatsapp"
               >
                 <i class="bi bi-whatsapp"></i>
@@ -138,6 +138,7 @@
                             href="#"
                             @click.prevent="viewCourse(c)"
                           >
+                            <i class="bi bi-eye me-2"></i>
                             View
                           </a>
                           <a
@@ -145,16 +146,50 @@
                             href="#"
                             @click.prevent="editCourse(c)"
                           >
+                            <i class="bi bi-pencil me-2"></i>
                             Edit
                           </a>
 
                           <div class="dropdown-divider"></div>
+                            <router-link
+                                class="dropdown-item"
+                                :to="`/courses/${c.id}/outline`"
+                            >
+                                <i class="bi bi-journal-text me-2"></i>
+                                Course Outline
+                            </router-link>
 
+                            <router-link
+                                class="dropdown-item"
+                                :to="`/courses/${c.id}/sessions`"
+                            >
+                                <i class="bi bi-calendar-week me-2"></i>
+                                Course Sessions
+                            </router-link>
+
+                            <router-link
+                                class="dropdown-item"
+                                :to="`/courses/${c.id}/materials`"
+                            >
+                                <i class="bi bi-folder2-open me-2"></i>
+                                Course Materials
+                            </router-link>
+
+                            <router-link
+                                class="dropdown-item"
+                                :to="`/courses/${c.id}/students`"
+                            >
+                                <i class="bi bi-people me-2"></i>
+                                Enrollments
+                            </router-link>
+
+                          <div class="dropdown-divider"></div>
                           <a
                             class="dropdown-item text-danger"
                             href="#"
                             @click.prevent="removeCourse(c)"
                           >
+                            <i class="bi bi-trash me-2"></i>
                             Delete
                           </a>
                         </div>

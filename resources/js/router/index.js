@@ -48,6 +48,13 @@ import Projects from '../views/Projects.vue';
 import AdminNotifications from '../views/AdminNotifications.vue';
 import Enrollments from '../views/Enrollments.vue';
 import Courses from '../views/Courses.vue';
+import CourseOutline from '@/views/training/CourseOutline.vue';
+import CourseSessions from '@/views/training/CourseSessions.vue';
+import CourseMaterials from '@/views/training/CourseMaterials.vue';
+import CourseStudents from '@/views/training/CourseStudents.vue';
+
+import CourseAssessments from '@/views/training/CourseAssessments.vue';
+import StudentAssessments from '@/views/training/StudentAssessments.vue';
 
 const routes = [
   // Public routes
@@ -143,7 +150,81 @@ const routes = [
 
   { path: '/enrollments', name: 'Enrollments', component: Enrollments, meta: { requiresAuth: true } },
   { path: '/courses', name: 'Courses', component: Courses, meta: { requiresAuth: true } },
+  // TRAINING ROUTES
 
+
+  {
+      path:'/courses/:id/outline',
+      name:'CourseOutline',
+      component:CourseOutline,
+      meta:{
+          requiresAuth:true
+      }
+  },
+
+
+
+  {
+      path:'/courses/:id/sessions',
+      name:'CourseSessions',
+      component:CourseSessions,
+      meta:{
+          requiresAuth:true
+      }
+  },
+
+
+
+
+  {
+      path:'/courses/:id/materials',
+      name:'CourseMaterials',
+      component:CourseMaterials,
+      meta:{
+          requiresAuth:true
+      }
+  },
+
+
+
+
+  {
+      path:'/courses/:id/students',
+      name:'CourseStudents',
+      component:CourseStudents,
+      meta:{
+          requiresAuth:true
+      }
+  },
+
+
+
+
+
+  // COURSE ASSESSMENTS
+
+  {
+      path:'/course-assessments',
+      name:'CourseAssessments',
+      component:CourseAssessments,
+      meta:{
+          requiresAuth:true
+      }
+  },
+
+
+
+
+  // STUDENT ASSESSMENTS
+
+  {
+      path:'/student-assessments',
+      name:'StudentAssessments',
+      component:StudentAssessments,
+      meta:{
+          requiresAuth:true
+      }
+  },
 ];
 
 const router = createRouter({

@@ -88,6 +88,15 @@ class ServiceController extends Controller
         return response()->json($service);
     }
 
+    public function showCourse($id)
+    {
+        $course = Service::findOrFail($id);
+
+        return response()->json([
+            'data' => $course
+        ]);
+    }    
+
     /**
      * Update the specified resource in storage.
      */

@@ -57,6 +57,9 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\CourseAssessmentController;
 use App\Http\Controllers\StudentAssessmentController;
+use App\Http\Controllers\CourseOutlineController;
+use App\Http\Controllers\CourseSessionController;
+use App\Http\Controllers\CourseSessionTopicController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -147,6 +150,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('farm-assets', FarmAssetController::class);
 
     Route::get('/courses', [ServiceController::class, 'courses']);
+    Route::get('/courses/{course}', 
+        [ServiceController::class, 'showCourse']
+    );
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::post('/enrollments', [EnrollmentController::class, 'store']);
     Route::post('/enrollments/request', [EnrollmentController::class, 'requestEnrollment']);
@@ -334,6 +340,103 @@ Route::middleware(['auth:api'])->group(function () {
 
         Route::post('/{studentAssessment}/upload',
             [StudentAssessmentController::class,'uploadAttachment']);
+
+    });
+
+    // COURSE OUTLINE
+
+    Route::prefix('services/{service}')->group(function () {
+
+
+        Route::get('/outline',
+            [CourseOutlineController::class, 'show']);
+
+
+        Route::post('/outline',
+            [CourseOutlineController::class, 'store']);
+
+    });
+
+
+
+    Route::prefix('course-outlines')->group(function () {
+
+
+        Route::put('/{outline}',
+            [CourseOutlineController::class, 'update']);
+
+
+        Route::delete('/{outline}',
+            [CourseOutlineController::class, 'destroy']);
+
+    });
+
+    // COURSE SESSIONS
+
+    Route::prefix('services/{service}')->group(function(){
+
+
+        Route::get('/sessions',
+            [CourseSessionController::class,'index']
+        );
+
+
+        Route::post('/sessions',
+            [CourseSessionController::class,'store']
+        );
+
+
+    });
+
+
+
+    Route::prefix('course-sessions')->group(function(){
+
+
+        Route::put('/{session}',
+            [CourseSessionController::class,'update']
+        );
+
+
+        Route::delete('/{session}',
+            [CourseSessionController::class,'destroy']
+        );
+
+
+    });
+
+    // SESSION TOPICS
+
+    Route::prefix('course-sessions/{session}')
+    ->group(function(){
+
+
+    Route::get('/topics',
+    [CourseSessionTopicController::class,'index']
+    );
+
+
+    Route::post('/topics',
+    [CourseSessionTopicController::class,'store']
+    );
+
+
+    });
+
+
+    Route::prefix('course-session-topics')
+    ->group(function(){
+
+
+    Route::put('/{topic}',
+    [CourseSessionTopicController::class,'update']
+    );
+
+
+    Route::delete('/{topic}',
+    [CourseSessionTopicController::class,'destroy']
+    );
+
 
     });
 });

@@ -55,6 +55,8 @@ use App\Http\Controllers\ProjectProgressController;
 use App\Http\Controllers\CapitalInjectionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\CourseAssessmentController;
+use App\Http\Controllers\StudentAssessmentController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -282,4 +284,56 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/projects/{project}/toggle-board', [ProjectController::class, 'toggleBoardType']);
 
     Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote']);
+
+    //training
+    Route::prefix('course-assessments')->group(function () {
+
+        Route::get('/', 
+            [CourseAssessmentController::class, 'index']);
+
+        Route::post('/', 
+            [CourseAssessmentController::class, 'store']);
+
+        Route::get('/{assessment}', 
+            [CourseAssessmentController::class, 'show']);
+
+        Route::put('/{assessment}', 
+            [CourseAssessmentController::class, 'update']);
+
+        Route::delete('/{assessment}', 
+            [CourseAssessmentController::class, 'destroy']);
+
+
+        Route::post('/{assessment}/upload',
+            [CourseAssessmentController::class, 'uploadAttachment']);
+
+    });
+
+    Route::prefix('student-assessments')->group(function () {
+
+
+        Route::get('/',
+            [StudentAssessmentController::class,'index']);
+
+
+        Route::post('/',
+            [StudentAssessmentController::class,'store']);
+
+
+        Route::get('/{studentAssessment}',
+            [StudentAssessmentController::class,'show']);
+
+
+        Route::put('/{studentAssessment}',
+            [StudentAssessmentController::class,'update']);
+
+
+        Route::delete('/{studentAssessment}',
+            [StudentAssessmentController::class,'destroy']);
+
+
+        Route::post('/{studentAssessment}/upload',
+            [StudentAssessmentController::class,'uploadAttachment']);
+
+    });
 });

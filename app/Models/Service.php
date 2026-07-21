@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\CourseMaterial;
 use App\Models\CourseOutline;
 use App\Models\CourseSession;
+use App\Models\CourseAssessment;
 
 class Service extends Model
 {
@@ -61,6 +62,11 @@ class Service extends Model
     {
         return $this->hasMany(CourseMaterial::class)
             ->orderBy('sort_order');
+    }
+
+    public function assessments()
+    {
+        return $this->hasMany(CourseAssessment::class);
     }
     
     public function scopeCourses($query)

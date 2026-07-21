@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Customer;
 use App\Models\Service;
+use App\Models\StudentAssessment;
+use App\Models\CourseAssessment;
 
 class Enrollment extends Model
 {
@@ -48,6 +50,11 @@ class Enrollment extends Model
     {
         return $this->belongsTo(Service::class);
     }   
+
+    public function assessments()
+    {
+        return $this->hasMany(StudentAssessment::class);
+    }
     
     public function markAsPaid($amount = null)
     {
@@ -61,6 +68,49 @@ class Enrollment extends Model
         $this->status = 'active';
 
         $this->save();
+    }
+
+    public function updateProgress()
+    {
+        $totalAssessments = CourseAssessment::where(
+            'service_id',
+            $this->service_id
+        )
+        ->count();
+
+
+        if($totalAssessments == 0){
+
+            $this->progress_percent = 0;
+            $this->save();
+
+            return;
+
+        }
+
+
+
+        $completedAssessments = StudentAssessment::where(
+            'enrollment_id',
+            $this->id
+        )
+        ->count();
+
+
+
+        $progress =
+        ($completedAssessments / $totalAssessments) * 100;
+
+
+
+        $this->progress_percent =
+            round($progress);
+
+
+
+        $this->save();
+
+
     }
 
     public function complete()

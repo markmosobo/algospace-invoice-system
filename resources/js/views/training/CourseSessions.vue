@@ -206,31 +206,56 @@ Save
 
 </div>
 
-<div v-if="showTopicForm">
+<div class="modal fade" id="topicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-<h5>Add Topic</h5>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {{ topicForm.id ? 'Edit Topic' : 'Add Topic' }}
+                </h5>
 
-<input
-class="form-control mb-2"
-v-model="topicForm.title"
-placeholder="Topic title"
-/>
+                <button
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+            </div>
 
-<textarea
-class="form-control mb-2"
-v-model="topicForm.description"
-placeholder="Description"
-/>
+            <div class="modal-body">
 
-<button
-class="btn btn-success"
-@click="saveTopic"
->
+                <input
+                    class="form-control mb-3"
+                    v-model="topicForm.title"
+                    placeholder="Topic title"
+                >
 
-Save Topic
+                <textarea
+                    class="form-control"
+                    rows="4"
+                    v-model="topicForm.description"
+                    placeholder="Description">
+                </textarea>
 
-</button>
+            </div>
 
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button
+                    class="btn btn-success"
+                    @click="saveTopic">
+                    Save Topic
+                </button>
+
+            </div>
+
+        </div>
+    </div>
 </div>
 </section>
 
@@ -302,18 +327,19 @@ sort_order:1
 methods:{
 addTopic(session){
 
-    this.topicForm={
+    this.topicForm = {
         id:null,
         course_session_id:session.id,
         title:"",
         description:"",
-        sort_order:session.topics.length+1
-    }
+        sort_order:(session.topics?.length || 0) + 1
+    };
 
-    this.showTopicForm=true;
+    new bootstrap.Modal(
+        document.getElementById("topicModal")
+    ).show();
 
 },
-
 async saveTopic(){
 
     if(this.topicForm.id){
@@ -332,8 +358,9 @@ async saveTopic(){
 
     }
 
-    this.showTopicForm=false;
-
+bootstrap.Modal.getInstance(
+    document.getElementById("topicModal")
+).hide();
     this.load();
 
 },

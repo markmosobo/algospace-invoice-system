@@ -3,141 +3,367 @@
     <section class="section dashboard">
       <div class="row">
 
-        <!-- ================= FINANCIAL SUMMARY (PERSONAL ONLY) ================= -->
-        <div v-if="userRole == 'personal'" class="col-12 mb-4">
-          <div class="p-3 rounded bg-light border shadow-sm">
+<!-- ================= FINANCIAL SUMMARY (PERSONAL ONLY) ================= -->
+<div v-if="userRole == 'personal'" class="col-12 mb-4">
 
-            <!-- Primary total -->
-            <div class="text-center mb-3">
-              <div class="text-muted small">Total Worth</div>
-              <div class="fs-4 fw-bold">
-                KES {{ accountTotal }}
-              </div>
-            </div>
+  <div class="p-3 rounded bg-light border shadow-sm">
 
-            <!-- Breakdown -->
-            <div class="row g-2 text-center">
 
-              <!-- Liquid -->
-              <div class="col-6">
-                <div class="p-2 rounded bg-success bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-cash-coin me-1"></i>
-                    Liquid (Spend Now)
-                  </div>
-                  <div class="fw-semibold text-success">
-                    KES {{ liquidTotal }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Safe to use today
-                  </div>
-                </div>
-              </div>
+    <!-- Privacy Toggle -->
+    <div class="text-end mb-2">
+      <button 
+        class="btn btn-sm btn-outline-secondary"
+        @click="toggleAmounts"
+      >
+        <i 
+          class="bi"
+          :class="showAmounts ? 'bi-eye-slash' : 'bi-eye'"
+        ></i>
 
-              <!-- Semi-liquid -->
-              <div class="col-6">
-                <div class="p-2 rounded bg-warning bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-wallet2 me-1"></i>
-                    Semi-Liquid (Buffer)
-                  </div>
-                  <div class="fw-semibold text-warning">
-                    KES {{ semiLiquidTotal }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Emergency cushion
-                  </div>
-                </div>
-              </div>
+        {{ showAmounts ? 'Hide Amounts' : 'Show Amounts' }}
 
-              <!-- Savings -->
-              <div class="col-12">
-                <div class="p-2 rounded bg-primary bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-piggy-bank me-1"></i>
-                    Savings & Shares
-                  </div>
-                  <div class="fw-semibold text-primary">
-                    KES {{ savingsTotal }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Do not spend
-                  </div>
-                </div>
-              </div>
+      </button>
+    </div>
 
-            </div>
+
+
+    <!-- Primary total -->
+    <div class="text-center mb-3">
+
+      <div class="text-muted small">
+        Total Worth
+      </div>
+
+      <div class="fs-4 fw-bold">
+        KES {{ maskedAmount(accountTotal) }}
+      </div>
+
+    </div>
+
+
+
+    <!-- Breakdown -->
+    <div class="row g-2 text-center">
+
+
+
+      <!-- Liquid -->
+      <div class="col-6">
+
+        <div class="p-2 rounded bg-success bg-opacity-10 border">
+
+          <div class="small text-muted">
+            <i class="bi bi-cash-coin me-1"></i>
+            Liquid (Spend Now)
           </div>
-        </div>
-        <!-- ================= END FINANCIAL SUMMARY ================= -->
 
-        <!-- ================= FINANCIAL SUMMARY (OFFICE ONLY) ================= -->
-        <div v-if="userRole == 'office'" class="col-12 mb-4">
-          <div class="p-3 rounded bg-light border shadow-sm">
 
-            <!-- Primary total -->
-            <div class="text-center mb-3">
-              <div class="text-muted small">Total Office Funds</div>
-              <div class="fs-4 fw-bold">
-                KES {{ officeTotal }}
-              </div>
-            </div>
-
-            <!-- Breakdown -->
-            <div class="row g-2 text-center">
-
-              <!-- Cash on Hand -->
-              <div class="col-6">
-                <div class="p-2 rounded bg-success bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-cash-coin me-1"></i>
-                    Cash on Hand
-                  </div>
-                  <div class="fw-semibold text-success">
-                    KES {{ officeCash }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Immediate liquidity
-                  </div>
-                </div>
-              </div>
-
-              <!-- Bank Accounts -->
-              <div class="col-6">
-                <div class="p-2 rounded bg-info bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-bank me-1"></i>
-                    Bank Accounts
-                  </div>
-                  <div class="fw-semibold text-info">
-                    KES {{ officeBank }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Accessible funds
-                  </div>
-                </div>
-              </div>
-
-              <!-- Receivables / Pending Payments -->
-              <div class="col-12">
-                <div class="p-2 rounded bg-warning bg-opacity-10 border">
-                  <div class="small text-muted">
-                    <i class="bi bi-wallet2 me-1"></i>
-                    Accounts Receivable
-                  </div>
-                  <div class="fw-semibold text-warning">
-                    KES {{ officeReceivables }}
-                  </div>
-                  <div class="small text-muted fst-italic">
-                    Pending collections
-                  </div>
-                </div>
-              </div>
-
-            </div>
+          <div class="fw-semibold text-success">
+            KES {{ maskedAmount(liquidTotal) }}
           </div>
+
+
+          <div class="small text-muted fst-italic">
+            Safe to use today
+          </div>
+
+
         </div>
-        <!-- ================= END FINANCIAL SUMMARY ================= -->
+
+      </div>
+
+
+
+
+
+      <!-- Semi-liquid -->
+      <div class="col-6">
+
+        <div class="p-2 rounded bg-warning bg-opacity-10 border">
+
+
+          <div class="small text-muted">
+
+            <i class="bi bi-wallet2 me-1"></i>
+
+            Semi-Liquid (Buffer)
+
+          </div>
+
+
+          <div class="fw-semibold text-warning">
+
+            KES {{ maskedAmount(semiLiquidTotal) }}
+
+          </div>
+
+
+          <div class="small text-muted fst-italic">
+
+            Emergency cushion
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+
+
+
+      <!-- Savings -->
+      <div class="col-12">
+
+        <div class="p-2 rounded bg-primary bg-opacity-10 border">
+
+
+          <div class="small text-muted">
+
+            <i class="bi bi-piggy-bank me-1"></i>
+
+            Savings & Shares
+
+          </div>
+
+
+          <div class="fw-semibold text-primary">
+
+            KES {{ maskedAmount(savingsTotal) }}
+
+          </div>
+
+
+          <div class="small text-muted fst-italic">
+
+            Do not spend
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+
+    </div>
+
+
+  </div>
+
+</div>
+<!-- ================= END FINANCIAL SUMMARY ================= -->
+
+
+
+
+
+
+<!-- ================= FINANCIAL SUMMARY (OFFICE ONLY) ================= -->
+
+<div v-if="userRole == 'office'" class="col-12 mb-4">
+
+
+  <div class="p-3 rounded bg-light border shadow-sm">
+
+
+
+    <!-- Privacy Toggle -->
+    <div class="text-end mb-2">
+
+      <button 
+        class="btn btn-sm btn-outline-secondary"
+        @click="toggleAmounts"
+      >
+
+        <i 
+          class="bi"
+          :class="showAmounts ? 'bi-eye-slash' : 'bi-eye'"
+        ></i>
+
+
+        {{ showAmounts ? 'Hide Amounts' : 'Show Amounts' }}
+
+
+      </button>
+
+
+    </div>
+
+
+
+
+
+    <!-- Primary total -->
+    <div class="text-center mb-3">
+
+
+      <div class="text-muted small">
+
+        Total Office Funds
+
+      </div>
+
+
+      <div class="fs-4 fw-bold">
+
+        KES {{ maskedAmount(officeTotal) }}
+
+      </div>
+
+
+    </div>
+
+
+
+
+
+
+    <!-- Breakdown -->
+
+    <div class="row g-2 text-center">
+
+
+
+
+
+      <!-- Cash on Hand -->
+
+      <div class="col-6">
+
+        <div class="p-2 rounded bg-success bg-opacity-10 border">
+
+
+          <div class="small text-muted">
+
+            <i class="bi bi-cash-coin me-1"></i>
+
+            Cash on Hand
+
+          </div>
+
+
+
+          <div class="fw-semibold text-success">
+
+            KES {{ maskedAmount(officeCash) }}
+
+          </div>
+
+
+
+          <div class="small text-muted fst-italic">
+
+            Immediate liquidity
+
+          </div>
+
+
+
+        </div>
+
+      </div>
+
+
+
+
+
+
+
+      <!-- Bank Accounts -->
+
+      <div class="col-6">
+
+        <div class="p-2 rounded bg-info bg-opacity-10 border">
+
+
+          <div class="small text-muted">
+
+            <i class="bi bi-bank me-1"></i>
+
+            Bank Accounts
+
+          </div>
+
+
+
+          <div class="fw-semibold text-info">
+
+            KES {{ maskedAmount(officeBank) }}
+
+          </div>
+
+
+
+          <div class="small text-muted fst-italic">
+
+            Accessible funds
+
+          </div>
+
+
+
+        </div>
+
+      </div>
+
+
+
+
+
+
+
+      <!-- Receivables -->
+
+      <div class="col-12">
+
+        <div class="p-2 rounded bg-warning bg-opacity-10 border">
+
+
+          <div class="small text-muted">
+
+            <i class="bi bi-wallet2 me-1"></i>
+
+            Accounts Receivable
+
+          </div>
+
+
+
+          <div class="fw-semibold text-warning">
+
+            KES {{ maskedAmount(officeReceivables) }}
+
+          </div>
+
+
+
+          <div class="small text-muted fst-italic">
+
+            Pending collections
+
+          </div>
+
+
+
+        </div>
+
+      </div>
+
+
+
+
+    </div>
+
+
+  </div>
+
+
+</div>
+
+<!-- ================= END FINANCIAL SUMMARY ================= -->
 
 
         <!-- ================= DASHBOARD CARDS ================= -->
@@ -200,6 +426,8 @@ export default {
   },
   data() {
     return {
+      // Financial privacy toggle
+      showAmounts: false,
       currentYear: '',
       accountTotal: null,
       semiLiquidTotal: null,
@@ -228,6 +456,15 @@ export default {
     };
   },
   computed: {
+    maskedAmount() {
+      return (amount) => {
+        if (!this.showAmounts) {
+          return '••••••';
+        }
+
+        return Number(amount || 0).toLocaleString();
+      };
+    },    
     dashboardCards() {
       const cards = {
         office: [
@@ -254,6 +491,9 @@ export default {
     }
   },
   methods: {
+    toggleAmounts() {
+      this.showAmounts = !this.showAmounts;
+    },
     fetchDashboardStats() {
       axios
         .get('/api/dashboard/stats')

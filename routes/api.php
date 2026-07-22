@@ -423,7 +423,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     });
 
-
+    Route::get(
+        '/services/{service}/outline/pdf',
+        [CourseOutlineController::class,'pdf']
+    );
     Route::prefix('course-session-topics')
     ->group(function(){
 

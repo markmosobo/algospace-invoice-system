@@ -6,6 +6,7 @@ use App\Models\Service;
 use App\Models\CourseOutline;
 use App\Models\CourseOutlineItem;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class CourseOutlineController extends Controller
@@ -212,5 +213,26 @@ public function destroy(
 
 }
 
+public function pdf($service)
+{
+
+    $course = Service::with([
+        'outline.items',
+        'sessions.topics'
+    ])
+    ->findOrFail($service);
+
+
+    $pdf = Pdf::loadView(
+        'pdf.course-outline',
+        compact('course')
+    );
+
+
+    return $pdf->stream(
+        $course->name.'-outline.pdf'
+    );
+
+}
 
 }

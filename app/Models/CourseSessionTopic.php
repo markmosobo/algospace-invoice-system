@@ -16,6 +16,6 @@ class CourseSessionTopic extends Model
 
     public function session()
     {
-        return $this->belongsTo(CourseSession::class);
+        return $this->belongsTo(CourseSession::class,'course_session_id');
     }
 }

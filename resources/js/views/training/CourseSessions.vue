@@ -340,6 +340,22 @@ addTopic(session){
     ).show();
 
 },
+editTopic(topic, session){
+
+    this.topicForm = {
+        id: topic.id,
+        course_session_id: session.id,
+        title: topic.title,
+        description: topic.description,
+        sort_order: topic.sort_order
+    };
+
+
+    new bootstrap.Modal(
+        document.getElementById("topicModal")
+    ).show();
+
+},
 async saveTopic(){
 
     if(this.topicForm.id){

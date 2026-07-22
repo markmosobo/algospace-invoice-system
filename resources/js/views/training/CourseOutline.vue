@@ -25,16 +25,26 @@
 
 <div class="mb-3">
 
-<button
-class="btn btn-success btn-sm"
-@click="saveOutline"
->
+<div class="d-flex gap-2 mb-3">
 
-<i class="bi bi-save"></i>
-Save Outline
+    <button
+        class="btn btn-primary btn-sm"
+        @click="generateOutlinePdf"
+    >
+        <i class="bi bi-file-earmark-pdf me-1"></i>
+        Generate PDF Outline
+    </button>
 
-</button>
 
+    <button
+        class="btn btn-success btn-sm"
+        @click="saveOutline"
+    >
+        <i class="bi bi-save me-1"></i>
+        Save Outline
+    </button>
+
+</div>
 
 </div>
 
@@ -541,7 +551,46 @@ index,
 
 
 
+async generateOutlinePdf(){
 
+    let id = this.$route.params.id;
+
+    try {
+
+        let response = await axios.get(
+            `/api/services/${id}/outline/pdf`,
+            {
+                responseType:'blob'
+            }
+        );
+
+
+        let file = new Blob(
+            [response.data],
+            {
+                type:'application/pdf'
+            }
+        );
+
+
+        let url = window.URL.createObjectURL(file);
+
+
+        window.open(url,'_blank');
+
+
+    } catch(error){
+
+        console.log(error);
+
+        toast.fire({
+            icon:"error",
+            title:"Failed generating PDF"
+        });
+
+    }
+
+},
 
 
 

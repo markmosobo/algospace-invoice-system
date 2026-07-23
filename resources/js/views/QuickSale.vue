@@ -266,25 +266,178 @@
                         </div>
 
 
-                        <!-- NEW CUSTOMER FORM -->
-                        <div v-if="customerForm.type === 'new'" class="row g-3">
+<!-- NEW CUSTOMER FORM -->
+<div v-if="customerForm.type === 'new'" class="row g-3">
 
-                            <div class="col-md-4">
-                            <label class="form-label">Name*</label>
-                            <input type="text" class="form-control" v-model="customerForm.name" required>
-                            </div>
+    <!-- NAME -->
+    <div class="col-md-4 position-relative">
 
-                            <div class="col-md-4">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" v-model="customerForm.email">
-                            </div>
+        <label class="form-label">
+            Name*
+        </label>
 
-                            <div class="col-md-4">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" v-model="customerForm.phone">
-                            </div>
+        <div class="input-group">
 
+            <span class="input-group-text">
+                <i class="bi bi-person"></i>
+            </span>
+
+            <input 
+                type="text" 
+                class="form-control"
+                :class="{
+                    'border-warning': duplicateCustomers.length
+                }"
+                v-model="customerForm.name"
+                @input="checkDuplicateCustomer"
+                placeholder="Customer name"
+                autocomplete="off"
+                required
+            >
+
+        </div>
+
+
+        <!-- Duplicate Suggestions -->
+        <div 
+            v-if="duplicateCustomers.length"
+            class="position-absolute bg-white border rounded shadow-sm mt-1 w-100"
+            style="z-index:1050;"
+        >
+
+            <div class="p-2 bg-warning-subtle">
+
+                <small class="fw-bold">
+                    ⚠️ Existing customer found
+                </small>
+
+            </div>
+
+
+            <div
+                v-for="c in duplicateCustomers"
+                :key="c.id"
+                class="p-2 border-bottom"
+            >
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <div class="fw-bold">
+                            {{ c.name }}
                         </div>
+
+
+                        <small class="text-muted">
+
+                            <i class="bi bi-telephone"></i>
+                            {{ c.phone || 'No phone' }}
+
+                            <span class="ms-2">
+
+                                👣 
+                                {{ c.visits_count || 0 }}
+                                visits
+
+                            </span>
+
+                        </small>
+
+                    </div>
+
+
+                    <button
+                        class="btn btn-sm btn-success rounded-pill"
+                        @click="useExistingCustomer(c)"
+                    >
+
+                        <i class="bi bi-check-circle"></i>
+                        Use
+
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+            <div class="p-2 text-center">
+
+                <small class="text-muted">
+                    Or continue creating a new customer
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- EMAIL -->
+    <div class="col-md-4">
+
+        <label class="form-label">
+            Email
+        </label>
+
+
+        <div class="input-group">
+
+            <span class="input-group-text">
+                <i class="bi bi-envelope"></i>
+            </span>
+
+
+            <input 
+                type="email" 
+                class="form-control"
+                v-model="customerForm.email"
+                placeholder="example@email.com"
+            >
+
+        </div>
+
+    </div>
+
+
+
+
+    <!-- PHONE -->
+    <div class="col-md-4">
+
+        <label class="form-label">
+            Phone
+        </label>
+
+
+        <div class="input-group">
+
+            <span class="input-group-text">
+                <i class="bi bi-phone"></i>
+            </span>
+
+
+            <input 
+                type="text"
+                class="form-control"
+                v-model="customerForm.phone"
+                placeholder="07xxxxxxxx"
+            >
+
+        </div>
+
+
+    </div>
+
+
+</div>
 
                         </div>
 
@@ -862,6 +1015,7 @@ export default {
     return {
       customers: [],
       services: [],
+      duplicateCustomers: [],
       showToDoModal: false,
       newToDo: {
         title: '',
@@ -935,6 +1089,48 @@ export default {
    },
 
   methods: {
+    checkDuplicateCustomer(){
+
+        let name = this.customerForm.name
+            .trim()
+            .toLowerCase();
+
+
+        if(name.length < 3){
+            this.duplicateCustomers = [];
+            return;
+        }
+
+
+        this.duplicateCustomers = this.customers.filter(c => {
+
+            return c.name
+                .toLowerCase()
+                .includes(name);
+
+        });
+
+    },  
+    useExistingCustomer(customer){
+
+        this.customerForm.type = 'existing';
+
+        this.customerForm.customer_id = customer.id;
+
+        this.customerForm.name = customer.name;
+        this.customerForm.email = customer.email;
+        this.customerForm.phone = customer.phone;
+
+
+        this.duplicateCustomers = [];
+
+
+        toast.fire({
+            icon:'success',
+            title:'Existing customer selected'
+        });
+
+    },  
     openToDoModal() {
         this.todos = []
         this.resetToDoForm()
@@ -1283,9 +1479,11 @@ export default {
             // =========================
             if (!customerId) {
                 const existing = this.customers.find(c => 
-                    (c.phone && c.phone === this.customerForm.phone) ||
-                    (c.email && c.email === this.customerForm.email) ||
-                    (!this.customerForm.phone && !this.customerForm.email && c.name.toLowerCase() === this.customerForm.name.toLowerCase())
+                    c.name.toLowerCase().trim() === this.customerForm.name.toLowerCase().trim()
+                    ||
+                    (c.phone && c.phone === this.customerForm.phone)
+                    ||
+                    (c.email && c.email === this.customerForm.email)
                 );
 
                 if (existing) {

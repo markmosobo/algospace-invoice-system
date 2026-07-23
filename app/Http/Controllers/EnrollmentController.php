@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Service;
 use App\Models\Customer;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
@@ -17,11 +18,35 @@ class EnrollmentController extends Controller
         ]);
 
         $enrollment = Enrollment::create([
-            'customer_id' => $request->customer_id,
-            'service_id' => $request->service_id,
-            'enrolled_at' => now(),
-            'status' => 'active',
+
+            'customer_id'=>$request->customer_id,
+
+            'service_id'=>$request->service_id,
+
+            'enrolled_at'=>now(),
+
+            'status'=>'active'
+
         ]);
+
+
+
+        $service = Service::with('sessions')
+            ->find($request->service_id);
+
+
+
+        foreach($service->sessions as $session){
+
+
+            $enrollment->sessions()->create([
+
+                'course_session_id'=>$session->id
+
+            ]);
+
+
+        }
 
         return response()->json([
             'message' => 'Student enrolled successfully',
@@ -107,5 +132,191 @@ class EnrollmentController extends Controller
         Enrollment::findOrFail($id)->delete();
 
         return response()->json(['message' => 'Enrollment rejected']);
-    }    
+    }  
+    
+public function show(Enrollment $enrollment)
+{
+
+    $enrollment->load([
+
+        'customer',
+
+        'service',
+
+        'invoice',
+
+        'sessions.session'
+
+    ]);
+
+
+    return response()->json([
+
+        'data'=>$enrollment
+
+    ]);
+
+}
+
+
+
+
+
+
+public function payments(Enrollment $enrollment)
+{
+
+
+    $payments = Payment::where(
+
+        'invoice_id',
+
+        $enrollment->invoice_id
+
+    )
+
+    ->orderBy(
+        'payment_date',
+        'desc'
+    )
+
+    ->get();
+
+
+
+    return response()->json([
+
+        'data'=>$payments
+
+    ]);
+
+}
+
+
+
+
+
+
+public function progress(Enrollment $enrollment)
+{
+
+
+    return response()->json([
+
+        'data'=>
+
+        $enrollment->load(
+
+            'sessions.session'
+
+        )
+
+    ]);
+
+}
+
+
+
+
+
+
+
+public function updateProgress(
+Request $request,
+Enrollment $enrollment
+)
+{
+
+
+$request->validate([
+
+    'session_id'=>'required',
+
+    'completed'=>'required|boolean'
+
+]);
+
+
+
+$studentSession =
+
+$enrollment
+
+->sessions()
+
+->where(
+    'course_session_id',
+    $request->session_id
+)
+
+->firstOrFail();
+
+
+
+$studentSession->update([
+
+    'completed'=>$request->completed,
+
+    'completed_at'=>
+
+    $request->completed
+
+    ? now()
+
+    : null
+
+]);
+
+
+
+
+
+$total =
+
+$enrollment
+
+->sessions()
+
+->count();
+
+
+
+$completed =
+
+$enrollment
+
+->sessions()
+
+->where(
+    'completed',
+    true
+)
+
+->count();
+
+
+
+
+$enrollment->update([
+
+'progress_percent'=>
+
+$total
+
+? round(($completed/$total)*100)
+
+:0
+
+]);
+
+
+
+return response()->json([
+
+'message'=>'Progress updated'
+
+]);
+
+
+}    
 }

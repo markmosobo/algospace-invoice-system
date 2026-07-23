@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\SystemLog;
 use App\Models\PersonalAccount;
+use App\Models\Enrollment;
 use App\Services\LedgerService;
 use App\Models\PersonalTransaction;
 use Illuminate\Http\Request;
@@ -129,16 +130,31 @@ class PaymentController extends Controller
                     }
             }
 
-            /* ===============================
-            UPDATE INVOICE
-            =============================== */
-            $invoice->amount_paid += $request->amount;
+/* ===============================
+UPDATE INVOICE
+=============================== */
 
-            if ($invoice->amount_paid >= $invoice->total_amount) {
-                $invoice->status = 'paid';
-            }
+$invoice->amount_paid += $request->amount;
 
-            $invoice->save();
+if ($invoice->amount_paid >= $invoice->total_amount) {
+    $invoice->status = 'paid';
+}
+
+$invoice->save();
+
+
+
+
+
+/* ===============================
+AUTO CREATE COURSE ENROLLMENTS
+=============================== */
+
+if($request->amount > 0){
+
+    $this->createCourseEnrollments($invoice);
+
+}
 
             /* ===============================
             SYSTEM LOG
@@ -340,7 +356,89 @@ public function complete($id)
 }
 
 
+private function createCourseEnrollments($invoice)
+{
+
+    $invoice->load([
+        'customer',
+        'items.service.sessions'
+    ]);
 
 
+    foreach($invoice->items as $item){
+
+
+        $service = $item->service;
+
+
+        if(!$service){
+            continue;
+        }
+
+
+        // only courses
+        if($service->type !== 'course'){
+            continue;
+        }
+
+
+
+        $enrollment = Enrollment::firstOrCreate(
+
+            [
+                'customer_id'=>$invoice->customer_id,
+                'service_id'=>$service->id
+            ],
+
+            [
+                'invoice_id'=>$invoice->id,
+                'status'=>'active',
+                'is_paid'=>false,
+                'amount_paid'=>0,
+                'enrolled_at'=>now(),
+                'starts_at'=>now()
+            ]
+
+        );
+
+
+        // CREATE STUDENT COURSE SESSION TRACKING
+
+        foreach($service->sessions as $session){
+
+            $enrollment->sessions()->firstOrCreate([
+
+                'course_session_id'=>$session->id
+
+            ]);
+
+        }
+
+
+
+        // UPDATE PAYMENT PROGRESS
+
+        $enrollment->amount_paid =
+            $invoice->payments()->sum('amount');
+
+
+
+        // FULL PAYMENT CHECK
+
+        if($enrollment->amount_paid >= $item->amount){
+
+            $enrollment->is_paid = true;
+            $enrollment->paid_at = now();
+
+        }
+
+
+        $enrollment->save();
+
+
+    }
+
+
+}
 
 }

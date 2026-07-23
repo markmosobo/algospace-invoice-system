@@ -62,6 +62,7 @@ use App\Http\Controllers\CourseSessionController;
 use App\Http\Controllers\CourseSessionTopicController;
 use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\CourseHandbookController;
+use App\Http\Controllers\CourseEnrollmentController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -158,6 +159,28 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::post('/enrollments', [EnrollmentController::class, 'store']);
     Route::post('/enrollments/request', [EnrollmentController::class, 'requestEnrollment']);
+    Route::get(
+        '/enrollments/{enrollment}',
+        [EnrollmentController::class,'show']
+    );
+
+
+    Route::get(
+        '/enrollments/{enrollment}/payments',
+        [EnrollmentController::class,'payments']
+    );
+
+
+    Route::get(
+        '/enrollments/{enrollment}/progress',
+        [EnrollmentController::class,'progress']
+    );
+
+
+    Route::put(
+        '/enrollments/{enrollment}/progress',
+        [EnrollmentController::class,'updateProgress']
+    );
 
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/quick-sales', [ListController::class, 'quickSales']);
@@ -487,5 +510,42 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get(
     '/services/{service}/package',
     [CourseHandbookController::class,'package']
+    );
+
+    //course-specific enrollments
+    Route::prefix('services/{service}')
+    ->group(function(){
+
+
+        // list students enrolled in course
+        Route::get(
+            '/enrollments',
+            [CourseEnrollmentController::class,'index']
+        );
+
+
+        // enroll student
+        Route::post(
+            '/enrollments',
+            [CourseEnrollmentController::class,'store']
+        );
+
+
+    });
+
+
+
+    // delete enrollment
+    Route::delete(
+        '/enrollments/{enrollment}',
+        [CourseEnrollmentController::class,'destroy']
+    );
+
+
+
+    // customers list for enrollment
+    Route::get(
+        '/customers',
+        [CourseEnrollmentController::class,'customers']
     );
 });

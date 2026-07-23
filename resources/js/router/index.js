@@ -55,6 +55,7 @@ import CourseStudents from '@/views/training/CourseStudents.vue';
 
 import CourseAssessments from '@/views/training/CourseAssessments.vue';
 import StudentAssessments from '@/views/training/StudentAssessments.vue';
+import EnrollmentProfile from '@/views/training/EnrollmentProfile.vue';
 
 const routes = [
   // Public routes
@@ -225,6 +226,15 @@ const routes = [
           requiresAuth:true
       }
   },
+
+  {
+      path:'/enrollments/:id',
+      name:'EnrollmentProfile',
+      component:EnrollmentProfile,
+      meta:{
+          requiresAuth:true
+      }
+  }
 ];
 
 const router = createRouter({

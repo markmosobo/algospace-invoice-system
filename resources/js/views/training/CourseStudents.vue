@@ -4,9 +4,6 @@
 
 <section class="section dashboard">
 
-<div class="row">
-
-<div class="col-12">
 
 <div class="card">
 
@@ -15,320 +12,161 @@
 
 <h5 class="card-title">
 
-{{ course.name }}
+{{course.name}}
 
-<span>| Course Outline</span>
+<span>| Students</span>
 
 </h5>
 
 
+<table class="table table-bordered table-hover">
 
-<div class="mb-3">
 
-<button
-class="btn btn-success btn-sm"
-@click="saveOutline"
+<thead>
+
+<tr>
+
+<th>
+Student
+</th>
+
+<th>
+Status
+</th>
+
+<th>
+Paid
+</th>
+
+<th>
+Progress
+</th>
+
+<th>
+Action
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+<tr
+v-for="e in students"
+:key="e.id"
 >
 
-<i class="bi bi-save"></i>
-Save Outline
 
-</button>
+<td>
 
+{{e.customer.name}}
 
-</div>
+</td>
 
 
 
+<td>
 
-<!-- MAIN OUTLINE -->
-
-<div class="mb-3">
-
-<label class="form-label">
-Course Overview
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="4"
-
-v-model="outline.overview"
-
-placeholder="Describe the course..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Certificate Information
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.certificate_information"
-
-placeholder="Certificate requirements..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Notes
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.notes"
-
-placeholder="Additional notes..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<hr>
-
-
-<div class="d-flex justify-content-between align-items-center">
-
-
-<h5>
-Outline Sections
-</h5>
-
-
-<button
-
-class="btn btn-outline-primary btn-sm"
-
-@click="addItem"
-
+<span
+class="badge"
+:class="statusClass(e.status)"
 >
 
-<i class="bi bi-plus"></i>
+{{e.status}}
 
-Add Section
+</span>
 
-</button>
-
-
-</div>
+</td>
 
 
 
 
+<td>
 
-<!-- ITEMS -->
+KES {{Number(e.amount_paid).toLocaleString()}}
+
+</td>
+
+
+
+
+<td>
+
+
+<div class="progress">
 
 <div
 
-v-for="(item,index) in outline.items"
+class="progress-bar"
 
-:key="index"
-
-class="card mt-3 border"
-
-
->
-
-
-<div class="card-body">
-
-
-
-<div class="row">
-
-
-<div class="col-md-3">
-
-
-<label class="form-label">
-Section
-</label>
-
-
-<select
-
-class="form-select"
-
-v-model="item.section"
+:style="{
+width:e.progress_percent+'%'
+}"
 
 >
 
+{{e.progress_percent}}%
 
-<option value="objective">
-Objective
-</option>
-
-
-<option value="outcome">
-Learning Outcome
-</option>
-
-
-<option value="requirement">
-Requirement
-</option>
-
-
-<option value="assessment">
-Assessment
-</option>
-
-
-</select>
-
-
+</div>
 
 </div>
 
 
-
-
-
-<div class="col-md-9">
-
-
-<label class="form-label">
-Title
-</label>
-
-
-<input
-
-type="text"
-
-class="form-control"
-
-v-model="item.title"
-
-placeholder="Section title"
-
-/>
-
-
-</div>
-
-
-</div>
+</td>
 
 
 
 
+<td>
 
 
-<div class="mt-3">
+<router-link
 
+class="btn btn-primary btn-sm"
 
-<label class="form-label">
-
-Description
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="item.description"
-
-placeholder="Explain this section..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-
-<div class="text-end mt-3">
-
-
-<button
-
-class="btn btn-sm btn-danger"
-
-@click="removeItem(index)"
+:to="`/enrollments/${e.id}`"
 
 >
 
-<i class="bi bi-trash"></i>
+<i class="bi bi-eye"></i>
 
-Remove
+Manage
+
+</router-link>
 
 
-</button>
+</td>
+
+
+
+</tr>
+
+
+
+<tr v-if="students.length==0">
+
+<td
+colspan="5"
+class="text-center"
+>
+
+No enrolled students
+
+</td>
+
+</tr>
+
+
+</tbody>
+
+
+</table>
 
 
 </div>
-
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
 
 </div>
 
@@ -338,35 +176,16 @@ Remove
 
 </Master>
 
-
 </template>
-
-
-
 
 
 <script>
 
 import Master from "@/components/Master.vue";
 import axios from "axios";
-import Swal from "sweetalert2";
 
 
-const toast = Swal.mixin({
-
-toast:true,
-
-position:"top-end",
-
-timer:3000,
-
-showConfirmButton:false
-
-});
-
-
-
-export default {
+export default{
 
 
 components:{
@@ -374,65 +193,27 @@ Master
 },
 
 
-
 data(){
-
 
 return{
 
-
 course:{},
 
-
-
-outline:{
-
-
-id:null,
-
-
-overview:"",
-
-
-certificate_information:"",
-
-
-notes:"",
-
-
-items:[]
+students:[]
 
 }
-
-
-
-}
-
 
 },
-
-
-
-
 
 
 methods:{
 
 
-
-
-
 async load(){
-
-
-try{
 
 
 let id=this.$route.params.id;
 
-
-
-// Load course
 
 let course =
 await axios.get(
@@ -440,49 +221,39 @@ await axios.get(
 );
 
 
-
 this.course =
 course.data.data;
 
 
 
-
-// Load outline
-
-let outline =
+let students =
 await axios.get(
-`/api/services/${id}/outline`
+`/api/services/${id}/enrollments`
 );
 
 
-
-if(outline.data.data){
-
-
-this.outline =
-outline.data.data;
+this.students =
+students.data.data || [];
 
 
-
-if(!this.outline.items){
-
-this.outline.items=[];
-
-}
+},
 
 
 
-}
+statusClass(status){
 
 
+return {
 
-}
+active:'bg-success',
 
-catch(error){
+pending:'bg-warning',
 
+completed:'bg-primary',
 
-console.log(error);
+dropped:'bg-danger'
 
+}[status];
 
 
 }
@@ -490,196 +261,17 @@ console.log(error);
 
 
 },
-
-
-
-
-
-
-
-addItem(){
-
-
-this.outline.items.push({
-
-
-section:"objective",
-
-
-title:"",
-
-
-description:"",
-
-
-sort_order:
-this.outline.items.length + 1
-
-
-});
-
-
-},
-
-
-
-
-
-
-
-removeItem(index){
-
-
-this.outline.items.splice(
-index,
-1
-);
-
-
-
-},
-
-
-
-
-
-
-
-async saveOutline(){
-
-
-
-let id=this.$route.params.id;
-
-
-
-
-try{
-
-
-
-let response;
-
-
-
-if(this.outline.id){
-
-
-
-response =
-await axios.put(
-
-
-`/api/course-outlines/${this.outline.id}`,
-
-this.outline
-
-
-);
-
-
-
-}
-
-else{
-
-
-
-response =
-await axios.post(
-
-
-`/api/services/${id}/outline`,
-
-this.outline
-
-
-);
-
-
-
-}
-
-
-
-this.outline =
-response.data.data;
-
-
-
-toast.fire({
-
-icon:"success",
-
-title:"Course outline saved"
-
-});
-
-
-
-}
-
-
-
-catch(error){
-
-
-
-console.log(error.response);
-
-
-
-toast.fire({
-
-icon:"error",
-
-title:"Failed to save outline"
-
-});
-
-
-
-}
-
-
-
-}
-
-
-
-
-
-},
-
-
 
 
 
 mounted(){
 
-
 this.load();
 
-
 }
-
 
 
 }
 
 
 </script>
-
-
-
-
-
-<style scoped>
-
-textarea{
-
-resize:none;
-
-}
-
-</style>

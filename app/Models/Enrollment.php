@@ -13,6 +13,7 @@ class Enrollment extends Model
     protected $fillable = [
         'customer_id',
         'service_id',
+        'invoice_id',
         'enrolled_at',
         // STATUS FLOW
         'status',
@@ -55,6 +56,17 @@ class Enrollment extends Model
     {
         return $this->hasMany(StudentAssessment::class);
     }
+
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(EnrollmentSession::class);
+    }
+    
     
     public function markAsPaid($amount = null)
     {

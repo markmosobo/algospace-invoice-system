@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Service;
 use App\Models\CourseSessionTopic;
+use App\Models\CourseMaterial;
 
 class CourseSession extends Model
 {
@@ -30,5 +31,13 @@ class CourseSession extends Model
     {
         return $this->hasMany(CourseSessionTopic::class)
             ->orderBy('sort_order');
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(
+            CourseMaterial::class,
+            'course_session_id'
+        );
     }
 }

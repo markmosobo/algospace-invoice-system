@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Service;
+use App\Models\CourseSession;
 use App\Models\Book;
 
 class CourseMaterial extends Model
 {
     protected $fillable = [
         'service_id',
+        'course_session_id',
         'title',
         'description',
         'type',
@@ -34,6 +36,14 @@ class CourseMaterial extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(
+            CourseSession::class,
+            'course_session_id'
+        );
     }
 
     public function book()

@@ -4,9 +4,6 @@
 
 <section class="section dashboard">
 
-<div class="row">
-
-<div class="col-12">
 
 <div class="card">
 
@@ -15,81 +12,61 @@
 
 <h5 class="card-title">
 
-{{ course.name }}
+{{course.name}}
 
-<span>| Course Outline</span>
+<span>| Course Materials</span>
 
 </h5>
 
 
 
-<div class="mb-3">
+<div class="d-flex gap-2 mb-3">
+
 
 <button
 class="btn btn-success btn-sm"
-@click="saveOutline"
+@click="openModal"
 >
 
-<i class="bi bi-save"></i>
-Save Outline
+<i class="bi bi-plus me-1"></i>
+Add Material
 
 </button>
 
 
-</div>
 
+<button
+class="btn btn-primary btn-sm"
+@click="generateHandbook"
+>
 
+<i class="bi bi-file-earmark-pdf me-1"></i>
+Generate Handbook
 
+</button>
 
-<!-- MAIN OUTLINE -->
+<button
+class="btn btn-dark btn-sm"
+@click="downloadPackage"
+>
 
-<div class="mb-3">
+<i class="bi bi-file-zip"></i>
 
-<label class="form-label">
-Course Overview
-</label>
+Download Course Package
 
-
-<textarea
-
-class="form-control"
-
-rows="4"
-
-v-model="outline.overview"
-
-placeholder="Describe the course..."
-
-></textarea>
-
+</button>
 
 </div>
 
+<!-- MATERIALS -->
 
 
+<div
+v-if="materials.length==0"
+class="alert alert-secondary"
+>
 
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Certificate Information
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.certificate_information"
-
-placeholder="Certificate requirements..."
-
-></textarea>
-
+No course materials added.
 
 </div>
 
@@ -97,30 +74,102 @@ placeholder="Certificate requirements..."
 
 
 
-<div class="mb-3">
-
-<label class="form-label">
-
-Notes
-
-</label>
+<div
+class="row"
+>
 
 
-<textarea
+<div
+class="col-md-6 mb-3"
+v-for="material in materials"
+:key="material.id"
+>
 
-class="form-control"
 
-rows="3"
 
-v-model="outline.notes"
+<div class="card shadow-sm h-100">
 
-placeholder="Additional notes..."
 
-></textarea>
+<div class="card-body">
+
+
+<div class="d-flex">
+
+
+<div class="me-3">
+
+<i
+:class="icon(material.type)"
+class="fs-2"
+>
+</i>
+
+</div>
+
+
+
+<div class="flex-grow-1">
+
+
+<h6>
+
+{{material.title}}
+
+</h6>
+
+
+
+<div>
+
+
+<span class="badge bg-primary me-1">
+
+{{material.type}}
+
+</span>
+
+
+
+<span class="badge bg-secondary">
+
+{{material.source}}
+
+</span>
 
 
 </div>
 
+
+
+
+
+<p class="text-muted mt-2">
+
+{{material.description}}
+
+</p>
+
+
+
+
+
+<small
+v-if="material.session"
+class="text-success"
+>
+
+Session:
+{{material.session.title}}
+
+</small>
+
+
+
+
+</div>
+
+
+</div>
 
 
 
@@ -128,25 +177,56 @@ placeholder="Additional notes..."
 <hr>
 
 
-<div class="d-flex justify-content-between align-items-center">
 
 
-<h5>
-Outline Sections
-</h5>
+<div class="text-end">
+
+
+<a
+v-if="material.file"
+:href="'/storage/'+material.file"
+target="_blank"
+class="btn btn-sm btn-outline-primary me-2"
+>
+
+<i class="bi bi-eye"></i>
+Open
+
+</a>
+
+
+
+<a
+v-if="material.url"
+:href="material.url"
+target="_blank"
+class="btn btn-sm btn-outline-primary me-2"
+>
+
+<i class="bi bi-globe"></i>
+Visit
+
+</a>
+
 
 
 <button
-
-class="btn btn-outline-primary btn-sm"
-
-@click="addItem"
-
+class="btn btn-sm btn-outline-success me-2"
+@click="edit(material)"
 >
 
-<i class="bi bi-plus"></i>
+Edit
 
-Add Section
+</button>
+
+
+
+<button
+class="btn btn-sm btn-outline-danger"
+@click="remove(material)"
+>
+
+Delete
 
 </button>
 
@@ -155,68 +235,14 @@ Add Section
 
 
 
+</div>
 
 
-<!-- ITEMS -->
-
-<div
-
-v-for="(item,index) in outline.items"
-
-:key="index"
-
-class="card mt-3 border"
-
-
->
-
-
-<div class="card-body">
+</div>
 
 
 
-<div class="row">
-
-
-<div class="col-md-3">
-
-
-<label class="form-label">
-Section
-</label>
-
-
-<select
-
-class="form-select"
-
-v-model="item.section"
-
->
-
-
-<option value="objective">
-Objective
-</option>
-
-
-<option value="outcome">
-Learning Outcome
-</option>
-
-
-<option value="requirement">
-Requirement
-</option>
-
-
-<option value="assessment">
-Assessment
-</option>
-
-
-</select>
-
+</div>
 
 
 </div>
@@ -225,7 +251,58 @@ Assessment
 
 
 
-<div class="col-md-9">
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- MODAL -->
+
+
+<div
+class="modal fade"
+id="materialModal"
+tabindex="-1"
+>
+
+
+<div class="modal-dialog">
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h5 class="modal-title">
+
+{{form.id?'Edit':'Add'}} Material
+
+</h5>
+
+
+<button
+class="btn-close"
+data-bs-dismiss="modal"
+></button>
+
+
+</div>
+
+
+
+
+
+<div class="modal-body">
+
 
 
 <label class="form-label">
@@ -234,49 +311,199 @@ Title
 
 
 <input
+class="form-control mb-3"
+v-model="form.title"
+/>
 
-type="text"
 
+
+
+
+<label class="form-label">
+Description
+</label>
+
+
+<textarea
+class="form-control mb-3"
+rows="3"
+v-model="form.description"
+></textarea>
+
+
+
+
+
+<label class="form-label">
+Material Type
+</label>
+
+
+<select
+class="form-select mb-3"
+v-model="form.type"
+>
+
+
+<option value="note">
+Note
+</option>
+
+
+<option value="ebook">
+E-book
+</option>
+
+
+<option value="exercise">
+Exercise
+</option>
+
+
+<option value="assignment">
+Assignment
+</option>
+
+
+<option value="template">
+Template
+</option>
+
+
+<option value="presentation">
+Presentation
+</option>
+
+
+<option value="video">
+Video
+</option>
+
+
+<option value="website">
+Website
+</option>
+
+
+<option value="software">
+Software
+</option>
+
+
+</select>
+
+
+
+
+
+<label class="form-label">
+Source
+</label>
+
+
+<select
+class="form-select mb-3"
+v-model="form.source"
+>
+
+
+<option value="upload">
+Upload
+</option>
+
+
+<option value="external">
+External Link
+</option>
+
+
+<option value="library">
+Library
+</option>
+
+
+</select>
+
+
+
+
+
+<label class="form-label">
+
+Session
+
+</label>
+
+
+<select
+class="form-select mb-3"
+v-model="form.course_session_id"
+>
+
+
+<option :value="null">
+General Course Material
+</option>
+
+
+<option
+v-for="s in sessions"
+:key="s.id"
+:value="s.id"
+>
+
+Session {{s.session_number}}
+-
+{{s.title}}
+
+</option>
+
+
+</select>
+
+
+
+
+
+
+<div v-if="form.source=='upload'">
+
+
+<label class="form-label">
+
+File
+
+</label>
+
+
+<input
+type="file"
 class="form-control"
-
-v-model="item.title"
-
-placeholder="Section title"
-
+@change="selectFile"
 />
 
 
 </div>
 
 
-</div>
 
 
+<div v-if="form.source=='external'">
 
 
-
-
-<div class="mt-3">
-
-
-<label class="form-label">
-
-Description
-
+<label>
+URL
 </label>
 
 
-<textarea
-
+<input
 class="form-control"
+v-model="form.url"
+/>
 
-rows="3"
 
-v-model="item.description"
+</div>
 
-placeholder="Explain this section..."
-
-></textarea>
 
 
 </div>
@@ -285,22 +512,26 @@ placeholder="Explain this section..."
 
 
 
-
-<div class="text-end mt-3">
+<div class="modal-footer">
 
 
 <button
-
-class="btn btn-sm btn-danger"
-
-@click="removeItem(index)"
-
+class="btn btn-secondary"
+data-bs-dismiss="modal"
 >
 
-<i class="bi bi-trash"></i>
+Cancel
 
-Remove
+</button>
 
+
+
+<button
+class="btn btn-success"
+@click="save"
+>
+
+Save
 
 </button>
 
@@ -309,21 +540,6 @@ Remove
 
 
 
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-</div>
-
-
-
 </div>
 
 
@@ -331,6 +547,8 @@ Remove
 
 
 </div>
+
+
 
 
 </section>
@@ -345,28 +563,16 @@ Remove
 
 
 
+
 <script>
+
 
 import Master from "@/components/Master.vue";
 import axios from "axios";
-import Swal from "sweetalert2";
-
-
-const toast = Swal.mixin({
-
-toast:true,
-
-position:"top-end",
-
-timer:3000,
-
-showConfirmButton:false
-
-});
 
 
 
-export default {
+export default{
 
 
 components:{
@@ -377,33 +583,35 @@ Master
 
 data(){
 
-
 return{
 
 
 course:{},
 
+materials:[],
+
+sessions:[],
+
+file:null,
 
 
-outline:{
-
+form:{
 
 id:null,
 
+title:"",
 
-overview:"",
+description:"",
 
+type:"note",
 
-certificate_information:"",
+source:"upload",
 
+course_session_id:null,
 
-notes:"",
-
-
-items:[]
+url:""
 
 }
-
 
 
 }
@@ -413,26 +621,100 @@ items:[]
 
 
 
-
-
-
 methods:{
+async downloadPackage(){
+
+    let id=this.$route.params.id;
+
+    try {
+
+        let response = await axios.get(
+            `/api/services/${id}/package`,
+            {
+                responseType:'blob'
+            }
+        );
 
 
+        let blob = new Blob(
+            [response.data],
+            {
+                type:'application/zip'
+            }
+        );
 
 
+        let url = window.URL.createObjectURL(blob);
+
+
+        let link=document.createElement('a');
+
+        link.href=url;
+
+        link.download="course-package.zip";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+
+    } catch(error){
+
+        console.log(error);
+
+        alert("Failed downloading course package");
+
+    }
+
+
+},
+
+async generateHandbook(){
+
+    let id = this.$route.params.id;
+
+    try {
+
+        let response = await axios.get(
+            `/api/services/${id}/handbook/pdf`,
+            {
+                responseType:'blob'
+            }
+        );
+
+
+        let file = new Blob(
+            [response.data],
+            {
+                type:'application/pdf'
+            }
+        );
+
+
+        let url = window.URL.createObjectURL(file);
+
+
+        window.open(url,'_blank');
+
+
+    } catch(error){
+
+        console.log(error);
+
+        alert("Failed generating handbook");
+
+    }
+
+},
 
 async load(){
-
-
-try{
 
 
 let id=this.$route.params.id;
 
 
-
-// Load course
 
 let course =
 await axios.get(
@@ -440,102 +722,35 @@ await axios.get(
 );
 
 
-
-this.course =
-course.data.data;
+this.course=course.data.data;
 
 
 
 
-// Load outline
 
-let outline =
+let materials =
 await axios.get(
-`/api/services/${id}/outline`
+`/api/services/${id}/materials`
 );
 
 
-
-if(outline.data.data){
-
-
-this.outline =
-outline.data.data;
-
-
-
-if(!this.outline.items){
-
-this.outline.items=[];
-
-}
-
-
-
-}
-
-
-
-}
-
-catch(error){
-
-
-console.log(error);
-
-
-
-}
-
-
-
-},
+this.materials =
+materials.data.data || [];
 
 
 
 
 
-
-
-addItem(){
-
-
-this.outline.items.push({
-
-
-section:"objective",
-
-
-title:"",
-
-
-description:"",
-
-
-sort_order:
-this.outline.items.length + 1
-
-
-});
-
-
-},
-
-
-
-
-
-
-
-removeItem(index){
-
-
-this.outline.items.splice(
-index,
-1
+let sessions =
+await axios.get(
+`/api/services/${id}/sessions`
 );
 
 
+this.sessions =
+sessions.data.data || [];
+
+
 
 },
 
@@ -543,110 +758,104 @@ index,
 
 
 
+openModal(){
 
 
-async saveOutline(){
+this.reset();
 
+
+new bootstrap.Modal(
+document.getElementById("materialModal")
+).show();
+
+
+},
+
+
+
+
+
+selectFile(e){
+
+this.file=e.target.files[0];
+
+},
+
+
+
+
+
+async save(){
 
 
 let id=this.$route.params.id;
 
 
-
-
-try{
-
-
-
-let response;
+let data=new FormData();
 
 
 
-if(this.outline.id){
+Object.keys(this.form)
+.forEach(key=>{
 
-
-
-response =
-await axios.put(
-
-
-`/api/course-outlines/${this.outline.id}`,
-
-this.outline
-
-
+data.append(
+key,
+this.form[key] ?? ""
 );
 
+});
 
+
+
+if(this.file){
+
+data.append(
+'file',
+this.file
+);
 
 }
 
-else{
 
 
 
-response =
+
+if(this.form.id){
+
+
+data.append('_method','PUT');
+
+
 await axios.post(
-
-
-`/api/services/${id}/outline`,
-
-this.outline
-
-
+`/api/course-materials/${this.form.id}`,
+data
 );
 
 
 
-}
+}else{
 
 
-
-this.outline =
-response.data.data;
-
-
-
-toast.fire({
-
-icon:"success",
-
-title:"Course outline saved"
-
-});
-
+await axios.post(
+`/api/services/${id}/materials`,
+data
+);
 
 
 }
 
 
 
-catch(error){
+
+bootstrap.Modal
+.getInstance(
+document.getElementById("materialModal")
+)
+.hide();
 
 
 
-console.log(error.response);
-
-
-
-toast.fire({
-
-icon:"error",
-
-title:"Failed to save outline"
-
-});
-
-
-
-}
-
-
-
-}
-
-
-
+this.load();
 
 
 },
@@ -655,7 +864,38 @@ title:"Failed to save outline"
 
 
 
-mounted(){
+
+edit(material){
+
+
+this.form={...material};
+
+this.file=null;
+
+
+new bootstrap.Modal(
+document.getElementById("materialModal")
+).show();
+
+
+},
+
+
+
+
+
+
+async remove(material){
+
+
+if(confirm("Delete material?")){
+
+
+await axios.delete(
+
+`/api/course-materials/${material.id}`
+
+);
 
 
 this.load();
@@ -664,22 +904,94 @@ this.load();
 }
 
 
+},
+
+
+
+
+
+
+icon(type){
+
+
+let icons={
+
+
+note:'bi bi-file-earmark-text text-primary',
+
+ebook:'bi bi-book text-success',
+
+exercise:'bi bi-pencil-square text-warning',
+
+assignment:'bi bi-journal-check text-danger',
+
+template:'bi bi-file-earmark-richtext',
+
+presentation:'bi bi-easel',
+
+video:'bi bi-play-circle',
+
+website:'bi bi-globe',
+
+software:'bi bi-download',
+
+other:'bi bi-folder'
+
+
+};
+
+
+return icons[type] || icons.other;
+
+
+},
+
+
+
+
+
+
+reset(){
+
+
+this.form={
+
+id:null,
+
+title:"",
+
+description:"",
+
+type:"note",
+
+source:"upload",
+
+course_session_id:null,
+
+url:""
+
+};
+
+
+this.file=null;
+
 
 }
 
+
+
+},
+
+
+
+mounted(){
+
+this.load();
+
+}
+
+
+
+}
 
 </script>
-
-
-
-
-
-<style scoped>
-
-textarea{
-
-resize:none;
-
-}
-
-</style>

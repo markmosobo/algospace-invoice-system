@@ -17,7 +17,10 @@ return new class extends Migration
             $table->foreignId('service_id')
                 ->constrained()
                 ->cascadeOnDelete();
-
+            $table->foreignId('course_session_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
             // Display Information
             $table->string('title');
             $table->text('description')->nullable();

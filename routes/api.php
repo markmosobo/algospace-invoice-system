@@ -60,6 +60,8 @@ use App\Http\Controllers\StudentAssessmentController;
 use App\Http\Controllers\CourseOutlineController;
 use App\Http\Controllers\CourseSessionController;
 use App\Http\Controllers\CourseSessionTopicController;
+use App\Http\Controllers\CourseMaterialController;
+use App\Http\Controllers\CourseHandbookController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -442,4 +444,48 @@ Route::middleware(['auth:api'])->group(function () {
 
 
     });
+
+    // COURSE MATERIALS
+
+    Route::prefix('services/{service}/materials')
+    ->group(function(){
+
+
+    Route::get('/',
+    [CourseMaterialController::class,'index']);
+
+
+    Route::post('/',
+    [CourseMaterialController::class,'store']);
+
+
+    });
+
+
+
+    Route::prefix('course-materials')
+    ->group(function(){
+
+
+    Route::put('/{material}',
+    [CourseMaterialController::class,'update']);
+
+
+
+    Route::delete('/{material}',
+    [CourseMaterialController::class,'destroy']);
+
+
+    }); 
+    //download course handbook pdf
+    Route::get(
+    '/services/{service}/handbook/pdf',
+    [CourseHandbookController::class,'pdf']
+    );
+
+    //download course package
+    Route::get(
+    '/services/{service}/package',
+    [CourseHandbookController::class,'package']
+    );
 });

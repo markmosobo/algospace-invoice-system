@@ -177,6 +177,14 @@
 
                             <router-link
                                 class="dropdown-item"
+                                :to="`/courses/${c.id}/assessments`"
+                            >
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Course Assessments
+                            </router-link>
+
+                            <router-link
+                                class="dropdown-item"
                                 :to="`/courses/${c.id}/students`"
                             >
                                 <i class="bi bi-people me-2"></i>

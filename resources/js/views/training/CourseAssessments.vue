@@ -4,149 +4,38 @@
 
 <section class="section dashboard">
 
-<div class="row">
-
-<div class="col-12">
 
 <div class="card">
+
 
 <div class="card-body">
 
 
 <h5 class="card-title">
 
-{{ course.name }}
+{{course.name}}
 
-<span>| Course Outline</span>
+<span>| Course Assessments</span>
 
 </h5>
 
 
 
+
 <div class="mb-3">
 
+
 <button
+
 class="btn btn-success btn-sm"
-@click="saveOutline"
->
 
-<i class="bi bi-save"></i>
-Save Outline
-
-</button>
-
-
-</div>
-
-
-
-
-<!-- MAIN OUTLINE -->
-
-<div class="mb-3">
-
-<label class="form-label">
-Course Overview
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="4"
-
-v-model="outline.overview"
-
-placeholder="Describe the course..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Certificate Information
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.certificate_information"
-
-placeholder="Certificate requirements..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Notes
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.notes"
-
-placeholder="Additional notes..."
-
-></textarea>
-
-
-</div>
-
-
-
-
-
-<hr>
-
-
-<div class="d-flex justify-content-between align-items-center">
-
-
-<h5>
-Outline Sections
-</h5>
-
-
-<button
-
-class="btn btn-outline-primary btn-sm"
-
-@click="addItem"
+@click="openModal"
 
 >
 
 <i class="bi bi-plus"></i>
 
-Add Section
+Add Assessment
 
 </button>
 
@@ -157,61 +46,424 @@ Add Section
 
 
 
-<!-- ITEMS -->
-
 <div
+v-if="assessments.length===0"
+class="alert alert-secondary"
+>
 
-v-for="(item,index) in outline.items"
+No assessments created yet.
 
-:key="index"
+</div>
 
-class="card mt-3 border"
+
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-bordered table-hover">
+
+
+<thead>
+
+<tr>
+
+<th>
+Title
+</th>
+
+<th>
+Type
+</th>
+
+<th>
+Session
+</th>
+
+<th>
+Marks
+</th>
+
+<th>
+File
+</th>
+
+<th>
+Status
+</th>
+
+<th>
+Actions
+</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+<tr
+v-for="assessment in assessments"
+:key="assessment.id"
+>
+
+
+<td>
+
+
+<strong>
+
+{{assessment.title}}
+
+</strong>
+
+
+<br>
+
+
+<small class="text-muted">
+
+{{assessment.description}}
+
+</small>
+
+
+</td>
+
+
+
+<td>
+
+
+<span class="badge bg-primary">
+
+{{assessment.assessment_type}}
+
+</span>
+
+
+</td>
+
+
+
+
+
+<td>
+
+{{assessment.session?.title || 'General'}}
+
+</td>
+
+
+
+
+
+<td>
+
+{{assessment.max_marks}}
+
+</td>
+
+
+
+
+
+<td>
+
+
+<a
+
+v-if="assessment.attachment"
+
+:href="'/storage/'+assessment.attachment"
+
+target="_blank"
+
+class="btn btn-outline-primary btn-sm"
+
+>
+
+<i class="bi bi-download"></i>
+
+File
+
+</a>
+
+
+<span v-else>
+
+-
+
+</span>
+
+
+</td>
+
+
+
+
+
+<td>
+
+
+<span
+
+class="badge"
+
+:class="assessment.is_active ? 'bg-success':'bg-danger'"
+
+>
+
+{{assessment.is_active?'Active':'Disabled'}}
+
+</span>
+
+
+</td>
+
+
+
+
+
+
+<td>
+
+
+<router-link
+
+
+class="btn btn-primary btn-sm me-1"
+
+
+:to="{
+
+name:'AssessmentGradebook',
+
+params:{
+id:assessment.id
+}
+
+}"
 
 
 >
 
 
-<div class="card-body">
+<i class="bi bi-pencil-square"></i>
+
+Grade
+
+
+</router-link>
 
 
 
-<div class="row">
 
 
-<div class="col-md-3">
+
+<button
+
+class="btn btn-outline-success btn-sm me-1"
+
+@click="edit(assessment)"
+
+>
+
+Edit
+
+</button>
+
+
+
+
+
+
+
+<button
+
+class="btn btn-outline-danger btn-sm"
+
+@click="remove(assessment)"
+
+>
+
+Delete
+
+</button>
+
+
+
+</td>
+
+
+
+</tr>
+
+
+</tbody>
+
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+<!-- MODAL -->
+
+
+<div
+
+class="modal fade"
+
+id="assessmentModal"
+
+tabindex="-1"
+
+>
+
+
+<div class="modal-dialog">
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h5 class="modal-title">
+
+{{form.id?'Edit':'Add'}} Assessment
+
+</h5>
+
+
+<button
+
+class="btn-close"
+
+data-bs-dismiss="modal"
+
+></button>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="modal-body">
+
+
+
 
 
 <label class="form-label">
-Section
+
+Title
+
+</label>
+
+
+<input
+
+class="form-control mb-3"
+
+v-model="form.title"
+
+/>
+
+
+
+
+
+
+<label class="form-label">
+
+Assessment Type
+
 </label>
 
 
 <select
 
-class="form-select"
+class="form-select mb-3"
 
-v-model="item.section"
+v-model="form.assessment_type"
 
 >
 
 
-<option value="objective">
-Objective
+<option value="practical">
+
+Practical
+
 </option>
 
 
-<option value="outcome">
-Learning Outcome
+<option value="homework">
+
+Homework
+
 </option>
 
 
-<option value="requirement">
-Requirement
+<option value="quiz">
+
+Quiz
+
 </option>
 
 
-<option value="assessment">
-Assessment
+<option value="assignment">
+
+Assignment
+
+</option>
+
+
+<option value="exam">
+
+Exam
+
+</option>
+
+
+<option value="project">
+
+Project
+
+</option>
+
+
+<option value="other">
+
+Other
+
 </option>
 
 
@@ -219,29 +471,215 @@ Assessment
 
 
 
+
+
+
+
+
+<label class="form-label">
+
+Session
+
+</label>
+
+
+<select
+
+class="form-select mb-3"
+
+v-model="form.course_session_id"
+
+>
+
+
+<option :value="null">
+
+General Assessment
+
+</option>
+
+
+
+<option
+
+v-for="s in sessions"
+
+:key="s.id"
+
+:value="s.id"
+
+>
+
+Session {{s.session_number}}
+
+-
+
+{{s.title}}
+
+</option>
+
+
+</select>
+
+
+
+
+
+
+
+
+<label class="form-label">
+
+Description
+
+</label>
+
+
+<textarea
+
+class="form-control mb-3"
+
+rows="3"
+
+v-model="form.description"
+
+></textarea>
+
+
+
+
+
+
+
+
+<label class="form-label">
+
+Instructions
+
+</label>
+
+
+<textarea
+
+class="form-control mb-3"
+
+rows="4"
+
+v-model="form.instructions"
+
+></textarea>
+
+
+
+
+
+
+
+<label class="form-label">
+
+Assessment File
+
+</label>
+
+
+
+<input
+
+type="file"
+
+class="form-control mb-3"
+
+accept=".pdf,.doc,.docx"
+
+@change="selectFile"
+
+/>
+
+
+
+
+
+<div
+v-if="form.attachment"
+class="mb-3"
+>
+
+
+<a
+
+:href="'/storage/'+form.attachment"
+
+target="_blank"
+
+class="btn btn-outline-primary btn-sm"
+
+>
+
+<i class="bi bi-file-earmark"></i>
+
+View Existing File
+
+</a>
+
+
 </div>
 
 
 
 
 
-<div class="col-md-9">
 
 
-<label class="form-label">
-Title
+
+
+<div class="row">
+
+
+<div class="col">
+
+
+<label>
+
+Maximum Marks
+
 </label>
 
 
 <input
 
-type="text"
+type="number"
 
 class="form-control"
 
-v-model="item.title"
+v-model="form.max_marks"
 
-placeholder="Section title"
+/>
+
+
+</div>
+
+
+
+
+
+
+<div class="col">
+
+
+<label>
+
+Pass Mark
+
+</label>
+
+
+<input
+
+type="number"
+
+class="form-control"
+
+v-model="form.pass_mark"
 
 />
 
@@ -255,30 +693,6 @@ placeholder="Section title"
 
 
 
-
-<div class="mt-3">
-
-
-<label class="form-label">
-
-Description
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="item.description"
-
-placeholder="Explain this section..."
-
-></textarea>
-
-
 </div>
 
 
@@ -286,51 +700,53 @@ placeholder="Explain this section..."
 
 
 
-<div class="text-end mt-3">
+
+<div class="modal-footer">
 
 
 <button
 
-class="btn btn-sm btn-danger"
+class="btn btn-secondary"
 
-@click="removeItem(index)"
+data-bs-dismiss="modal"
 
 >
 
-<i class="bi bi-trash"></i>
-
-Remove
-
+Cancel
 
 </button>
 
 
+
+
+<button
+
+class="btn btn-success"
+
+@click="save"
+
+>
+
+Save
+
+</button>
+
+
+
 </div>
 
 
 
 
-</div>
-
 
 </div>
 
-
-
-
-
+</div>
 
 </div>
 
 
 
-</div>
-
-
-</div>
-
-
-</div>
 
 
 </section>
@@ -345,28 +761,14 @@ Remove
 
 
 
+
 <script>
 
 import Master from "@/components/Master.vue";
 import axios from "axios";
-import Swal from "sweetalert2";
 
 
-const toast = Swal.mixin({
-
-toast:true,
-
-position:"top-end",
-
-timer:3000,
-
-showConfirmButton:false
-
-});
-
-
-
-export default {
+export default{
 
 
 components:{
@@ -383,24 +785,36 @@ return{
 
 course:{},
 
+assessments:[],
+
+sessions:[],
 
 
-outline:{
+file:null,
+
+
+
+form:{
 
 
 id:null,
 
+title:"",
 
-overview:"",
+assessment_type:"practical",
 
+course_session_id:null,
 
-certificate_information:"",
+description:"",
 
+instructions:"",
 
-notes:"",
+max_marks:100,
 
+pass_mark:null,
 
-items:[]
+attachment:null
+
 
 }
 
@@ -410,7 +824,6 @@ items:[]
 
 
 },
-
 
 
 
@@ -425,14 +838,9 @@ methods:{
 async load(){
 
 
-try{
-
-
 let id=this.$route.params.id;
 
 
-
-// Load course
 
 let course =
 await axios.get(
@@ -447,42 +855,329 @@ course.data.data;
 
 
 
-// Load outline
 
-let outline =
+
+let assessments =
 await axios.get(
-`/api/services/${id}/outline`
+`/api/services/${id}/assessments`
 );
 
 
 
-if(outline.data.data){
-
-
-this.outline =
-outline.data.data;
+this.assessments =
+assessments.data.data || [];
 
 
 
-if(!this.outline.items){
 
-this.outline.items=[];
+
+
+let sessions =
+await axios.get(
+`/api/services/${id}/sessions`
+);
+
+
+
+this.sessions =
+sessions.data.data || [];
+
+
+
+},
+
+
+
+
+
+
+
+
+openModal(){
+
+
+this.reset();
+
+
+new bootstrap.Modal(
+
+document.getElementById(
+'assessmentModal'
+)
+
+).show();
+
+
+},
+
+
+
+
+
+
+
+
+edit(assessment){
+
+
+this.form={
+
+...assessment
+
+};
+
+
+this.file=null;
+
+
+
+new bootstrap.Modal(
+
+document.getElementById(
+'assessmentModal'
+)
+
+).show();
+
+
+
+},
+
+
+
+
+
+
+
+selectFile(e){
+
+
+this.file =
+e.target.files[0];
+
+
+},
+
+
+
+
+
+
+
+
+async save(){
+
+
+
+let service_id =
+this.$route.params.id;
+
+
+
+
+let data =
+new FormData();
+
+
+
+
+data.append(
+'service_id',
+service_id
+);
+
+
+
+data.append(
+'title',
+this.form.title
+);
+
+
+
+data.append(
+'assessment_type',
+this.form.assessment_type
+);
+
+
+
+data.append(
+'course_session_id',
+this.form.course_session_id ?? ''
+);
+
+
+
+data.append(
+'description',
+this.form.description ?? ''
+);
+
+
+
+data.append(
+'instructions',
+this.form.instructions ?? ''
+);
+
+
+
+data.append(
+'max_marks',
+this.form.max_marks
+);
+
+
+
+data.append(
+'pass_mark',
+this.form.pass_mark ?? ''
+);
+
+
+
+
+
+
+let assessmentId=this.form.id;
+
+
+
+
+
+
+if(assessmentId){
+
+
+data.append(
+'_method',
+'PUT'
+);
+
+
+
+await axios.post(
+
+`/api/course-assessments/${assessmentId}`,
+
+data
+
+);
+
+
+
+}else{
+
+
+let response =
+await axios.post(
+
+'/api/course-assessments',
+
+data
+
+);
+
+
+
+assessmentId =
+response.data.data.id;
+
+
 
 }
 
 
 
-}
+
+
+
+
+if(this.file){
+
+
+let upload =
+new FormData();
+
+
+upload.append(
+'file',
+this.file
+);
+
+
+
+
+await axios.post(
+
+`/api/course-assessments/${assessmentId}/attachment`,
+
+upload
+
+);
 
 
 
 }
 
-catch(error){
 
 
-console.log(error);
 
+
+
+bootstrap.Modal
+
+.getInstance(
+
+document.getElementById(
+'assessmentModal'
+)
+
+)
+
+.hide();
+
+
+
+
+this.file=null;
+
+
+this.load();
+
+
+
+},
+
+
+
+
+
+
+
+
+
+
+async remove(assessment){
+
+
+
+if(confirm(
+"Delete assessment?"
+)){
+
+
+
+await axios.delete(
+
+`/api/course-assessments/${assessment.id}`
+
+);
+
+
+
+this.load();
 
 
 }
@@ -497,155 +1192,38 @@ console.log(error);
 
 
 
-addItem(){
+reset(){
 
 
-this.outline.items.push({
+this.form={
 
 
-section:"objective",
-
+id:null,
 
 title:"",
 
+assessment_type:"practical",
+
+course_session_id:null,
 
 description:"",
 
+instructions:"",
 
-sort_order:
-this.outline.items.length + 1
+max_marks:100,
 
+pass_mark:null,
 
-});
-
-
-},
+attachment:null
 
 
+};
 
 
-
-
-
-removeItem(index){
-
-
-this.outline.items.splice(
-index,
-1
-);
-
-
-
-},
-
-
-
-
-
-
-
-async saveOutline(){
-
-
-
-let id=this.$route.params.id;
-
-
-
-
-try{
-
-
-
-let response;
-
-
-
-if(this.outline.id){
-
-
-
-response =
-await axios.put(
-
-
-`/api/course-outlines/${this.outline.id}`,
-
-this.outline
-
-
-);
-
+this.file=null;
 
 
 }
-
-else{
-
-
-
-response =
-await axios.post(
-
-
-`/api/services/${id}/outline`,
-
-this.outline
-
-
-);
-
-
-
-}
-
-
-
-this.outline =
-response.data.data;
-
-
-
-toast.fire({
-
-icon:"success",
-
-title:"Course outline saved"
-
-});
-
-
-
-}
-
-
-
-catch(error){
-
-
-
-console.log(error.response);
-
-
-
-toast.fire({
-
-icon:"error",
-
-title:"Failed to save outline"
-
-});
-
-
-
-}
-
-
-
-}
-
-
 
 
 
@@ -657,9 +1235,7 @@ title:"Failed to save outline"
 
 mounted(){
 
-
 this.load();
-
 
 }
 
@@ -669,17 +1245,3 @@ this.load();
 
 
 </script>
-
-
-
-
-
-<style scoped>
-
-textarea{
-
-resize:none;
-
-}
-
-</style>

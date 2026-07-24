@@ -37,41 +37,65 @@ class CourseAssessmentController extends Controller
     public function store(Request $request)
     {
 
-        $validated = $request->validate([
 
-            'service_id'=>'required|exists:services,id',
-
-            'course_session_id'=>'nullable|exists:course_sessions,id',
-
-            'title'=>'required|string|max:255',
-
-            'assessment_type'=>'required|string',
-
-            'description'=>'nullable|string',
-
-            'instructions'=>'nullable|string',
-
-            'max_marks'=>'required|numeric',
-
-            'pass_mark'=>'nullable|numeric',
-
-            'sort_order'=>'nullable|integer',
-
-        ]);
+    $validated=$request->validate([
 
 
-        $assessment = CourseAssessment::create($validated);
+    'service_id'=>'required|exists:services,id',
+
+    'course_session_id'=>'nullable|exists:course_sessions,id',
+
+    'title'=>'required|string|max:255',
+
+    'assessment_type'=>'required|string',
+
+    'description'=>'nullable|string',
+
+    'instructions'=>'nullable|string',
+
+    'max_marks'=>'required|numeric',
+
+    'pass_mark'=>'nullable|numeric',
+
+    'sort_order'=>'nullable|integer',
+
+    'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240',
 
 
-        return response()->json([
+    ]);
 
-            'success'=>true,
 
-            'message'=>'Assessment created successfully',
 
-            'data'=>$assessment
 
-        ],201);
+
+    if($request->hasFile('attachment')){
+
+
+    $validated['attachment'] =
+    $request->file('attachment')
+    ->store('course_assessments');
+
+
+    }
+
+
+
+    $assessment =
+    CourseAssessment::create($validated);
+
+
+
+    return response()->json([
+
+    'success'=>true,
+
+    'message'=>'Assessment created successfully',
+
+    'data'=>$assessment
+
+    ],201);
+
+
     }
 
 
@@ -106,29 +130,58 @@ class CourseAssessmentController extends Controller
     /**
      * Update assessment
      */
-    public function update(Request $request, CourseAssessment $assessment)
+    public function update(Request $request, CourseAssessment $assessment
     {
 
 
-        $validated = $request->validate([
+        $validated=$request->validate([
 
-            'title'=>'sometimes|string|max:255',
 
-            'assessment_type'=>'sometimes|string',
+        'title'=>'sometimes|string|max:255',
 
-            'description'=>'nullable|string',
+        'assessment_type'=>'sometimes|string',
 
-            'instructions'=>'nullable|string',
+        'description'=>'nullable|string',
 
-            'max_marks'=>'sometimes|numeric',
+        'instructions'=>'nullable|string',
 
-            'pass_mark'=>'nullable|numeric',
+        'max_marks'=>'sometimes|numeric',
 
-            'sort_order'=>'nullable|integer',
+        'pass_mark'=>'nullable|numeric',
 
-            'is_active'=>'boolean'
+        'sort_order'=>'nullable|integer',
+
+        'is_active'=>'boolean',
+
+        'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240'
+
 
         ]);
+
+
+
+
+
+        if($request->hasFile('attachment')){
+
+
+        if($assessment->attachment){
+
+        Storage::delete(
+        $assessment->attachment
+        );
+
+        }
+
+
+
+        $validated['attachment'] =
+        $request->file('attachment')
+        ->store('course_assessments');
+
+
+        }
+
 
 
 
@@ -138,13 +191,14 @@ class CourseAssessmentController extends Controller
 
         return response()->json([
 
-            'success'=>true,
+        'success'=>true,
 
-            'message'=>'Assessment updated successfully',
+        'message'=>'Assessment updated successfully',
 
-            'data'=>$assessment
+        'data'=>$assessment
 
         ]);
+
 
     }
 

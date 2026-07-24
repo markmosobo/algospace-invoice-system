@@ -266,178 +266,178 @@
                         </div>
 
 
-<!-- NEW CUSTOMER FORM -->
-<div v-if="customerForm.type === 'new'" class="row g-3">
+                        <!-- NEW CUSTOMER FORM -->
+                        <div v-if="customerForm.type === 'new'" class="row g-3">
 
-    <!-- NAME -->
-    <div class="col-md-4 position-relative">
+                            <!-- NAME -->
+                            <div class="col-md-4 position-relative">
 
-        <label class="form-label">
-            Name*
-        </label>
+                                <label class="form-label">
+                                    Name*
+                                </label>
 
-        <div class="input-group">
+                                <div class="input-group">
 
-            <span class="input-group-text">
-                <i class="bi bi-person"></i>
-            </span>
+                                    <span class="input-group-text">
+                                        <i class="bi bi-person"></i>
+                                    </span>
 
-            <input 
-                type="text" 
-                class="form-control"
-                :class="{
-                    'border-warning': duplicateCustomers.length
-                }"
-                v-model="customerForm.name"
-                @input="checkDuplicateCustomer"
-                placeholder="Customer name"
-                autocomplete="off"
-                required
-            >
+                                    <input 
+                                        type="text" 
+                                        class="form-control"
+                                        :class="{
+                                            'border-warning': duplicateCustomers.length
+                                        }"
+                                        v-model="customerForm.name"
+                                        @input="checkDuplicateCustomer"
+                                        placeholder="Customer name"
+                                        autocomplete="off"
+                                        required
+                                    >
 
-        </div>
-
-
-        <!-- Duplicate Suggestions -->
-        <div 
-            v-if="duplicateCustomers.length"
-            class="position-absolute bg-white border rounded shadow-sm mt-1 w-100"
-            style="z-index:1050;"
-        >
-
-            <div class="p-2 bg-warning-subtle">
-
-                <small class="fw-bold">
-                    ⚠️ Existing customer found
-                </small>
-
-            </div>
+                                </div>
 
 
-            <div
-                v-for="c in duplicateCustomers"
-                :key="c.id"
-                class="p-2 border-bottom"
-            >
+                                <!-- Duplicate Suggestions -->
+                                <div 
+                                    v-if="duplicateCustomers.length"
+                                    class="position-absolute bg-white border rounded shadow-sm mt-1 w-100"
+                                    style="z-index:1050;"
+                                >
 
-                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="p-2 bg-warning-subtle">
 
-                    <div>
+                                        <small class="fw-bold">
+                                            ⚠️ Existing customer found
+                                        </small>
 
-                        <div class="fw-bold">
-                            {{ c.name }}
+                                    </div>
+
+
+                                    <div
+                                        v-for="c in duplicateCustomers"
+                                        :key="c.id"
+                                        class="p-2 border-bottom"
+                                    >
+
+                                        <div class="d-flex justify-content-between align-items-center">
+
+                                            <div>
+
+                                                <div class="fw-bold">
+                                                    {{ c.name }}
+                                                </div>
+
+
+                                                <small class="text-muted">
+
+                                                    <i class="bi bi-telephone"></i>
+                                                    {{ c.phone || 'No phone' }}
+
+                                                    <span class="ms-2">
+
+                                                        👣 
+                                                        {{ c.visits_count || 0 }}
+                                                        visits
+
+                                                    </span>
+
+                                                </small>
+
+                                            </div>
+
+
+                                            <button
+                                                class="btn btn-sm btn-success rounded-pill"
+                                                @click="useExistingCustomer(c)"
+                                            >
+
+                                                <i class="bi bi-check-circle"></i>
+                                                Use
+
+                                            </button>
+
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                    <div class="p-2 text-center">
+
+                                        <small class="text-muted">
+                                            Or continue creating a new customer
+                                        </small>
+
+                                    </div>
+
+
+                                </div>
+
+
+                            </div>
+
+
+
+                            <!-- EMAIL -->
+                            <div class="col-md-4">
+
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+
+
+                                    <input 
+                                        type="email" 
+                                        class="form-control"
+                                        v-model="customerForm.email"
+                                        placeholder="example@email.com"
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+
+
+                            <!-- PHONE -->
+                            <div class="col-md-4">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <span class="input-group-text">
+                                        <i class="bi bi-phone"></i>
+                                    </span>
+
+
+                                    <input 
+                                        type="text"
+                                        class="form-control"
+                                        v-model="customerForm.phone"
+                                        placeholder="07xxxxxxxx"
+                                    >
+
+                                </div>
+
+
+                            </div>
+
+
                         </div>
-
-
-                        <small class="text-muted">
-
-                            <i class="bi bi-telephone"></i>
-                            {{ c.phone || 'No phone' }}
-
-                            <span class="ms-2">
-
-                                👣 
-                                {{ c.visits_count || 0 }}
-                                visits
-
-                            </span>
-
-                        </small>
-
-                    </div>
-
-
-                    <button
-                        class="btn btn-sm btn-success rounded-pill"
-                        @click="useExistingCustomer(c)"
-                    >
-
-                        <i class="bi bi-check-circle"></i>
-                        Use
-
-                    </button>
-
-
-                </div>
-
-
-            </div>
-
-
-            <div class="p-2 text-center">
-
-                <small class="text-muted">
-                    Or continue creating a new customer
-                </small>
-
-            </div>
-
-
-        </div>
-
-
-    </div>
-
-
-
-    <!-- EMAIL -->
-    <div class="col-md-4">
-
-        <label class="form-label">
-            Email
-        </label>
-
-
-        <div class="input-group">
-
-            <span class="input-group-text">
-                <i class="bi bi-envelope"></i>
-            </span>
-
-
-            <input 
-                type="email" 
-                class="form-control"
-                v-model="customerForm.email"
-                placeholder="example@email.com"
-            >
-
-        </div>
-
-    </div>
-
-
-
-
-    <!-- PHONE -->
-    <div class="col-md-4">
-
-        <label class="form-label">
-            Phone
-        </label>
-
-
-        <div class="input-group">
-
-            <span class="input-group-text">
-                <i class="bi bi-phone"></i>
-            </span>
-
-
-            <input 
-                type="text"
-                class="form-control"
-                v-model="customerForm.phone"
-                placeholder="07xxxxxxxx"
-            >
-
-        </div>
-
-
-    </div>
-
-
-</div>
 
                         </div>
 

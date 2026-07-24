@@ -317,28 +317,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote']);
 
     //training
-    Route::prefix('course-assessments')->group(function () {
 
-        Route::get('/', 
-            [CourseAssessmentController::class, 'index']);
-
-        Route::post('/', 
-            [CourseAssessmentController::class, 'store']);
-
-        Route::get('/{assessment}', 
-            [CourseAssessmentController::class, 'show']);
-
-        Route::put('/{assessment}', 
-            [CourseAssessmentController::class, 'update']);
-
-        Route::delete('/{assessment}', 
-            [CourseAssessmentController::class, 'destroy']);
-
-
-        Route::post('/{assessment}/upload',
-            [CourseAssessmentController::class, 'uploadAttachment']);
-
-    });
 
     Route::prefix('student-assessments')->group(function () {
 
@@ -547,5 +526,75 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get(
         '/customers',
         [CourseEnrollmentController::class,'customers']
+    );
+
+    // COURSE ASSESSMENTS
+
+    Route::prefix('course-assessments')->group(function(){
+
+
+        // create assessment
+        Route::post(
+            '/',
+            [
+                CourseAssessmentController::class,
+                'store'
+            ]
+        );
+
+
+        // update assessment
+        Route::put(
+            '/{assessment}',
+            [
+                CourseAssessmentController::class,
+                'update'
+            ]
+        );
+
+
+        // view assessment + gradebook
+        Route::get(
+            '/{assessment}',
+            [
+                CourseAssessmentController::class,
+                'show'
+            ]
+        );
+
+
+        // delete assessment
+        Route::delete(
+            '/{assessment}',
+            [
+                CourseAssessmentController::class,
+                'destroy'
+            ]
+        );
+
+
+        // upload assessment paper
+        Route::post(
+            '/{assessment}/upload',
+            [
+                CourseAssessmentController::class,
+                'uploadAttachment'
+            ]
+        );
+
+
+    });
+
+
+
+
+    // assessments belonging to course
+
+    Route::get(
+        '/services/{service}/assessments',
+        [
+            CourseAssessmentController::class,
+            'byService'
+        ]
     );
 });

@@ -54,7 +54,7 @@ import CourseMaterials from '@/views/training/CourseMaterials.vue';
 import CourseStudents from '@/views/training/CourseStudents.vue';
 
 import CourseAssessments from '@/views/training/CourseAssessments.vue';
-import StudentAssessments from '@/views/training/StudentAssessments.vue';
+import AssessmentGradebook from '@/views/training/AssessmentGradebook.vue';
 import EnrollmentProfile from '@/views/training/EnrollmentProfile.vue';
 
 const routes = [
@@ -204,24 +204,24 @@ const routes = [
 
   // COURSE ASSESSMENTS
 
+{
+    path:'/courses/:id/assessments',
+    name:'CourseAssessments',
+    component:CourseAssessments,
+    meta:{
+        requiresAuth:true
+    }
+},
+
+
+
+
+  // ASSESSMENT GRADEBOOK
+
   {
-      path:'/course-assessments',
-      name:'CourseAssessments',
-      component:CourseAssessments,
-      meta:{
-          requiresAuth:true
-      }
-  },
-
-
-
-
-  // STUDENT ASSESSMENTS
-
-  {
-      path:'/student-assessments',
-      name:'StudentAssessments',
-      component:StudentAssessments,
+      path:'/student-assessments/:id',
+      name:'AssessmentGradebook',
+      component:AssessmentGradebook,
       meta:{
           requiresAuth:true
       }

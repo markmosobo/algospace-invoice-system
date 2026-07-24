@@ -4,45 +4,24 @@
 
 <section class="section dashboard">
 
-
 <div class="card">
-
 
 <div class="card-body">
 
 
 <h5 class="card-title">
-
 {{course.name}}
-
 <span>| Course Assessments</span>
-
 </h5>
 
 
-
-
-<div class="mb-3">
-
-
 <button
-
-class="btn btn-success btn-sm"
-
+class="btn btn-success btn-sm mb-3"
 @click="openModal"
-
 >
-
 <i class="bi bi-plus"></i>
-
 Add Assessment
-
 </button>
-
-
-</div>
-
-
 
 
 
@@ -50,17 +29,12 @@ Add Assessment
 v-if="assessments.length===0"
 class="alert alert-secondary"
 >
-
 No assessments created yet.
-
 </div>
 
 
 
-
-
 <div class="table-responsive">
-
 
 <table class="table table-bordered table-hover">
 
@@ -69,38 +43,23 @@ No assessments created yet.
 
 <tr>
 
-<th>
-Title
-</th>
+<th>Title</th>
 
-<th>
-Type
-</th>
+<th>Type</th>
 
-<th>
-Session
-</th>
+<th>Session</th>
 
-<th>
-Marks
-</th>
+<th>Marks</th>
 
-<th>
-File
-</th>
+<th>File</th>
 
-<th>
-Status
-</th>
+<th>Status</th>
 
-<th>
-Actions
-</th>
+<th>Actions</th>
 
 </tr>
 
 </thead>
-
 
 
 <tbody>
@@ -114,23 +73,15 @@ v-for="assessment in assessments"
 
 <td>
 
-
 <strong>
-
 {{assessment.title}}
-
 </strong>
-
 
 <br>
 
-
-<small class="text-muted">
-
+<small>
 {{assessment.description}}
-
 </small>
-
 
 </td>
 
@@ -138,17 +89,11 @@ v-for="assessment in assessments"
 
 <td>
 
-
 <span class="badge bg-primary">
-
 {{assessment.assessment_type}}
-
 </span>
 
-
 </td>
-
-
 
 
 
@@ -160,8 +105,6 @@ v-for="assessment in assessments"
 
 
 
-
-
 <td>
 
 {{assessment.max_marks}}
@@ -170,34 +113,22 @@ v-for="assessment in assessments"
 
 
 
-
-
 <td>
 
 
 <a
-
 v-if="assessment.attachment"
-
 :href="'/storage/'+assessment.attachment"
-
 target="_blank"
-
 class="btn btn-outline-primary btn-sm"
-
 >
-
 <i class="bi bi-download"></i>
-
 File
-
 </a>
 
 
 <span v-else>
-
 -
-
 </span>
 
 
@@ -205,17 +136,16 @@ File
 
 
 
-
-
 <td>
 
 
 <span
-
 class="badge"
-
-:class="assessment.is_active ? 'bg-success':'bg-danger'"
-
+:class="
+assessment.is_active
+?'bg-success'
+:'bg-danger'
+"
 >
 
 {{assessment.is_active?'Active':'Disabled'}}
@@ -228,73 +158,77 @@ class="badge"
 
 
 
-
-
-<td>
+<td class="text-nowrap">
 
 
 <router-link
-
-
 class="btn btn-primary btn-sm me-1"
-
-
 :to="{
-
-name:'AssessmentGradebook',
-
-params:{
-id:assessment.id
-}
-
+    name:'AssessmentGradebook',
+    params:{
+        id:assessment.id
+    }
 }"
-
-
 >
-
-
-<i class="bi bi-pencil-square"></i>
-
+<i class="bi bi-clipboard-check"></i>
 Grade
-
-
 </router-link>
 
 
 
-
+<div class="btn-group">
 
 
 <button
-
-class="btn btn-outline-success btn-sm me-1"
-
-@click="edit(assessment)"
-
+class="btn btn-outline-secondary btn-sm dropdown-toggle"
+data-bs-toggle="dropdown"
 >
 
-Edit
+<i class="bi bi-three-dots"></i>
 
 </button>
 
 
+<ul class="dropdown-menu dropdown-menu-end">
 
 
-
-
+<li>
 
 <button
-
-class="btn btn-outline-danger btn-sm"
-
-@click="remove(assessment)"
-
+class="dropdown-item"
+@click="edit(assessment)"
 >
+
+<i class="bi bi-pencil me-2"></i>
+
+Edit Assessment
+
+</button>
+
+</li>
+
+
+
+<li>
+
+<button
+class="dropdown-item text-danger"
+@click="remove(assessment)"
+>
+
+<i class="bi bi-trash me-2"></i>
 
 Delete
 
 </button>
 
+</li>
+
+
+</ul>
+
+
+</div>
 
 
 </td>
@@ -307,21 +241,15 @@ Delete
 </tbody>
 
 
-
 </table>
 
 
 </div>
 
 
-
-
-
 </div>
 
 </div>
-
-
 
 
 
@@ -330,23 +258,16 @@ Delete
 
 <!-- MODAL -->
 
-
 <div
-
 class="modal fade"
-
 id="assessmentModal"
-
 tabindex="-1"
-
 >
 
 
 <div class="modal-dialog">
 
-
 <div class="modal-content">
-
 
 
 <div class="modal-header">
@@ -359,12 +280,10 @@ tabindex="-1"
 </h5>
 
 
+
 <button
-
 class="btn-close"
-
 data-bs-dismiss="modal"
-
 ></button>
 
 
@@ -374,96 +293,57 @@ data-bs-dismiss="modal"
 
 
 
-
-
 <div class="modal-body">
 
 
 
-
-
-<label class="form-label">
-
+<label>
 Title
-
 </label>
 
 
 <input
-
 class="form-control mb-3"
-
 v-model="form.title"
-
 />
 
 
 
 
 
-
-<label class="form-label">
-
+<label>
 Assessment Type
-
 </label>
 
 
 <select
-
 class="form-select mb-3"
-
 v-model="form.assessment_type"
-
 >
 
 
 <option value="practical">
-
 Practical
-
 </option>
 
 
 <option value="homework">
-
 Homework
-
 </option>
 
 
 <option value="quiz">
-
 Quiz
-
 </option>
 
 
 <option value="assignment">
-
 Assignment
-
 </option>
 
 
 <option value="exam">
-
 Exam
-
-</option>
-
-
-<option value="project">
-
-Project
-
-</option>
-
-
-<option value="other">
-
-Other
-
 </option>
 
 
@@ -474,46 +354,30 @@ Other
 
 
 
-
-
-<label class="form-label">
-
+<label>
 Session
-
 </label>
 
 
 <select
-
 class="form-select mb-3"
-
 v-model="form.course_session_id"
-
 >
 
 
 <option :value="null">
-
 General Assessment
-
 </option>
 
 
-
 <option
-
 v-for="s in sessions"
-
 :key="s.id"
-
 :value="s.id"
-
 >
 
 Session {{s.session_number}}
-
 -
-
 {{s.title}}
 
 </option>
@@ -526,23 +390,15 @@ Session {{s.session_number}}
 
 
 
-
-
-<label class="form-label">
-
+<label>
 Description
-
 </label>
 
 
 <textarea
-
 class="form-control mb-3"
-
-rows="3"
-
 v-model="form.description"
-
+rows="3"
 ></textarea>
 
 
@@ -550,49 +406,33 @@ v-model="form.description"
 
 
 
-
-
-<label class="form-label">
-
+<label>
 Instructions
-
 </label>
 
 
-<textarea
+<div class="alert alert-info">
 
-class="form-control mb-3"
+<i class="bi bi-info-circle"></i>
 
-rows="4"
+Complete all tasks without assistance. Instructor assessment required.
 
-v-model="form.instructions"
-
-></textarea>
+</div>
 
 
 
 
 
-
-
-<label class="form-label">
-
+<label>
 Assessment File
-
 </label>
-
 
 
 <input
-
 type="file"
-
 class="form-control mb-3"
-
 accept=".pdf,.doc,.docx"
-
 @change="selectFile"
-
 />
 
 
@@ -606,27 +446,15 @@ class="mb-3"
 
 
 <a
-
 :href="'/storage/'+form.attachment"
-
 target="_blank"
-
 class="btn btn-outline-primary btn-sm"
-
 >
-
-<i class="bi bi-file-earmark"></i>
-
-View Existing File
-
+Existing File
 </a>
 
 
 </div>
-
-
-
-
 
 
 
@@ -639,27 +467,18 @@ View Existing File
 
 
 <label>
-
 Maximum Marks
-
 </label>
 
 
 <input
-
 type="number"
-
 class="form-control"
-
 v-model="form.max_marks"
-
 />
 
 
 </div>
-
-
-
 
 
 
@@ -667,20 +486,14 @@ v-model="form.max_marks"
 
 
 <label>
-
 Pass Mark
-
 </label>
 
 
 <input
-
 type="number"
-
 class="form-control"
-
 v-model="form.pass_mark"
-
 />
 
 
@@ -692,10 +505,7 @@ v-model="form.pass_mark"
 
 
 
-
 </div>
-
-
 
 
 
@@ -705,30 +515,19 @@ v-model="form.pass_mark"
 
 
 <button
-
 class="btn btn-secondary"
-
 data-bs-dismiss="modal"
-
 >
-
 Cancel
-
 </button>
-
 
 
 
 <button
-
 class="btn btn-success"
-
 @click="save"
-
 >
-
 Save
-
 </button>
 
 
@@ -736,16 +535,11 @@ Save
 </div>
 
 
-
-
-
 </div>
 
 </div>
 
 </div>
-
-
 
 
 
@@ -754,13 +548,7 @@ Save
 
 </Master>
 
-
 </template>
-
-
-
-
-
 
 <script>
 
@@ -768,11 +556,11 @@ import Master from "@/components/Master.vue";
 import axios from "axios";
 
 
-export default{
+export default {
 
 
 components:{
-Master
+    Master
 },
 
 
@@ -780,12 +568,14 @@ Master
 data(){
 
 
-return{
+return {
 
 
 course:{},
 
+
 assessments:[],
+
 
 sessions:[],
 
@@ -807,17 +597,16 @@ course_session_id:null,
 
 description:"",
 
-instructions:"",
+instructions:"Complete all tasks without assistance. Instructor will provide guidance if needed.",
 
 max_marks:100,
 
-pass_mark:null,
+pass_mark:50,
 
 attachment:null
 
 
 }
-
 
 
 }
@@ -838,6 +627,9 @@ methods:{
 async load(){
 
 
+try{
+
+
 let id=this.$route.params.id;
 
 
@@ -848,10 +640,8 @@ await axios.get(
 );
 
 
-
 this.course =
 course.data.data;
-
 
 
 
@@ -863,10 +653,8 @@ await axios.get(
 );
 
 
-
 this.assessments =
 assessments.data.data || [];
-
 
 
 
@@ -878,14 +666,20 @@ await axios.get(
 );
 
 
-
 this.sessions =
 sessions.data.data || [];
 
 
 
-},
+}catch(error){
 
+console.log(error);
+
+}
+
+
+
+},
 
 
 
@@ -899,17 +693,26 @@ openModal(){
 this.reset();
 
 
-new bootstrap.Modal(
 
+let modalElement =
 document.getElementById(
 'assessmentModal'
-)
+);
 
-).show();
+
+
+let modal =
+new bootstrap.Modal(
+modalElement
+);
+
+
+
+modal.show();
+
 
 
 },
-
 
 
 
@@ -920,24 +723,67 @@ document.getElementById(
 edit(assessment){
 
 
+
 this.form={
 
-...assessment
+
+id:assessment.id,
+
+
+title:assessment.title,
+
+
+assessment_type:
+assessment.assessment_type,
+
+
+course_session_id:
+assessment.course_session_id,
+
+
+description:
+assessment.description || "",
+
+
+instructions:
+assessment.instructions || "",
+
+
+max_marks:
+assessment.max_marks,
+
+
+pass_mark:
+assessment.pass_mark,
+
+
+attachment:
+assessment.attachment
+
 
 };
+
 
 
 this.file=null;
 
 
 
-new bootstrap.Modal(
-
+let modalElement =
 document.getElementById(
 'assessmentModal'
-)
+);
 
-).show();
+
+
+let modal =
+new bootstrap.Modal(
+modalElement
+);
+
+
+
+modal.show();
 
 
 
@@ -949,14 +795,15 @@ document.getElementById(
 
 
 
-selectFile(e){
+selectFile(event){
 
 
 this.file =
-e.target.files[0];
+event.target.files[0];
 
 
 },
+
 
 
 
@@ -968,10 +815,11 @@ e.target.files[0];
 async save(){
 
 
+try{
+
 
 let service_id =
 this.$route.params.id;
-
 
 
 
@@ -1018,7 +866,7 @@ this.form.description ?? ''
 
 data.append(
 'instructions',
-this.form.instructions ?? ''
+'Complete all tasks without assistance. Instructor assessment required.'
 );
 
 
@@ -1039,15 +887,23 @@ this.form.pass_mark ?? ''
 
 
 
-
-let assessmentId=this.form.id;
-
-
+let assessmentId =
+this.form.id;
 
 
 
+
+
+let response;
+
+
+
+
+
+// UPDATE
 
 if(assessmentId){
+
 
 
 data.append(
@@ -1057,6 +913,7 @@ data.append(
 
 
 
+response =
 await axios.post(
 
 `/api/course-assessments/${assessmentId}`,
@@ -1067,10 +924,20 @@ data
 
 
 
-}else{
+}
 
 
-let response =
+
+
+
+
+// CREATE
+
+else{
+
+
+
+response =
 await axios.post(
 
 '/api/course-assessments',
@@ -1085,7 +952,6 @@ assessmentId =
 response.data.data.id;
 
 
-
 }
 
 
@@ -1094,11 +960,16 @@ response.data.data.id;
 
 
 
+
+// FILE UPLOAD
+
 if(this.file){
+
 
 
 let upload =
 new FormData();
+
 
 
 upload.append(
@@ -1111,9 +982,20 @@ this.file
 
 await axios.post(
 
-`/api/course-assessments/${assessmentId}/attachment`,
+`/api/course-assessments/${assessmentId}/upload`,
 
-upload
+upload,
+
+{
+
+headers:{
+
+'Content-Type':
+'multipart/form-data'
+
+}
+
+}
 
 );
 
@@ -1126,29 +1008,62 @@ upload
 
 
 
-bootstrap.Modal
 
-.getInstance(
 
+// CLOSE MODAL
+
+
+let modalElement =
 document.getElementById(
 'assessmentModal'
-)
-
-)
-
-.hide();
+);
 
 
 
+let modal =
+bootstrap.Modal.getInstance(
+modalElement
+);
 
-this.file=null;
 
 
-this.load();
+if(modal){
+
+modal.hide();
+
+}
+
+
+
+
+
+this.reset();
+
+
+
+await this.load();
+
+
+
+
+
+}catch(error){
+
+
+console.log(error);
+
+
+alert(
+"Failed saving assessment"
+);
+
+
+}
 
 
 
 },
+
 
 
 
@@ -1163,9 +1078,14 @@ async remove(assessment){
 
 
 
-if(confirm(
+if(!confirm(
 "Delete assessment?"
 )){
+
+return;
+
+}
+
 
 
 
@@ -1180,9 +1100,6 @@ await axios.delete(
 this.load();
 
 
-}
-
-
 
 },
 
@@ -1195,24 +1112,33 @@ this.load();
 reset(){
 
 
+
 this.form={
 
 
 id:null,
 
+
 title:"",
+
 
 assessment_type:"practical",
 
+
 course_session_id:null,
+
 
 description:"",
 
+
 instructions:"",
+
 
 max_marks:100,
 
-pass_mark:null,
+
+pass_mark:50,
+
 
 attachment:null
 
@@ -1220,7 +1146,9 @@ attachment:null
 };
 
 
+
 this.file=null;
+
 
 
 }
@@ -1233,9 +1161,13 @@ this.file=null;
 
 
 
+
+
 mounted(){
 
+
 this.load();
+
 
 }
 

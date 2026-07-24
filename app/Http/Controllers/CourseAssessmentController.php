@@ -31,6 +31,7 @@ class CourseAssessmentController extends Controller
 
 
 
+
     /**
      * Store new assessment
      */
@@ -38,65 +39,62 @@ class CourseAssessmentController extends Controller
     {
 
 
-    $validated=$request->validate([
+        $validated = $request->validate([
 
+            'service_id'=>'required|exists:services,id',
 
-    'service_id'=>'required|exists:services,id',
+            'course_session_id'=>'nullable|exists:course_sessions,id',
 
-    'course_session_id'=>'nullable|exists:course_sessions,id',
+            'title'=>'required|string|max:255',
 
-    'title'=>'required|string|max:255',
+            'assessment_type'=>'required|string',
 
-    'assessment_type'=>'required|string',
+            'description'=>'nullable|string',
 
-    'description'=>'nullable|string',
+            'instructions'=>'nullable|string',
 
-    'instructions'=>'nullable|string',
+            'max_marks'=>'required|numeric',
 
-    'max_marks'=>'required|numeric',
+            'pass_mark'=>'nullable|numeric',
 
-    'pass_mark'=>'nullable|numeric',
+            'sort_order'=>'nullable|integer',
 
-    'sort_order'=>'nullable|integer',
+            'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240',
 
-    'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240',
-
-
-    ]);
-
+        ]);
 
 
 
 
-    if($request->hasFile('attachment')){
+        if($request->hasFile('attachment')){
 
 
-    $validated['attachment'] =
-    $request->file('attachment')
-    ->store('course_assessments');
+            $validated['attachment'] =
+                $request->file('attachment')
+                ->store('course_assessments');
 
 
-    }
-
-
-
-    $assessment =
-    CourseAssessment::create($validated);
+        }
 
 
 
-    return response()->json([
+        $assessment = CourseAssessment::create($validated);
 
-    'success'=>true,
 
-    'message'=>'Assessment created successfully',
 
-    'data'=>$assessment
+        return response()->json([
 
-    ],201);
+            'success'=>true,
 
+            'message'=>'Assessment created successfully',
+
+            'data'=>$assessment
+
+        ],201);
 
     }
+
+
 
 
 
@@ -108,10 +106,15 @@ class CourseAssessmentController extends Controller
     {
 
         $assessment->load([
+
             'service',
+
             'session',
+
             'studentAssessments.enrollment.customer'
+
         ]);
+
 
 
         return response()->json([
@@ -127,33 +130,38 @@ class CourseAssessmentController extends Controller
 
 
 
+
+
     /**
      * Update assessment
      */
-    public function update(Request $request, CourseAssessment $assessment
+    public function update(
+        Request $request,
+        CourseAssessment $assessment
+    )
     {
 
 
-        $validated=$request->validate([
+        $validated = $request->validate([
 
 
-        'title'=>'sometimes|string|max:255',
+            'title'=>'sometimes|string|max:255',
 
-        'assessment_type'=>'sometimes|string',
+            'assessment_type'=>'sometimes|string',
 
-        'description'=>'nullable|string',
+            'description'=>'nullable|string',
 
-        'instructions'=>'nullable|string',
+            'instructions'=>'nullable|string',
 
-        'max_marks'=>'sometimes|numeric',
+            'max_marks'=>'sometimes|numeric',
 
-        'pass_mark'=>'nullable|numeric',
+            'pass_mark'=>'nullable|numeric',
 
-        'sort_order'=>'nullable|integer',
+            'sort_order'=>'nullable|integer',
 
-        'is_active'=>'boolean',
+            'is_active'=>'boolean',
 
-        'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240'
+            'attachment'=>'nullable|file|mimes:pdf,doc,docx|max:10240'
 
 
         ]);
@@ -165,22 +173,23 @@ class CourseAssessmentController extends Controller
         if($request->hasFile('attachment')){
 
 
-        if($assessment->attachment){
+            if($assessment->attachment){
 
-        Storage::delete(
-        $assessment->attachment
-        );
+                Storage::delete(
+                    $assessment->attachment
+                );
+
+            }
+
+
+
+            $validated['attachment'] =
+                $request->file('attachment')
+                ->store('course_assessments');
+
 
         }
 
-
-
-        $validated['attachment'] =
-        $request->file('attachment')
-        ->store('course_assessments');
-
-
-        }
 
 
 
@@ -191,16 +200,18 @@ class CourseAssessmentController extends Controller
 
         return response()->json([
 
-        'success'=>true,
+            'success'=>true,
 
-        'message'=>'Assessment updated successfully',
+            'message'=>'Assessment updated successfully',
 
-        'data'=>$assessment
+            'data'=>$assessment
 
         ]);
 
-
     }
+
+
+
 
 
 
@@ -212,7 +223,19 @@ class CourseAssessmentController extends Controller
     public function destroy(CourseAssessment $assessment)
     {
 
+
+        if($assessment->attachment){
+
+            Storage::delete(
+                $assessment->attachment
+            );
+
+        }
+
+
+
         $assessment->delete();
+
 
 
         return response()->json([
@@ -229,14 +252,18 @@ class CourseAssessmentController extends Controller
 
 
 
+
+
+
     /**
-     * Upload assessment paper
+     * Upload assessment paper separately
      */
     public function uploadAttachment(
         Request $request,
         CourseAssessment $assessment
     )
     {
+
 
         $request->validate([
 
@@ -246,17 +273,25 @@ class CourseAssessmentController extends Controller
 
 
 
+
+
         if($assessment->attachment){
 
-            Storage::delete($assessment->attachment);
+            Storage::delete(
+                $assessment->attachment
+            );
 
         }
 
 
 
+
+
         $path = $request
             ->file('file')
-            ->store('course_assessments');
+            ->store('course_assessments', 'public');
+
+
 
 
 
@@ -265,6 +300,8 @@ class CourseAssessmentController extends Controller
             'attachment'=>$path
 
         ]);
+
+
 
 
 
@@ -284,17 +321,22 @@ class CourseAssessmentController extends Controller
 
 
 
+
+
+
     /**
-     * Get assessments for a course(Service)
+     * Get assessments for a course
      */
     public function byService(Service $service)
     {
+
 
         $assessments = $service
             ->assessments()
             ->with('session')
             ->orderBy('sort_order')
             ->get();
+
 
 
 

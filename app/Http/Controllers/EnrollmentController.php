@@ -6,7 +6,9 @@ use App\Models\Enrollment;
 use App\Models\Service;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\CourseCertificate;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class EnrollmentController extends Controller
 {
@@ -318,5 +320,125 @@ return response()->json([
 ]);
 
 
-}    
+}  
+
+public function certificate(Enrollment $enrollment)
+{
+
+    // Load required relationships
+    $enrollment->load([
+        'customer',
+        'service',
+        'assessments.assessment'
+    ]);
+
+
+    $certificate = $enrollment->certificate;
+
+
+
+    if(!$certificate){
+
+
+        $assessments = $enrollment
+            ->assessments()
+            ->with('assessment')
+            ->get();
+
+
+
+        $total = $assessments->sum('score');
+
+
+
+        $maximum = $assessments->sum(function($a){
+
+            return $a->assessment->max_marks ?? 0;
+
+        });
+
+
+
+        $percentage = $maximum > 0
+            ? round(($total / $maximum) * 100, 2)
+            : 0;
+
+
+
+
+        $grade = match(true){
+
+            $percentage >= 80 =>
+                'Distinction',
+
+            $percentage >= 70 =>
+                'Credit',
+
+            $percentage >= 50 =>
+                'Pass',
+
+            default =>
+                'Needs Improvement'
+
+        };
+
+
+
+
+        $certificate = CourseCertificate::create([
+
+            'enrollment_id' => $enrollment->id,
+
+
+            'certificate_no' =>
+                'ALG-'.date('Y').'-'.
+                str_pad(
+                    $enrollment->id,
+                    5,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+
+
+            'percentage' => $percentage,
+
+
+            'grade' => $grade,
+
+
+            'issued_date' => now(),
+
+
+            'issued_by' =>
+                auth()->user()->name ?? 'AlgoSpace'
+
+        ]);
+
+
+
+    }
+
+
+
+    // Reload certificate relationship
+    $certificate->load([
+        'enrollment.customer',
+        'enrollment.service'
+    ]);
+
+
+
+    return PDF::loadView(
+        'certificates.course',
+        [
+            'certificate'=>$certificate,
+            'enrollment'=>$enrollment
+        ]
+    )
+    ->stream(
+        'certificate-'.$certificate->certificate_no.'.pdf'
+    );
+
+}
+
 }

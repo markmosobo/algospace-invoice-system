@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Service;
 use App\Models\StudentAssessment;
 use App\Models\CourseAssessment;
+use App\Models\CourseCertificate;
 
 class Enrollment extends Model
 {
@@ -65,6 +66,13 @@ class Enrollment extends Model
     public function sessions()
     {
         return $this->hasMany(EnrollmentSession::class);
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(
+            CourseCertificate::class
+        );
     }
     
     

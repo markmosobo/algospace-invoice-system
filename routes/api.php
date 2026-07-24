@@ -560,7 +560,7 @@ Route::middleware(['auth:api'])->group(function () {
                 'gradebook'
             ]
         );
-        
+
         // view assessment
         Route::get(
             '/{assessment}',
@@ -605,5 +605,10 @@ Route::middleware(['auth:api'])->group(function () {
             CourseAssessmentController::class,
             'byService'
         ]
+    );
+
+    Route::get(
+        '/enrollments/{enrollment}/certificate',
+        [EnrollmentController::class, 'certificate']
     );
 });

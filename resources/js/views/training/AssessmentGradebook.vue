@@ -4,9 +4,6 @@
 
 <section class="section dashboard">
 
-<div class="row">
-
-<div class="col-12">
 
 <div class="card">
 
@@ -15,53 +12,29 @@
 
 <h5 class="card-title">
 
-{{ course.name }}
+{{assessment.title}}
 
-<span>| Course Outline</span>
+<span>
+| Gradebook
+</span>
 
 </h5>
 
 
 
-<div class="mb-3">
+<div class="alert alert-info">
 
-<button
-class="btn btn-success btn-sm"
-@click="saveOutline"
->
+Maximum Marks:
+<strong>
+{{assessment.max_marks}}
+</strong>
 
-<i class="bi bi-save"></i>
-Save Outline
+<br>
 
-</button>
-
-
-</div>
-
-
-
-
-<!-- MAIN OUTLINE -->
-
-<div class="mb-3">
-
-<label class="form-label">
-Course Overview
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="4"
-
-v-model="outline.overview"
-
-placeholder="Describe the course..."
-
-></textarea>
-
+Pass Mark:
+<strong>
+{{assessment.pass_mark || 50}}
+%</strong>
 
 </div>
 
@@ -69,266 +42,178 @@ placeholder="Describe the course..."
 
 
 
-<div class="mb-3">
-
-<label class="form-label">
-
-Certificate Information
-
-</label>
+<div class="table-responsive">
 
 
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.certificate_information"
-
-placeholder="Certificate requirements..."
-
-></textarea>
+<table class="table table-bordered">
 
 
-</div>
+<thead>
+
+<tr>
+
+<th>
+Student
+</th>
+
+<th>
+Score
+</th>
+
+<th>
+Percentage
+</th>
+
+<th>
+Grade
+</th>
+
+<th>
+Remarks
+</th>
+
+<th>
+Action
+</th>
+
+</tr>
 
 
-
-
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Notes
-
-</label>
-
-
-<textarea
-
-class="form-control"
-
-rows="3"
-
-v-model="outline.notes"
-
-placeholder="Additional notes..."
-
-></textarea>
-
-
-</div>
+</thead>
 
 
 
+<tbody>
 
 
-<hr>
-
-
-<div class="d-flex justify-content-between align-items-center">
-
-
-<h5>
-Outline Sections
-</h5>
-
-
-<button
-
-class="btn btn-outline-primary btn-sm"
-
-@click="addItem"
-
->
-
-<i class="bi bi-plus"></i>
-
-Add Section
-
-</button>
-
-
-</div>
-
-
-
-
-
-<!-- ITEMS -->
-
-<div
-
-v-for="(item,index) in outline.items"
-
-:key="index"
-
-class="card mt-3 border"
-
-
+<tr
+v-for="student in students"
+:key="student.id"
 >
 
 
-<div class="card-body">
 
+<td>
 
+{{student.customer.name}}
 
-<div class="row">
-
-
-<div class="col-md-3">
-
-
-<label class="form-label">
-Section
-</label>
-
-
-<select
-
-class="form-select"
-
-v-model="item.section"
-
->
-
-
-<option value="objective">
-Objective
-</option>
-
-
-<option value="outcome">
-Learning Outcome
-</option>
-
-
-<option value="requirement">
-Requirement
-</option>
-
-
-<option value="assessment">
-Assessment
-</option>
-
-
-</select>
-
-
-
-</div>
+</td>
 
 
 
 
-
-<div class="col-md-9">
-
-
-<label class="form-label">
-Title
-</label>
+<td width="120">
 
 
 <input
 
-type="text"
+type="number"
 
 class="form-control"
 
-v-model="item.title"
+v-model="student.score"
 
-placeholder="Section title"
+:max="assessment.max_marks"
 
-/>
+>
 
-
-</div>
-
-
-</div>
+</td>
 
 
 
 
+<td>
+
+{{percentage(student)}}
+
+%
+
+</td>
 
 
-<div class="mt-3">
 
 
-<label class="form-label">
 
-Description
+<td>
 
-</label>
+
+<span
+
+class="badge"
+
+:class="gradeClass(student)"
+
+>
+
+{{grade(student)}}
+
+</span>
+
+
+</td>
+
+
+
+
+
+<td>
 
 
 <textarea
 
 class="form-control"
 
-rows="3"
+rows="2"
 
-v-model="item.description"
-
-placeholder="Explain this section..."
+v-model="student.remarks"
 
 ></textarea>
 
 
-</div>
+</td>
 
 
 
 
 
 
-<div class="text-end mt-3">
+<td>
 
 
 <button
 
-class="btn btn-sm btn-danger"
+class="btn btn-success btn-sm"
 
-@click="removeItem(index)"
+@click="save(student)"
 
 >
 
-<i class="bi bi-trash"></i>
+<i class="bi bi-save"></i>
 
-Remove
-
+Save
 
 </button>
 
 
-</div>
+</td>
 
 
 
-
-</div>
-
-
-</div>
+</tr>
 
 
 
+</tbody>
 
 
-
-</div>
-
+</table>
 
 
 </div>
 
 
-</div>
 
+</div>
 
 </div>
 
@@ -337,7 +222,6 @@ Remove
 
 
 </Master>
-
 
 </template>
 
@@ -355,23 +239,21 @@ import Swal from "sweetalert2";
 const toast = Swal.mixin({
 
 toast:true,
-
 position:"top-end",
-
-timer:3000,
-
+timer:2500,
 showConfirmButton:false
 
 });
 
 
 
-export default {
+export default{
 
 
 components:{
 Master
 },
+
 
 
 
@@ -381,37 +263,16 @@ data(){
 return{
 
 
-course:{},
+assessment:{},
 
 
-
-outline:{
-
-
-id:null,
-
-
-overview:"",
-
-
-certificate_information:"",
-
-
-notes:"",
-
-
-items:[]
-
-}
-
+students:[]
 
 
 }
 
 
 },
-
-
 
 
 
@@ -425,126 +286,172 @@ methods:{
 async load(){
 
 
-try{
-
-
 let id=this.$route.params.id;
 
 
 
-// Load course
-
-let course =
+let response =
 await axios.get(
-`/api/courses/${id}`
+
+`/api/course-assessments/${id}/gradebook`
+
 );
 
 
 
-this.course =
-course.data.data;
+this.assessment =
+response.data.assessment;
+
+
+
+this.students =
+response.data.students;
+
+
+
+},
 
 
 
 
-// Load outline
-
-let outline =
-await axios.get(
-`/api/services/${id}/outline`
-);
 
 
 
-if(outline.data.data){
+percentage(student){
 
-this.outline = {
 
-    ...outline.data.data,
+if(!student.score)
 
-    items: outline.data.data.items || []
+return 0;
+
+
+
+return (
+
+(student.score /
+this.assessment.max_marks)
+
+*100
+
+).toFixed(2);
+
+
+
+},
+
+
+
+
+
+
+
+grade(student){
+
+
+let percent =
+this.percentage(student);
+
+
+
+if(percent >=80)
+
+return "Distinction";
+
+
+
+if(percent >=70)
+
+return "Credit";
+
+
+
+if(percent >=50)
+
+return "Pass";
+
+
+
+return "Needs Improvement";
+
+
+},
+
+
+
+
+
+
+
+gradeClass(student){
+
+
+let g=this.grade(student);
+
+
+
+return {
+
+
+"bg-success":
+g==="Distinction",
+
+
+"bg-primary":
+g==="Credit",
+
+
+"bg-warning":
+g==="Pass",
+
+
+"bg-danger":
+g==="Needs Improvement"
+
+
+}
+
+
+},
+
+
+
+
+
+
+
+async save(student){
+
+
+
+let payload={
+
+
+course_assessment_id:
+this.assessment.id,
+
+
+enrollment_id:
+student.id,
+
+
+score:
+student.score,
+
+
+percentage:
+this.percentage(student),
+
+
+grade:
+this.grade(student),
+
+
+remarks:
+student.remarks
+
 
 };
 
-}
-
-
-
-}
-
-catch(error){
-
-
-console.log(error);
-
-
-
-}
-
-
-
-},
-
-
-
-
-
-
-
-addItem(){
-
-console.log("Adding item");
-
-console.log(this.outline.items);
-
-
-this.outline.items.push({
-
-section:"objective",
-
-title:"",
-
-description:"",
-
-sort_order:this.outline.items.length + 1
-
-});
-
-
-console.log(this.outline.items);
-
-
-},
-
-
-
-
-
-
-
-removeItem(index){
-
-
-this.outline.items.splice(
-index,
-1
-);
-
-
-
-},
-
-
-
-
-
-
-
-async saveOutline(){
-
-
-
-let id=this.$route.params.id;
 
 
 
@@ -552,26 +459,16 @@ let id=this.$route.params.id;
 try{
 
 
-
-let response;
-
+if(student.assessment_id){
 
 
-if(this.outline.id){
-
-
-
-response =
 await axios.put(
 
+`/api/student-assessments/${student.assessment_id}`,
 
-`/api/course-outlines/${this.outline.id}`,
-
-this.outline
-
+payload
 
 );
-
 
 
 }
@@ -579,26 +476,24 @@ this.outline
 else{
 
 
-
-response =
+let res =
 await axios.post(
 
+'/api/student-assessments',
 
-`/api/services/${id}/outline`,
-
-this.outline
-
+payload
 
 );
 
 
 
+student.assessment_id =
+res.data.data.id;
+
+
 }
 
 
-
-this.outline =
-response.data.data;
 
 
 
@@ -606,7 +501,7 @@ toast.fire({
 
 icon:"success",
 
-title:"Course outline saved"
+title:"Saved"
 
 });
 
@@ -617,7 +512,6 @@ title:"Course outline saved"
 
 
 catch(error){
-
 
 
 console.log(error.response);
@@ -628,17 +522,17 @@ toast.fire({
 
 icon:"error",
 
-title:"Failed to save outline"
+title:"Failed"
 
 });
 
 
-
 }
 
 
 
 }
+
 
 
 
@@ -652,9 +546,7 @@ title:"Failed to save outline"
 
 mounted(){
 
-
 this.load();
-
 
 }
 
@@ -664,17 +556,3 @@ this.load();
 
 
 </script>
-
-
-
-
-
-<style scoped>
-
-textarea{
-
-resize:none;
-
-}
-
-</style>

@@ -552,8 +552,16 @@ Route::middleware(['auth:api'])->group(function () {
             ]
         );
 
-
-        // view assessment + gradebook
+        // gradebook
+        Route::get(
+            '/{assessment}/gradebook',
+            [
+                CourseAssessmentController::class,
+                'gradebook'
+            ]
+        );
+        
+        // view assessment
         Route::get(
             '/{assessment}',
             [
@@ -561,6 +569,7 @@ Route::middleware(['auth:api'])->group(function () {
                 'show'
             ]
         );
+
 
 
         // delete assessment

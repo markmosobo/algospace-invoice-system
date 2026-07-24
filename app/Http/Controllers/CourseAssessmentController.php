@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseAssessment;
 use App\Models\Service;
+use App\Models\StudentAssessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -129,7 +130,64 @@ class CourseAssessmentController extends Controller
 
 
 
+    public function gradebook(CourseAssessment $assessment)
+    {
 
+        $assessment->load('service');
+
+
+        $students = $assessment->service
+            ->enrollments()
+            ->with('customer')
+            ->get()
+            ->map(function($enrollment) use ($assessment) {
+
+
+                $assessmentRecord = StudentAssessment::where(
+                    'course_assessment_id',
+                    $assessment->id
+                )
+                ->where(
+                    'enrollment_id',
+                    $enrollment->id
+                )
+                ->first();
+
+
+                return [
+
+                    'id'=>$enrollment->id,
+
+                    'customer'=>$enrollment->customer,
+
+                    'score'=>$assessmentRecord->score ?? null,
+
+                    'percentage'=>$assessmentRecord->percentage ?? null,
+
+                    'grade'=>$assessmentRecord->grade ?? null,
+
+                    'remarks'=>$assessmentRecord->remarks ?? '',
+
+                    'assessment_id'=>$assessmentRecord->id ?? null
+
+                ];
+
+
+            });
+
+
+
+        return response()->json([
+
+            'success'=>true,
+
+            'assessment'=>$assessment,
+
+            'students'=>$students
+
+        ]);
+
+    }
 
 
     /**

@@ -718,10 +718,10 @@
                             <span
                                 class="badge text-uppercase"
                                 :class="{
-                                'bg-success': viewSaleData.method.toLowerCase() === 'cash',
-                                'bg-primary': viewSaleData.method.toLowerCase() === 'm-pesa',
-                                'bg-secondary': viewSaleData.method.toLowerCase() === 'bank',
-                                'bg-warning': ['cash','m-pesa','bank'].indexOf(viewSaleData.method.toLowerCase()) === -1
+                                    'bg-success': sale.method?.toLowerCase() === 'cash',
+                                    'bg-primary': sale.method?.toLowerCase() === 'm-pesa',
+                                    'bg-secondary': sale.method?.toLowerCase() === 'bank',
+                                    'bg-warning': !['cash','m-pesa','bank'].includes(sale.method?.toLowerCase())
                                 }"
                             >
                                 {{ viewSaleData.method }}

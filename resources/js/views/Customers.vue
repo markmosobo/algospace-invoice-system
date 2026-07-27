@@ -706,7 +706,7 @@
                           </div>
 
                           <img
-                            v-if="edtImagePreview"
+                            v-if="editImagePreview"
                             :src="editImagePreview"
                             class="customer-preview mt-2 rounded-circle border"
                           />
@@ -859,6 +859,8 @@
           }
         },
         getAvatarColor(name) {
+          if (!name) return '#6c757d'; // default gray
+
           const colors = [
             '#1abc9c', '#2ecc71', '#3498db', '#9b59b6',
             '#f39c12', '#e74c3c', '#16a085', '#27ae60',
@@ -866,6 +868,7 @@
           ];
 
           let hash = 0;
+
           for (let i = 0; i < name.length; i++) {
             hash = name.charCodeAt(i) + ((hash << 5) - hash);
           }
@@ -978,10 +981,10 @@
         editCustomer(customer) {
         this.form = {
             id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            gender: customer.gender
+            name: customer.name || '',
+            email: customer.email || '',
+            phone: customer.phone || '',
+            gender: customer.gender || ''
         };
 
         const modal = new bootstrap.Modal(
@@ -1147,7 +1150,7 @@
           this.initializing = true; // Start spinner
           axios.get('/api/customers')
             .then((response) => {
-              this.customers = response.data;
+              this.customers = response.data.data;
               console.log(response)
 
               setTimeout(() => {

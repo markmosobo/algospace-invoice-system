@@ -112,18 +112,17 @@
                         <td>{{ sale.customer_name }}</td>
                         <td>{{ sale.amount }}</td>
                         <td>
-                        <span
-                            class="badge text-uppercase"
-                            :class="{
-                            'bg-success': sale.method.toLowerCase() === 'cash',
-                            'bg-primary': sale.method.toLowerCase() === 'm-pesa',
-                            'bg-secondary': sale.method.toLowerCase() === 'bank',
-                            'bg-warning': ['cash','m-pesa','bank'].indexOf(sale.method.toLowerCase()) === -1
-                            }"
-                            style="letter-spacing: 0.05em; font-size: 0.75rem;"
-                        >
-                            {{ sale.method }}
-                        </span>
+<span
+    class="badge text-uppercase"
+    :class="{
+        'bg-success': (sale.method || '').toLowerCase() === 'cash',
+        'bg-primary': (sale.method || '').toLowerCase() === 'mpesa',
+        'bg-secondary': (sale.method || '').toLowerCase() === 'bank',
+        'bg-warning': !['cash','mpesa','bank'].includes((sale.method || '').toLowerCase())
+    }"
+>
+    {{ sale.method || 'N/A' }}
+</span>
                         </td>
 
                         <td>{{ formatDate(sale.payment_date) }}</td>
@@ -718,13 +717,13 @@
                             <span
                                 class="badge text-uppercase"
                                 :class="{
-                                    'bg-success': sale.method?.toLowerCase() === 'cash',
-                                    'bg-primary': sale.method?.toLowerCase() === 'm-pesa',
-                                    'bg-secondary': sale.method?.toLowerCase() === 'bank',
-                                    'bg-warning': !['cash','m-pesa','bank'].includes(sale.method?.toLowerCase())
+                                    'bg-success': (viewSaleData.method || '').toLowerCase() === 'cash',
+                                    'bg-primary': (viewSaleData.method || '').toLowerCase() === 'mpesa',
+                                    'bg-secondary': (viewSaleData.method || '').toLowerCase() === 'bank',
+                                    'bg-warning': !['cash','mpesa','bank'].includes((viewSaleData.method || '').toLowerCase())
                                 }"
                             >
-                                {{ viewSaleData.method }}
+                                {{ viewSaleData.method || 'N/A' }}
                             </span>
                             </p>
                             <p><strong>Payment Date:</strong> {{ formatDate(viewSaleData.payment_date) }}</p>
@@ -1725,27 +1724,44 @@ export default {
         })
     },
     // Load quick sales list
-    loadLists() {
-        this.initializing = true; // Start spinner
-        axios.get('/api/quick-sales')
-        .then((response) => {
-            this.quickSales = response.data.quickSales;
-            this.customers = response.data.customers;
-            this.services = response.data.services;
-            this.todayFootTraffic = response.data.todayfoottraffic;
-            console.log(response)
+loadLists() {
+    this.initializing = true;
 
-            setTimeout(() => {
-            $("#SalesTable").DataTable();
-            }, 10);
-        })
-        .catch((error) => {
-            console.error('Error fetching user list:', error);
-        })
-        .finally(() => {
-            this.initializing = false; // Stop spinner
+    // Destroy previous DataTable instance if it exists
+    if ($.fn.DataTable.isDataTable("#SalesTable")) {
+        $("#SalesTable").DataTable().destroy();
+    }
+
+    axios.get('/api/quick-sales')
+    .then((response) => {
+
+        this.quickSales = response.data.quickSales;
+        this.customers = response.data.customers;
+        this.services = response.data.services;
+        this.todayFootTraffic = response.data.todayfoottraffic;
+
+        console.log(response);
+
+    })
+    .catch((error) => {
+        console.error('Error fetching user list:', error);
+    })
+    .finally(() => {
+
+        this.initializing = false;
+
+        // Wait for Vue DOM update
+        this.$nextTick(() => {
+
+            $("#SalesTable").DataTable({
+                responsive: true,
+                destroy: true
+            });
+
         });
-    },
+
+    });
+},
 
   },
   computed: {

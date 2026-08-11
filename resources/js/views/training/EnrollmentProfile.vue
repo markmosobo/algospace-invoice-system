@@ -363,7 +363,7 @@ Hours
 
 <h6 class="fw-bold">
 
-Course Progress
+Assessment Progress
 
 </h6>
 

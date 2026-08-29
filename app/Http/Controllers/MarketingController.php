@@ -250,9 +250,8 @@ class MarketingController extends Controller
     {
         $courses = Service::where('category', 'Training')
             ->where('type', 'course')
-            ->whereNotNull('schedule')
+            ->whereNotNull('schedule_type')
             ->orderBy('tier')
-            ->orderBy('title')
             ->get();
 
         $servicesCategories = Service::select('category')->distinct()->pluck('category');    

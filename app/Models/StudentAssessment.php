@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\CourseAssessment;
 use App\Models\Enrollment;
+use App\Models\EnrollmentSession;
 
 class StudentAssessment extends Model
 {
@@ -14,6 +15,7 @@ class StudentAssessment extends Model
     protected $fillable = [
         'course_assessment_id',
         'enrollment_id',
+        'enrollment_session_id',
         'score',
         'percentage',
         'grade',
@@ -46,6 +48,14 @@ class StudentAssessment extends Model
     public function enrollment()
     {
         return $this->belongsTo(Enrollment::class);
+    }
+
+    public function enrollmentSession()
+    {
+        return $this->belongsTo(
+            EnrollmentSession::class,
+            'enrollment_session_id'
+        );
     }
 
     /*

@@ -162,31 +162,31 @@
 
                                         <li>
                                             <a href="{{ url('/training-courses') }}?tier=basic">
-                                                Basic – Computer Fundamentals
+                                                Computer Fundamentals
                                             </a>
                                         </li>
 
                                         <li>
                                             <a href="{{ url('/training-courses') }}?tier=practical">
-                                                Practical – Office & Cyber Skills
+                                                Office & Cyber Skills
                                             </a>
                                         </li>
 
                                         <li>
                                             <a href="{{ url('/training-courses') }}?tier=refresher">
-                                                Refresher – Skills Update
+                                                Refresher
                                             </a>
                                         </li>
 
                                         <li>
                                             <a href="{{ url('/training-courses') }}?tier=coding">
-                                                Coding – Programming & Logic
+                                                Coding
                                             </a>
                                         </li>
 
                                         <li>
                                             <a href="{{ url('/training-courses/schedule') }}">
-                                                Saturday Timetable
+                                                Timetable
                                             </a>
                                         </li>
                                     </ul>

@@ -9,6 +9,8 @@ use App\Models\Payment;
 use App\Models\CourseCertificate;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\StudentAssessment;
+use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
 {
@@ -147,7 +149,9 @@ public function show(Enrollment $enrollment)
 
         'invoice',
 
-        'sessions.session'
+        'sessions.session',
+        'sessions.session.assessments',
+        'sessions.assessments.assessment'
 
     ]);
 
@@ -162,8 +166,70 @@ public function show(Enrollment $enrollment)
 
 
 
+public function storeAssessment(Request $request, Enrollment $enrollment)
+{
+    $validated = $request->validate([
+        'course_assessment_id' => 'required|exists:course_assessments,id',
+        'score' => 'required|numeric|min:0',
+        'remarks' => 'nullable|string',
+        'attachment' => 'nullable|file|max:10240',
+    ]);
 
+    $assessment = \App\Models\CourseAssessment::findOrFail(
+        $validated['course_assessment_id']
+    );
 
+    // Make sure score does not exceed maximum marks
+    if ($validated['score'] > $assessment->max_marks) {
+        return response()->json([
+            'message' => 'Score cannot exceed maximum marks.'
+        ], 422);
+    }
+
+    $attachmentPath = null;
+
+    if ($request->hasFile('attachment')) {
+        $attachmentPath = $request
+            ->file('attachment')
+            ->store('student-assessments', 'public');
+    }
+
+    $studentAssessment = StudentAssessment::updateOrCreate(
+        [
+            'course_assessment_id' => $assessment->id,
+            'enrollment_id' => $enrollment->id,
+        ],
+        [
+            'score' => $validated['score'],
+            'percentage' => round(
+                ($validated['score'] / $assessment->max_marks) * 100,
+                2
+            ),
+            'grade' => $this->calculateGrade(
+                ($validated['score'] / $assessment->max_marks) * 100
+            ),
+            'remarks' => $validated['remarks'] ?? null,
+            'attachment' => $attachmentPath,
+            'assessment_date' => now(),
+        ]
+    );
+
+    return response()->json([
+        'message' => 'Assessment saved successfully.',
+        'data' => $studentAssessment->load('assessment'),
+    ], 201);
+}
+
+private function calculateGrade($percentage)
+{
+    return match (true) {
+        $percentage >= 80 => 'A',
+        $percentage >= 70 => 'B',
+        $percentage >= 60 => 'C',
+        $percentage >= 50 => 'D',
+        default => 'E',
+    };
+}
 
 public function payments(Enrollment $enrollment)
 {

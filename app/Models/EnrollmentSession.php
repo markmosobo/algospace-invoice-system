@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CourseSession;
 use App\Models\Enrollment;
+use App\Models\StudentAssessment;
 
 class EnrollmentSession extends Model
 {
@@ -30,6 +31,14 @@ public function session()
     return $this->belongsTo(
         CourseSession::class,
         'course_session_id'
+    );
+}
+
+public function assessments()
+{
+    return $this->hasMany(
+        StudentAssessment::class,
+        'enrollment_session_id'
     );
 }
 

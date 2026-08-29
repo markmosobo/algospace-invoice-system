@@ -419,6 +419,9 @@ Completed
 Date
 </th>
 
+<th>Assessment</th>
+
+
 </tr>
 
 </thead>
@@ -485,7 +488,22 @@ type="checkbox"
 
 </td>
 
+<td>
+    <button
+        class="btn btn-sm btn-outline-primary"
+        @click="openAssessment(s)"
+    >
+        <i class="bi bi-upload"></i>
+    </button>
 
+    <button
+        v-if="s.assessments && s.assessments.length"
+        class="btn btn-sm btn-outline-success ms-1"
+        @click="viewAssessment(s)"
+    >
+        <i class="bi bi-eye"></i>
+    </button>
+</td>
 
 </tr>
 
@@ -716,6 +734,125 @@ Payment Received
 </div>
 
 
+<!-- ASSESSMENT MODAL -->
+
+<div
+    class="modal fade"
+    id="assessmentModal"
+    tabindex="-1"
+    ref="assessmentModal"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    {{ selectedSession?.session?.title }}
+                    Assessment
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Score
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        v-model="assessment.score"
+                        min="0"
+                        :max="assessment.max_marks"
+                    >
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Maximum Marks
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        v-model="assessment.max_marks"
+                    >
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Assessment File
+                    </label>
+
+                    <input
+                        type="file"
+                        class="form-control"
+                        @change="handleFile"
+                    >
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Remarks
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        v-model="assessment.remarks"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    @click="saveAssessment"
+                >
+                    Save Assessment
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 </section>
 
 
@@ -749,7 +886,16 @@ return{
 
 enrollment:{},
 
-payments:[]
+payments:[],
+
+selectedSession:null,
+
+assessment:{
+    score:'',
+    max_marks:100,
+    remarks:'',
+    file:null
+}
 
 }
 
@@ -784,7 +930,94 @@ return total-paid;
 
 methods:{
 
+openAssessment(session){
 
+    this.selectedSession = session;
+
+    this.assessment = {
+        score:'',
+        max_marks:100,
+        remarks:'',
+        file:null
+    };
+
+    const modal = new bootstrap.Modal(
+        this.$refs.assessmentModal
+    );
+
+    modal.show();
+},
+
+handleFile(event){
+
+    this.assessment.file =
+        event.target.files[0];
+
+},
+
+async saveAssessment(){
+
+    const formData = new FormData();
+
+    formData.append(
+        'enrollment_id',
+        this.enrollment.id
+    );
+
+    formData.append(
+        'course_session_id',
+        this.selectedSession.course_session_id
+    );
+
+    formData.append(
+        'course_assessment_id',
+        this.selectedSession.id
+    );
+
+    formData.append(
+        'score',
+        this.assessment.score
+    );
+
+    formData.append(
+        'max_marks',
+        this.assessment.max_marks
+    );
+
+    formData.append(
+        'remarks',
+        this.assessment.remarks
+    );
+
+    if(this.assessment.file){
+
+        formData.append(
+            'attachment',
+            this.assessment.file
+        );
+
+    }
+
+
+    await axios.post(
+        `/api/enrollments/${this.enrollment.id}/assessments`,
+        formData,
+        {
+            headers:{
+                'Content-Type':'multipart/form-data'
+            }
+        }
+    );
+
+
+    bootstrap.Modal
+        .getInstance(this.$refs.assessmentModal)
+        .hide();
+
+
+    await this.load();
+
+},
 
 async load(){
 

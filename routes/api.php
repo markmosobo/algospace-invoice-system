@@ -163,6 +163,10 @@ Route::middleware(['auth:api'])->group(function () {
         '/enrollments/{enrollment}',
         [EnrollmentController::class,'show']
     );
+    Route::post(
+        '/enrollments/{enrollment}/assessments',
+        [EnrollmentController::class, 'storeAssessment']
+    );
 
 
     Route::get(

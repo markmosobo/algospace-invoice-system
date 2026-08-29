@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Service;
 use App\Models\CourseSessionTopic;
 use App\Models\CourseMaterial;
+use App\Models\CourseAssessment;
 
 class CourseSession extends Model
 {
@@ -40,4 +41,12 @@ class CourseSession extends Model
             'course_session_id'
         );
     }
+
+    public function assessments()
+    {
+        return $this->hasMany(
+            CourseAssessment::class,
+            'course_session_id'
+        )->orderBy('sort_order');
+    }    
 }

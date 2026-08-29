@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<h3>Saturday AlgoSpace Cyber Training Courses</h3>
+<h3>AlgoSpace Cyber Training Courses</h3>
 
 <table>
   <thead>
@@ -29,7 +29,7 @@
         <td>{{ $c->name }}</td>
         <td>{{ ucfirst($c->tier) }}</td>
         <td>{{ ucfirst($c->schedule_type) }}</td>
-        <td>{{ $c->duration_units }} Saturdays</td>
+        <td>{{ $c->duration_units }} Sessions</td>
         <td>{{ $c->session_hours }}</td>
         <td>{{ number_format($c->price) }}</td>
       </tr>

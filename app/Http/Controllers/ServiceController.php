@@ -248,6 +248,6 @@ class ServiceController extends Controller
 
         $pdf = Pdf::loadView('pdf.courses', compact('courses'));
 
-        return $pdf->stream('AlgoSpace-Saturday-Courses.pdf');
+        return $pdf->stream('AlgoSpace-Training-Courses.pdf');
     }    
 }

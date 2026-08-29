@@ -99,7 +99,7 @@
 
                     <!-- DURATION -->
                     <td>
-                      {{ c.duration_units }} Saturdays
+                      {{ c.duration_units }} Sessions
                     </td>
 
                     <!-- SESSION HOURS -->
@@ -227,7 +227,7 @@
                   <tr><th>Name</th><td>{{ selectedCourse.name }}</td></tr>
                   <tr><th>Tier</th><td>{{ selectedCourse.tier }}</td></tr>
                   <tr><th>Schedule</th><td>{{ selectedCourse.schedule_type }}</td></tr>
-                  <tr><th>Duration</th><td>{{ selectedCourse.duration_units }} Saturdays</td></tr>
+                  <tr><th>Duration</th><td>{{ selectedCourse.duration_units }} Sessions</td></tr>
                   <tr><th>Session Hours</th><td>{{ selectedCourse.session_hours }}</td></tr>
                   <tr><th>Price</th><td>KES {{ Number(selectedCourse.price).toLocaleString() }}</td></tr>
                   <tr><th>Status</th>
@@ -351,7 +351,7 @@ sendCoursesWhatsapp() {
   const pdfUrl = 'https://algospacecyber.co.ke/training-courses';
 
   const message = encodeURIComponent(
-    `*Saturday Computer Classes – AlgoSpace Cyber*\n\n` +
+    `*Computer Classes – AlgoSpace Cyber*\n\n` +
     `View full course list here:\n` +
     `${pdfUrl}\n\n` +
     `*Timetable*\n` +
@@ -362,7 +362,6 @@ sendCoursesWhatsapp() {
     `11:45 – 12:45  Session 4\n` +
     `12:45 – 13:00  Q&A / Payments\n\n` +
     `Location: AlgoSpace Cyber\n` +
-    `Day: Every Saturday\n\n` +
     `Reply here to register or ask questions.`
   );
 

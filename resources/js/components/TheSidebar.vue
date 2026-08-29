@@ -25,6 +25,19 @@
               <i class="bi bi-lightning-charge"></i> Quick Sale
             </RouterLink>
           </li>
+
+          <li>
+            <a
+              href="https://algospace.ispledger.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="nav-link"
+            >
+              <i class="bi bi-router"></i>
+              ISP / MikroTik
+            </a>
+          </li>
+          
           <li v-show="userRole === 'office'" class="nav-item">
             <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">

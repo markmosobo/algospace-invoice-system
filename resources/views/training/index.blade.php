@@ -45,11 +45,11 @@
                         $units = $course->duration_units;
 
                         if ($units == 0.5) {
-                            $durationLabel = '½ Saturday';
+                            $durationLabel = '½ Session';
                         } elseif ($units == 1) {
-                            $durationLabel = '1 Saturday';
+                            $durationLabel = '1 Session';
                         } else {
-                            $durationLabel = $units . ' Saturdays';
+                            $durationLabel = $units . ' Sessions';
                         }
                     @endphp
 

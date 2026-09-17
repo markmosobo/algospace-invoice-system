@@ -574,171 +574,276 @@
           }
           return chunks;
         },         
-        async exportToPDF(type = "all") {
-          const pdf = new jsPDF("p", "mm", "a4");
+async exportToPDF(type = "all") {
+  const pdf = new jsPDF("p", "mm", "a4");
 
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-          let y = 10;
+  let y = 12;
 
-          // ===== DATA SOURCE (THIS IS THE KEY FIX) =====
-          const data =
-            type === "filtered"
-              ? this.filteredServicesList   // 👈 NOW MATCHES TABLE SEARCH
-              : this.services;
+  // ===== DATA SOURCE =====
+  const data =
+    type === "filtered"
+      ? this.filteredServicesList
+      : this.services;
 
-          const groups = this.getPdfGroups(data);
+  const groups = this.getPdfGroups(data);
 
-          // ===== FORMAT DATE dd/mm/yyyy =====
-          const formatDate = (date) => {
-            const d = new Date(date);
+  // ===== FORMAT DATE dd/mm/yyyy =====
+  const formatDate = (date) => {
+    const d = new Date(date);
 
-            return `${String(d.getDate()).padStart(2, "0")}/${
-              String(d.getMonth() + 1).padStart(2, "0")
-            }/${d.getFullYear()}`;
-          };
+    return `${String(d.getDate()).padStart(2, "0")}/${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}/${d.getFullYear()}`;
+  };
 
-          const printDate = formatDate(new Date());
+  const printDate = formatDate(new Date());
 
-          // ===== HEADER =====
-          pdf.setFontSize(18);
-          pdf.setFont("helvetica", "bold");
-          pdf.text("ALGOSPACE CYBER", pageWidth / 2, y, { align: "center" });
+  // ===== FOOTER =====
+  const totalPagesExp = "{total_pages_count_string}";
 
-          y += 8;
+  const addFooter = () => {
+    const pageCurrent =
+      pdf.internal.getCurrentPageInfo().pageNumber;
 
-          pdf.setFontSize(12);
-          pdf.text("SERVICES & PRICE LIST", pageWidth / 2, y, { align: "center" });
+    const footerY = pageHeight - 10;
 
-          y += 6;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(120);
 
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "normal");
-          pdf.text(`PRICE LIST AS OF: ${printDate}`, pageWidth / 2, y, {
-            align: "center"
-          });
+    pdf.text(
+      "AlgoSpace Cyber, Villa Nova Building, Shop 1, Kapsokwony, Mt. Elgon, Kenya",
+      pageWidth / 2,
+      footerY,
+      { align: "center" }
+    );
 
-          y += 10;
+    pdf.text(
+      `Page ${pageCurrent} of ${totalPagesExp}`,
+      pageWidth - 12,
+      footerY - 6,
+      { align: "right" }
+    );
 
-          // ===== LEGEND =====
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          pdf.text("LEGEND:", 12, y);
+    // IMPORTANT: reset text colour
+    pdf.setTextColor(0);
+  };
 
-          y += 5;
+  // ===== HEADER =====
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(22);
 
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "normal");
-          pdf.text("• ORDER ONLINE / IN-SHOP = You can send requests online or visit us", 12, y);
-          y += 5;
-          pdf.text("• IN-SHOP ONLY = You must visit the shop to get this service", 12, y);
+  pdf.text(
+    "ALGOSPACE CYBER",
+    pageWidth / 2,
+    y,
+    { align: "center" }
+  );
 
-          y += 8;
+  y += 10;
 
-          pdf.setDrawColor(200);
-          pdf.line(12, y, pageWidth - 12, y);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(15);
 
-          y += 8;
+  pdf.text(
+    "SERVICES & PRICE LIST",
+    pageWidth / 2,
+    y,
+    { align: "center" }
+  );
 
-          // ===== CONTACT =====
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "normal");
-          pdf.text("Phone: +254112514440", 12, y); y += 5;
-          pdf.text("Website: algospacecyber.co.ke", 12, y); y += 5;
-          pdf.text("Email: info@algospacecyber.co.ke", 12, y);
+  y += 8;
 
-          y += 10;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
 
-          const totalPagesExp = "{total_pages_count_string}";
+  pdf.text(
+    `PRICE LIST AS OF: ${printDate}`,
+    pageWidth / 2,
+    y,
+    { align: "center" }
+  );
 
-          const addFooter = () => {
-            const pageCurrent = pdf.internal.getCurrentPageInfo().pageNumber;
-            const footerY = pageHeight - 10;
+  y += 12;
 
-            pdf.setFontSize(8);
-            pdf.setTextColor(120);
+  // ===== LEGEND =====
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(12);
 
-            pdf.text(
-              "AlgoSpace Cyber, Villa Nova Building, Shop 1, Kapsokwony, Mt. Elgon, Kenya",
-              pageWidth / 2,
-              footerY,
-              { align: "center" }
-            );
+  pdf.text("LEGEND:", 12, y);
 
-            pdf.text(
-              `Page ${pageCurrent} of ${totalPagesExp}`,
-              pageWidth - 12,
-              footerY - 6,
-              { align: "right" }
-            );
+  y += 7;
 
-            pdf.setTextColor(0);
-          };
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
 
-          // ===== CONTENT =====
-          for (const group of groups) {
+  pdf.text(
+    "• ORDER ONLINE / IN-SHOP = You can send requests online or visit us",
+    12,
+    y
+  );
 
-            if (y > pageHeight - 30) {
-              addFooter();
-              pdf.addPage();
-              y = 15;
-            }
+  y += 6;
 
-            pdf.setFillColor(220, 220, 220);
-            pdf.rect(10, y - 5, pageWidth - 20, 8, "F");
+  pdf.text(
+    "• IN-SHOP ONLY = You must visit the shop to get this service",
+    12,
+    y
+  );
 
-            pdf.setFontSize(11);
-            pdf.setFont("helvetica", "bold");
-            pdf.text(group.category.toUpperCase(), 12, y);
+  y += 9;
 
-            y += 10;
+  pdf.setDrawColor(200);
+  pdf.line(12, y, pageWidth - 12, y);
 
-            pdf.setFontSize(9);
-            pdf.setFont("helvetica", "bold");
+  y += 9;
 
-            pdf.text("SERVICE", 12, y);
-            pdf.text("PRICE", 80, y);
-            pdf.text("UNIT", 110, y);
-            pdf.text("STATUS", 140, y);
+  // ===== CONTACT =====
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
 
-            y += 6;
+  pdf.text("Phone: +254112514440", 12, y);
+  y += 6;
 
-            pdf.setFont("helvetica", "normal");
+  pdf.text("Website: algospacecyber.co.ke", 12, y);
+  y += 6;
 
-            group.items.forEach(item => {
+  pdf.text("Email: info@algospacecyber.co.ke", 12, y);
 
-              if (y > pageHeight - 20) {
-                addFooter();
-                pdf.addPage();
-                y = 15;
-              }
+  y += 12;
 
-              pdf.text(String(item.name || "").toUpperCase(), 12, y);
-              pdf.text(String(item.price || "").toUpperCase(), 80, y);
-              pdf.text(String(item.unit || "").toUpperCase(), 110, y);
+  // ==========================================================
+  // CONTENT
+  // ==========================================================
 
-              const status = item.is_active
-                ? "ORDER ONLINE / IN-SHOP"
-                : "IN-SHOP ONLY";
+  for (const group of groups) {
 
-              pdf.text(status, 140, y);
+    // ===== NEW PAGE BEFORE CATEGORY =====
+    if (y > pageHeight - 35) {
+      addFooter();
 
-              y += 6;
-            });
+      pdf.addPage();
 
-            y += 5;
-          }
+      // RESET FONT AFTER NEW PAGE
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
 
-          addFooter();
-          pdf.putTotalPages(totalPagesExp);
+      y = 18;
+    }
 
-          pdf.save(
-            type === "filtered"
-              ? "ALGOSPACE_FILTERED_SERVICES.pdf"
-              : "ALGOSPACE_SERVICES.pdf"
-          );
-        },               
+    // ===== CATEGORY =====
+    pdf.setFillColor(220, 220, 220);
+
+    pdf.rect(
+      10,
+      y - 6,
+      pageWidth - 20,
+      10,
+      "F"
+    );
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(15);
+
+    pdf.text(
+      group.category.toUpperCase(),
+      12,
+      y + 1
+    );
+
+    y += 13;
+
+    // ===== TABLE HEADINGS =====
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(12);
+
+    pdf.text("SERVICE", 12, y);
+    pdf.text("PRICE", 80, y);
+    pdf.text("UNIT", 110, y);
+    pdf.text("STATUS", 140, y);
+
+    y += 8;
+
+    // ===== SERVICE ITEMS =====
+    for (const item of group.items) {
+
+      // ===== PAGE BREAK =====
+      if (y > pageHeight - 22) {
+
+        addFooter();
+
+        pdf.addPage();
+
+        // VERY IMPORTANT:
+        // Reset font immediately after new page
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(12);
+
+        y = 18;
+      }
+
+      // ===== SERVICE =====
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+      pdf.text(
+        String(item.name || "").toUpperCase(),
+        12,
+        y
+      );
+
+      // ===== PRICE =====
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+      pdf.text(
+        String(item.price || "").toUpperCase(),
+        80,
+        y
+      );
+
+      // ===== UNIT =====
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+      pdf.text(
+        String(item.unit || "").toUpperCase(),
+        110,
+        y
+      );
+
+      // ===== STATUS =====
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+
+      const status = item.is_active
+        ? "ORDER ONLINE / IN-SHOP"
+        : "IN-SHOP ONLY";
+
+      pdf.text(status, 140, y);
+
+      // Bigger row spacing
+      y += 8;
+    }
+
+    y += 6;
+  }
+
+  // ===== FINAL FOOTER =====
+  addFooter();
+
+  pdf.putTotalPages(totalPagesExp);
+
+  // ===== SAVE =====
+  pdf.save(
+    type === "filtered"
+      ? "ALGOSPACE_FILTERED_SERVICES.pdf"
+      : "ALGOSPACE_SERVICES.pdf"
+  );
+},                
         viewService(item)
         {
           console.log(this.selectedService)

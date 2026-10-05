@@ -105,7 +105,7 @@ Route::get('/email/verify/{id}', function (Request $request, $id) {
     // ✔ mark verified
     $user->update([
         'email_verified_at' => now(),
-        'status' => 'active'
+        'status' => 1
     ]);
 
     return redirect(env('FRONTEND_URL') . '/login?verified=1');
@@ -525,6 +525,8 @@ Route::middleware(['auth:api'])->group(function () {
     );
 
 
+    Route::get('/verify/{certificate_no}', [EnrollmentController::class, 'verify'])
+    ->name('certificate.verify');
 
     // customers list for enrollment
     Route::get(

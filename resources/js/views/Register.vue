@@ -74,7 +74,10 @@
                       </div> -->
                       <div class="col-12">
                         <label for="confirmPassword" class="form-label">Confirm Password</label>
-                        <input type="password" placeholder="Confirm Password" name="confirm_password" class="form-control" id="confirm_password" v-model="form.confirm_password" required>
+                        <input :type="isConfirmPasswordVisible ? 'text' : 'password'" placeholder="Confirm Password" name="confirm_password" class="form-control" id="confirm_password" v-model="form.confirm_password" required>
+                        <span class="input-group-text" @click="toggleConfirmPasswordVisibility">
+                          <i :class="isConfirmPasswordVisible ? 'fa fa-eye' : 'fa fa-eye-slash'"></i>
+                        </span>
                         <div class="invalid-feedback" v-if="!form.confirm_password">Please confirm password!</div>
                         <div class="invalid-feedback" v-if="form.password !== form.confirm_password">Passwords do not match!</div>
                       </div>
@@ -118,7 +121,7 @@
                 <!-- You can delete the links only if you purchased the pro version. -->
                 <!-- Licensing information: https://bootstrapmade.com/license/ -->
                 <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
-                <!-- Designed by <a href="#">BootstrapMade</a> -->
+                Designed by <a href="#">AlgoSpace</a>
               </div>
             </div>
           </div>
@@ -165,11 +168,15 @@
         loading: false,
         errors: {},
         isPasswordVisible: false,
+        isConfirmPasswordVisible: false,
       }
     },
     methods: {
         togglePasswordVisibility() {
           this.isPasswordVisible = !this.isPasswordVisible;
+        },
+        toggleConfirmPasswordVisibility() {
+          this.isConfirmPasswordVisible = !this.isConfirmPasswordVisible;
         },
         validateForm() {
           let isValid = true;

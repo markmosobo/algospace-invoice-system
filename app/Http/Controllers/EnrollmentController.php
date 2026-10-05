@@ -11,6 +11,11 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\StudentAssessment;
 use Illuminate\Support\Facades\Storage;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\GdImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class EnrollmentController extends Controller
 {
@@ -390,7 +395,6 @@ return response()->json([
 
 public function certificate(Enrollment $enrollment)
 {
-
     // Load required relationships
     $enrollment->load([
         'customer',
@@ -399,12 +403,12 @@ public function certificate(Enrollment $enrollment)
     ]);
 
 
+    // Get existing certificate
     $certificate = $enrollment->certificate;
 
 
-
-    if(!$certificate){
-
+    // Create certificate if it does not exist
+    if (!$certificate) {
 
         $assessments = $enrollment
             ->assessments()
@@ -412,17 +416,14 @@ public function certificate(Enrollment $enrollment)
             ->get();
 
 
-
         $total = $assessments->sum('score');
 
 
-
-        $maximum = $assessments->sum(function($a){
+        $maximum = $assessments->sum(function ($a) {
 
             return $a->assessment->max_marks ?? 0;
 
         });
-
 
 
         $percentage = $maximum > 0
@@ -430,9 +431,7 @@ public function certificate(Enrollment $enrollment)
             : 0;
 
 
-
-
-        $grade = match(true){
+        $grade = match (true) {
 
             $percentage >= 80 =>
                 'Distinction',
@@ -449,15 +448,12 @@ public function certificate(Enrollment $enrollment)
         };
 
 
-
-
         $certificate = CourseCertificate::create([
 
             'enrollment_id' => $enrollment->id,
 
-
             'certificate_no' =>
-                'ALG-'.date('Y').'-'.
+                'ALG-' . date('Y') . '-' .
                 str_pad(
                     $enrollment->id,
                     5,
@@ -465,46 +461,90 @@ public function certificate(Enrollment $enrollment)
                     STR_PAD_LEFT
                 ),
 
-
             'percentage' => $percentage,
-
 
             'grade' => $grade,
 
-
             'issued_date' => now(),
-
 
             'issued_by' =>
                 auth()->user()->name ?? 'AlgoSpace'
 
         ]);
-
-
-
     }
 
 
-
-    // Reload certificate relationship
+    // Reload certificate relationships
     $certificate->load([
         'enrollment.customer',
         'enrollment.service'
     ]);
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE QR CODE
+    |--------------------------------------------------------------------------
+    |
+    | Each certificate gets a unique verification URL based on its
+    | certificate number.
+    |
+    */
+
+    $verificationUrl = url(
+        '/verify/' . $certificate->certificate_no
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE QR CODE AS SVG
+    |--------------------------------------------------------------------------
+    */
+
+    $qrSvg = QrCode::format('svg')
+        ->size(300)
+        ->margin(2)
+        ->generate($verificationUrl);
+
+    $qrCode = base64_encode($qrSvg);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE PDF
+    |--------------------------------------------------------------------------
+    */
 
     return PDF::loadView(
         'certificates.course',
         [
-            'certificate'=>$certificate,
-            'enrollment'=>$enrollment
+            'certificate' => $certificate,
+            'enrollment' => $enrollment,
+            'qrCode' => $qrCode,
+            'verificationUrl' => $verificationUrl
         ]
     )
     ->stream(
-        'certificate-'.$certificate->certificate_no.'.pdf'
+        'certificate-' . $certificate->certificate_no . '.pdf'
     );
+}
 
+public function verify($certificate_no)
+{
+    $certificate = CourseCertificate::whereRaw(
+        'UPPER(certificate_no) = ?',
+        [strtoupper($certificate_no)]
+    )
+    ->with([
+        'enrollment.customer',
+        'enrollment.service'
+    ])
+    ->first();
+
+    return view(
+        'certificates.verify',
+        compact('certificate')
+    );
 }
 
 }

@@ -21,9 +21,9 @@
                     </div>
 
                     <div class="topbar-widget">
-                        <a href="mailto:support@algospace.co.ke">
+                        <a href="mailto:support@algospacecyber.co.ke">
                             <img src="{{ asset('templates/marketing_site/images/svg-white/envelope.svg') }}">
-                            support@algospace.co.ke
+                            support@algospacecyber.co.ke
                         </a>
                     </div>
                 </div>

@@ -321,6 +321,7 @@ class UserController extends Controller
         ], 201);
     }
 
+
     /**
      * Update an existing borrower or membership user.
      */
@@ -341,15 +342,17 @@ class UserController extends Controller
             'membership_type' => 'nullable|in:student,staff,public,premium',
             'borrow_limit' => 'nullable|integer|min:1',
             'status' => 'nullable|in:active,pending,suspended',
-            'profile_photo' => 'nullable|image|max:5120',
+            'profile_photo_file' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
             'profile_photo_url' => 'nullable|url',
         ]);
 
         $newPhotoPath = null;
+        $oldPhotoPath = null;
 
-        if ($request->hasFile('profile_photo')) {
-            $newPhotoPath = $request->file('profile_photo')
-                ->store('profiles', 'public');
+        // Upload the new file before opening the database transaction.
+        if ($request->hasFile('profile_photo_file')) {
+            $newPhotoPath = $request->file('profile_photo_file')
+                ->store('uploads/users', 'public');
 
             if (!$newPhotoPath) {
                 return response()->json([
@@ -357,8 +360,6 @@ class UserController extends Controller
                 ], 500);
             }
         }
-
-        $oldPhotoPath = null;
 
         try {
             $user = DB::transaction(function () use (
@@ -386,6 +387,7 @@ class UserController extends Controller
                     'profile_photo_url',
                 ];
 
+                // Capture values before the update for audit change tracking.
                 $before = $user->only($fields);
 
                 foreach ($fields as $field) {
@@ -394,9 +396,10 @@ class UserController extends Controller
                     }
                 }
 
+                // Save the uploaded file path in the correct database column.
                 if ($newPhotoPath) {
-                    $oldPhotoPath = $user->profile_photo;
-                    $user->profile_photo = $newPhotoPath;
+                    $oldPhotoPath = $user->profile_photo_file;
+                    $user->profile_photo_file = $newPhotoPath;
                 }
 
                 $user->save();
@@ -406,20 +409,16 @@ class UserController extends Controller
 
                 foreach ($after as $field => $value) {
                     if (($before[$field] ?? null) != $value) {
-                        // Keep personal contact details out of audit properties.
-                        $changes[$field] = in_array(
-                            $field,
-                            [
-                                'email',
-                                'phone',
-                                'dob',
-                                'address',
-                                'city',
-                                'postal_code',
-                                'profile_photo_url',
-                            ],
-                            true
-                        )
+                        // Avoid storing personal contact details in audit properties.
+                        $changes[$field] = in_array($field, [
+                            'email',
+                            'phone',
+                            'dob',
+                            'address',
+                            'city',
+                            'postal_code',
+                            'profile_photo_url',
+                        ], true)
                             ? 'changed'
                             : [
                                 'old' => $before[$field] ?? null,
@@ -429,7 +428,7 @@ class UserController extends Controller
                 }
 
                 if ($newPhotoPath) {
-                    $changes['profile_photo'] = 'changed';
+                    $changes['profile_photo_file'] = 'changed';
                 }
 
                 if (!empty($changes)) {
@@ -446,15 +445,21 @@ class UserController extends Controller
                     );
                 }
 
-                if ($oldPhotoPath && $newPhotoPath) {
+                // Remove the old file only after the transaction commits.
+                if (
+                    $oldPhotoPath &&
+                    $newPhotoPath &&
+                    $oldPhotoPath !== $newPhotoPath
+                ) {
                     DB::afterCommit(function () use ($oldPhotoPath) {
                         Storage::disk('public')->delete($oldPhotoPath);
                     });
                 }
 
                 return $user;
-            });
+            }, 3);
         } catch (\Throwable $e) {
+            // If the database update fails, remove the newly uploaded file.
             if ($newPhotoPath) {
                 Storage::disk('public')->delete($newPhotoPath);
             }
@@ -466,6 +471,7 @@ class UserController extends Controller
 
         return response()->json($user);
     }
+
 
     /**
      * Change the authenticated user's password.

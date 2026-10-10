@@ -13,6 +13,7 @@ import Payments from '../views/Payments.vue';
 import PendingInvoices from '../views/PendingInvoices.vue';
 import ServiceProviders from '../views/ServiceProviders.vue';
 import Customers from '../views/Customers.vue';
+import Users from '../views/Users.vue';
 import AuditLogs from '../views/AuditLogs.vue';
 import Restocks from '../views/Restocks.vue';
 import Expenses from '../views/Expenses.vue';
@@ -97,6 +98,7 @@ const routes = [
   { path: '/expenses', name: 'expenses', component: Expenses, meta: { requiresAuth: true } },
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
   { path: '/service-providers', name: 'service-providers', component: ServiceProviders, meta: { requiresAuth: true } },
+  { path: '/users', name: 'users', component: Users, meta: { requiresAuth: true } },
   { path: '/audit-logs', name: 'audit-logs', component: AuditLogs, meta: { requiresAuth: true } },
   { path: '/services', name: 'services', component: Services, meta: { requiresAuth: true } },
   { path: '/provider-services', name: 'provider-services', component: ProviderServices, meta: { requiresAuth: true } },

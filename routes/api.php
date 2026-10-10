@@ -119,6 +119,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('invoice-items', InvoiceItemController::class);
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('services', ServiceController::class);
+    Route::post('users/create-user', [UserController::class, 'storeUser']);
+    Route::put('users/update-user/{id}', [UserController::class, 'updateUser']);
     Route::apiResource('users', UserController::class);
     Route::apiResource('suppliers', SupplierController::class);
     Route::apiResource('restocks', RestockController::class);

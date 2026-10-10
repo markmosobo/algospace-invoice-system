@@ -454,6 +454,7 @@
         </a>
         <ul id="administration-nav" class="nav-content collapse">
           <li><RouterLink to="/audit-logs" class="nav-link"><i class="bi bi-circle"></i> Audit Logs</RouterLink></li>
+          <li><RouterLink to="/users" class="nav-link"><i class="bi bi-person"></i> Users</RouterLink></li>
         </ul>
       </li>
 

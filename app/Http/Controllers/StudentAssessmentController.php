@@ -5,433 +5,401 @@ namespace App\Http\Controllers;
 use App\Models\StudentAssessment;
 use App\Models\Enrollment;
 use App\Models\CourseAssessment;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StudentAssessmentController extends Controller
 {
+    protected AuditLogger $auditLogger;
 
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
 
     /**
-     * Display all student assessments
+     * Display all student assessments.
      */
     public function index()
     {
-
         $assessments = StudentAssessment::with([
             'assessment.service',
             'assessment.session',
             'enrollment.customer',
-            'enrollment.service'
+            'enrollment.service',
         ])
-        ->latest()
-        ->get();
-
-
+            ->latest()
+            ->get();
 
         return response()->json([
-
-            'success'=>true,
-
-            'data'=>$assessments
-
+            'success' => true,
+            'data' => $assessments,
         ]);
-
     }
 
-
-
-
-
     /**
-     * Store student assessment result
+     * Store a student assessment result.
      */
     public function store(Request $request)
     {
-
         $validated = $request->validate([
-
-
-            'course_assessment_id'=>
-                'required|exists:course_assessments,id',
-
-
-            'enrollment_id'=>
-                'required|exists:enrollments,id',
-
-
-            'score'=>
-                'required|numeric',
-
-
-            'homework_completed'=>
-                'nullable|boolean',
-
-
-            'bonus_completed'=>
-                'nullable|boolean',
-
-
-            'remarks'=>
-                'nullable|string',
-
-
-            'assessment_date'=>
-                'nullable|date',
-
-
+            'course_assessment_id' => 'required|exists:course_assessments,id',
+            'enrollment_id' => 'required|exists:enrollments,id',
+            'score' => 'required|numeric|min:0',
+            'homework_completed' => 'nullable|boolean',
+            'bonus_completed' => 'nullable|boolean',
+            'remarks' => 'nullable|string',
+            'assessment_date' => 'nullable|date',
         ]);
 
-
-
-        $assessment =
-            CourseAssessment::findOrFail(
+        $studentAssessment = DB::transaction(function () use (
+            $validated,
+            $request
+        ) {
+            $assessment = CourseAssessment::findOrFail(
                 $validated['course_assessment_id']
             );
 
+            $maxMarks = (float) $assessment->max_marks;
+            $score = (float) $validated['score'];
 
+            if ($maxMarks <= 0) {
+                throw ValidationException::withMessages([
+                    'course_assessment_id' =>
+                        'The assessment must have maximum marks greater than zero.',
+                ]);
+            }
 
-        // Calculate percentage
+            if ($score > $maxMarks) {
+                throw ValidationException::withMessages([
+                    'score' => "The score cannot exceed {$maxMarks} marks.",
+                ]);
+            }
 
-        $percentage = 0;
+            $percentage = ($score / $maxMarks) * 100;
 
+            $validated['percentage'] = round($percentage, 2);
+            $validated['grade'] = $this->calculateGrade($percentage);
 
-        if($assessment->max_marks > 0){
+            $studentAssessment = StudentAssessment::create($validated);
 
-            $percentage =
-                ($validated['score']
-                /
-                $assessment->max_marks)
-                * 100;
+            $studentAssessment->load('enrollment');
+            $studentAssessment->enrollment->updateProgress();
 
-        }
-
-
-
-        $validated['percentage'] =
-            round($percentage,2);
-
-
-
-        $validated['grade'] =
-            $this->calculateGrade(
-                $percentage
+            $this->auditLogger->record(
+                'student_assessment.created',
+                'Student assessment result recorded',
+                $studentAssessment,
+                [
+                    'student_assessment_id' => $studentAssessment->id,
+                    'enrollment_id' => $studentAssessment->enrollment_id,
+                    'course_assessment_id' => $studentAssessment->course_assessment_id,
+                    'score' => $score,
+                    'max_marks' => $maxMarks,
+                    'percentage' => $studentAssessment->percentage,
+                    'grade' => $studentAssessment->grade,
+                ],
+                $request,
+                auth('api')->id()
             );
 
-
-
-        $studentAssessment =
-            StudentAssessment::create(
-                $validated
-            );
-
-        // Update course progress
-        $studentAssessment
-            ->enrollment
-            ->updateProgress();
-
+            return $studentAssessment;
+        });
 
         return response()->json([
-
-            'success'=>true,
-
-            'message'=>'Student assessment recorded successfully',
-
-            'data'=>$studentAssessment
-
-        ],201);
-
-
+            'success' => true,
+            'message' => 'Student assessment recorded successfully',
+            'data' => $studentAssessment->load([
+                'assessment.service',
+                'assessment.session',
+                'enrollment.customer',
+                'enrollment.service',
+            ]),
+        ], 201);
     }
 
-
-
-
-
-
     /**
-     * Show one student assessment
+     * Show one student assessment.
      */
     public function show(StudentAssessment $studentAssessment)
     {
-
-
         $studentAssessment->load([
-
             'assessment.service',
-
             'assessment.session',
-
             'enrollment.customer',
-
-            'enrollment.service'
-
+            'enrollment.service',
         ]);
-
-
 
         return response()->json([
-
-            'success'=>true,
-
-            'data'=>$studentAssessment
-
+            'success' => true,
+            'data' => $studentAssessment,
         ]);
-
     }
 
-
-
-
-
-
-
     /**
-     * Update assessment result
+     * Update an assessment result.
      */
     public function update(
         Request $request,
         StudentAssessment $studentAssessment
-    )
-    {
-
-
+    ) {
         $validated = $request->validate([
-
-
-            'score'=>'sometimes|numeric',
-
-            'homework_completed'=>'nullable|boolean',
-
-            'bonus_completed'=>'nullable|boolean',
-
-            'remarks'=>'nullable|string',
-
-            'assessment_date'=>'nullable|date'
-
-
+            'score' => 'sometimes|required|numeric|min:0',
+            'homework_completed' => 'sometimes|nullable|boolean',
+            'bonus_completed' => 'sometimes|nullable|boolean',
+            'remarks' => 'sometimes|nullable|string',
+            'assessment_date' => 'sometimes|nullable|date',
         ]);
 
-
-
-
-        if(isset($validated['score'])){
-
-
-            $max =
+        DB::transaction(function () use (
+            $validated,
+            $request,
             $studentAssessment
-                ->assessment
-                ->max_marks;
+        ) {
+            $studentAssessment = StudentAssessment::whereKey(
+                $studentAssessment->id
+            )->lockForUpdate()->firstOrFail();
 
+            $before = $studentAssessment->only([
+                'score',
+                'percentage',
+                'grade',
+                'homework_completed',
+                'bonus_completed',
+                'remarks',
+                'assessment_date',
+            ]);
 
-
-            $percentage =
-            ($validated['score']/$max)*100;
-
-
-
-            $validated['percentage']
-                = round($percentage,2);
-
-
-
-            $validated['grade']
-                = $this->calculateGrade(
-                    $percentage
+            if (array_key_exists('score', $validated)) {
+                $assessment = CourseAssessment::findOrFail(
+                    $studentAssessment->course_assessment_id
                 );
 
-        }
+                $maxMarks = (float) $assessment->max_marks;
+                $score = (float) $validated['score'];
 
+                if ($maxMarks <= 0) {
+                    throw ValidationException::withMessages([
+                        'score' =>
+                            'The assessment must have maximum marks greater than zero.',
+                    ]);
+                }
 
+                if ($score > $maxMarks) {
+                    throw ValidationException::withMessages([
+                        'score' => "The score cannot exceed {$maxMarks} marks.",
+                    ]);
+                }
 
+                $percentage = ($score / $maxMarks) * 100;
 
-        $studentAssessment->update($validated);
+                $validated['percentage'] = round($percentage, 2);
+                $validated['grade'] = $this->calculateGrade($percentage);
+            }
 
-        // Refresh progress
-        $studentAssessment
-            ->enrollment
-            ->updateProgress();
+            $studentAssessment->update($validated);
+
+            $studentAssessment->load('enrollment');
+            $studentAssessment->enrollment->updateProgress();
+
+            $after = $studentAssessment->only(array_keys($before));
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    // Avoid storing free-text remarks in the audit log.
+                    if ($field === 'remarks') {
+                        $changes[$field] = 'changed';
+                    } else {
+                        $changes[$field] = [
+                            'old' => $before[$field] ?? null,
+                            'new' => $value,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'student_assessment.updated',
+                    'Student assessment result updated',
+                    $studentAssessment,
+                    [
+                        'student_assessment_id' => $studentAssessment->id,
+                        'enrollment_id' => $studentAssessment->enrollment_id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+        });
 
         return response()->json([
-
-            'success'=>true,
-
-            'message'=>'Assessment updated successfully',
-
-            'data'=>$studentAssessment
-
+            'success' => true,
+            'message' => 'Assessment updated successfully',
+            'data' => $studentAssessment->fresh([
+                'assessment.service',
+                'assessment.session',
+                'enrollment.customer',
+                'enrollment.service',
+            ]),
         ]);
-
     }
 
-
-
-
-
-
-
     /**
-     * Delete assessment
+     * Delete an assessment.
      */
-    public function destroy(StudentAssessment $studentAssessment)
-    {
+    public function destroy(
+        Request $request,
+        StudentAssessment $studentAssessment
+    ) {
+        DB::transaction(function () use ($request, $studentAssessment) {
+            $studentAssessment = StudentAssessment::whereKey(
+                $studentAssessment->id
+            )->lockForUpdate()->firstOrFail();
 
-        $studentAssessment->delete();
+            // Keep the enrollment reference before deleting the assessment.
+            $enrollment = Enrollment::findOrFail(
+                $studentAssessment->enrollment_id
+            );
 
-        // Recalculate progress
-        $enrollment->updateProgress();
+            $this->auditLogger->record(
+                'student_assessment.deleted',
+                'Student assessment deleted',
+                $studentAssessment,
+                [
+                    'student_assessment_id' => $studentAssessment->id,
+                    'enrollment_id' => $studentAssessment->enrollment_id,
+                    'course_assessment_id' => $studentAssessment->course_assessment_id,
+                    'score' => $studentAssessment->score,
+                    'percentage' => $studentAssessment->percentage,
+                    'grade' => $studentAssessment->grade,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
+            $studentAssessment->delete();
+
+            $enrollment->updateProgress();
+        });
 
         return response()->json([
-
-            'success'=>true,
-
-            'message'=>'Student assessment deleted'
-
+            'success' => true,
+            'message' => 'Student assessment deleted',
         ]);
-
     }
 
-
-
-
-
-
-
     /**
-     * Upload scanned marked assessment
+     * Upload a scanned marked assessment.
      */
     public function uploadAttachment(
         Request $request,
         StudentAssessment $studentAssessment
-    )
-    {
-
-
+    ) {
         $request->validate([
-
-            'file'=>
-            'required|file|mimes:pdf,jpg,jpeg,png|max:10240'
-
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
+        $file = $request->file('file');
+        $oldPath = $studentAssessment->attachment;
 
+        $path = $file->store('student_assessments');
 
-
-        if($studentAssessment->attachment){
-
-            Storage::delete(
-                $studentAssessment->attachment
-            );
-
+        if (!$path) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to store the assessment attachment.',
+            ], 500);
         }
 
+        try {
+            DB::transaction(function () use (
+                $request,
+                $studentAssessment,
+                $path,
+                $oldPath
+            ) {
+                $studentAssessment = StudentAssessment::whereKey(
+                    $studentAssessment->id
+                )->lockForUpdate()->firstOrFail();
 
+                $previousPath = $studentAssessment->attachment;
 
+                $studentAssessment->update([
+                    'attachment' => $path,
+                ]);
 
-        $path =
-        $request
-        ->file('file')
-        ->store('student_assessments');
+                $this->auditLogger->record(
+                    'student_assessment.attachment_uploaded',
+                    'Student assessment attachment uploaded',
+                    $studentAssessment,
+                    [
+                        'student_assessment_id' => $studentAssessment->id,
+                        'attachment_replaced' => !empty($previousPath),
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
 
-
-
-
-        $studentAssessment->update([
-
-            'attachment'=>$path
-
-        ]);
-
-
-
+                // Delete the previous file only after the new path is saved.
+                if ($previousPath && $previousPath !== $path) {
+                    DB::afterCommit(function () use ($previousPath) {
+                        Storage::delete($previousPath);
+                    });
+                }
+            });
+        } catch (\Throwable $e) {
+            Storage::delete($path);
+            throw $e;
+        }
 
         return response()->json([
-
-            'success'=>true,
-
-            'message'=>'Student assessment uploaded',
-
-            'path'=>$path
-
+            'success' => true,
+            'message' => 'Student assessment uploaded',
+            'path' => $path,
         ]);
-
     }
 
-
-
-
-
-
-
-
     /**
-     * Get assessments by enrollment
+     * Get assessments by enrollment.
      */
-    public function byEnrollment(
-        Enrollment $enrollment
-    )
+    public function byEnrollment(Enrollment $enrollment)
     {
-
-        $results =
-        $enrollment
-        ->assessments()
-        ->with([
-            'assessment.session'
-        ])
-        ->get();
-
-
+        $results = $enrollment
+            ->assessments()
+            ->with([
+                'assessment.session',
+            ])
+            ->get();
 
         return response()->json([
-
-            'success'=>true,
-
-            'data'=>$results
-
+            'success' => true,
+            'data' => $results,
         ]);
-
     }
-
-
-
-
-
-
-
 
     /**
-     * Grade calculator
+     * Calculate grade.
      */
-    private function calculateGrade($percentage)
+    private function calculateGrade($percentage): string
     {
-
-
-        if($percentage >= 80){
-
-            return "Distinction";
-
+        if ($percentage >= 80) {
+            return 'Distinction';
         }
 
-
-        if($percentage >=70){
-
-            return "Credit";
-
+        if ($percentage >= 70) {
+            return 'Credit';
         }
 
-
-        if($percentage >=50){
-
-            return "Pass";
-
+        if ($percentage >= 50) {
+            return 'Pass';
         }
 
-
-        return "Needs Improvement";
-
-
+        return 'Needs Improvement';
     }
-
-
 }

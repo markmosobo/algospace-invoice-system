@@ -3,93 +3,171 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProviderService;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProviderServiceController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display a listing of provider services.
      */
     public function index()
     {
         $providerServices = ProviderService::get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved provider services'
-        ]);
-
-        // Return as JSON
         return response()->json([
             'providerServices' => $providerServices,
-        ]);        
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created provider service.
      */
     public function store(Request $request)
     {
-        $providerService = new ProviderService();
-        $providerService->name = $request->name;
-        $providerService->category = $request->category;
-        $providerService->price = $request->price;
-        $providerService->save();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|numeric|min:0',
+        ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created provider service #'.$providerService->id
-        ]);          
-                
-        return response()->json($providerService);          
+        $providerService = DB::transaction(function () use ($validated, $request) {
+            $providerService = ProviderService::create($validated);
+
+            $this->auditLogger->record(
+                'provider_service.created',
+                'Provider service created',
+                $providerService,
+                [
+                    'provider_service_id' => $providerService->id,
+                    'name' => $providerService->name,
+                    'category' => $providerService->category,
+                    'price' => $providerService->price,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $providerService;
+        });
+
+        return response()->json($providerService, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified provider service.
      */
     public function show(string $id)
     {
-        $providerService = ProviderService::find($id);
-        return response()->json($providerService);         
+        $providerService = ProviderService::findOrFail($id);
+
+        return response()->json($providerService);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified provider service.
      */
     public function update(Request $request, ProviderService $providerService)
     {
-        $request->validate([
-            'name' => 'required|string',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'sometimes|nullable|string|max:255',
+            'price' => 'sometimes|required|numeric|min:0',
         ]);
 
-        $providerService->update($request->only([
-            'name','email','phone','gender'
-        ]));
+        DB::transaction(function () use (
+            $request,
+            $providerService,
+            $validated
+        ) {
+            $providerService = ProviderService::whereKey($providerService->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for provider service #'.$providerService->id
-        ]);         
+            $before = $providerService->only([
+                'name',
+                'category',
+                'price',
+            ]);
 
-        return response()->json(['message' => 'Updated']);        
+            $providerService->fill($validated);
+            $providerService->save();
+
+            $after = $providerService->only([
+                'name',
+                'category',
+                'price',
+            ]);
+
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    $changes[$field] = [
+                        'old' => $before[$field] ?? null,
+                        'new' => $value,
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'provider_service.updated',
+                    'Provider service updated',
+                    $providerService,
+                    [
+                        'provider_service_id' => $providerService->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+        });
+
+        return response()->json([
+            'message' => 'Updated',
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified provider service.
      */
     public function destroy(string $id)
     {
-        ProviderService::destroy($id);
+        DB::transaction(function () use ($id, request) {
+            $providerService = ProviderService::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted provider service #'.$id
-        ]);         
-        return response()->json(['message' => 'Deleted']);         
+            $serviceDetails = [
+                'provider_service_id' => $providerService->id,
+                'name' => $providerService->name,
+                'category' => $providerService->category,
+            ];
+
+            $this->auditLogger->record(
+                'provider_service.deleted',
+                'Provider service deleted',
+                $providerService,
+                $serviceDetails,
+                request(),
+                auth('api')->id()
+            );
+
+            $providerService->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 }

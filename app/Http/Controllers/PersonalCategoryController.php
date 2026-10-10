@@ -2,57 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SystemLog;
-use Illuminate\Http\Request;
 use App\Models\PersonalCategory;
+use App\Services\AuditLogger;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PersonalCategoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of personal categories.
      */
     public function index()
     {
-        $personalCategories = PersonalCategory::all();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved personal categories'
-        ]);
-
-        return response()->json($personalCategories);         
+        return response()->json(PersonalCategory::all());
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created personal category.
      */
     public function store(Request $request)
     {
-        // Validate incoming request
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        // Create the personal category
-        $personalCategory = PersonalCategory::create([
-            'name' => $request->name
-        ]);
+        $personalCategory = DB::transaction(function () use ($data, $request) {
+            $category = PersonalCategory::create($data);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal category #'.$personalCategory->id
-        ]);        
+            app(AuditLogger::class)->record(
+                'personal_category.created',
+                'Personal category created',
+                $category,
+                [
+                    'category_id' => $category->id,
+                    'name' => $category->name,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $category;
+        });
 
         return response()->json([
             'message' => 'Personal category created successfully',
-            'personalCategory' => $personalCategory
-        ], 201);         
+            'personalCategory' => $personalCategory,
+        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified personal category.
      */
     public function show(string $id)
     {
@@ -60,7 +59,7 @@ class PersonalCategoryController extends Controller
 
         if (!$personalCategory) {
             return response()->json([
-                'message' => 'Personal category not found'
+                'message' => 'Personal category not found',
             ], 404);
         }
 
@@ -68,62 +67,101 @@ class PersonalCategoryController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified personal category.
      */
     public function update(Request $request, string $id)
     {
-        $personalCategory = PersonalCategory::find($id);
-
-        if (!$personalCategory) {
-            return response()->json([
-                'message' => 'Personal category not found'
-            ], 404);
-        }
-
-        // Validate request
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        // Update category
-        $personalCategory->name = $request->name;
-        $personalCategory->save();
+        $personalCategory = DB::transaction(function () use (
+            $data,
+            $id,
+            $request
+        ) {
+            $category = PersonalCategory::whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal category #'.$personalCategory->id
-        ]);        
+            if (!$category) {
+                return null;
+            }
+
+            $oldName = $category->name;
+
+            if ($oldName !== $data['name']) {
+                $category->name = $data['name'];
+                $category->save();
+
+                app(AuditLogger::class)->record(
+                    'personal_category.updated',
+                    'Personal category updated',
+                    $category,
+                    [
+                        'category_id' => $category->id,
+                        'old_name' => $oldName,
+                        'new_name' => $category->name,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $category;
+        });
+
+        if (!$personalCategory) {
+            return response()->json([
+                'message' => 'Personal category not found',
+            ], 404);
+        }
 
         return response()->json([
             'message' => 'Personal category updated successfully',
-            'personalCategory' => $personalCategory
+            'personalCategory' => $personalCategory,
         ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified personal category.
      */
     public function destroy(string $id)
     {
-        $personalCategory = PersonalCategory::find($id);
+        $deleted = DB::transaction(function () use ($id) {
+            $category = PersonalCategory::whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-        if (!$personalCategory) {
+            if (!$category) {
+                return false;
+            }
+
+            app(AuditLogger::class)->record(
+                'personal_category.deleted',
+                'Personal category deleted',
+                $category,
+                [
+                    'category_id' => $category->id,
+                    'name' => $category->name,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            $category->delete();
+
+            return true;
+        });
+
+        if (!$deleted) {
             return response()->json([
-                'message' => 'Personal category not found'
+                'message' => 'Personal category not found',
             ], 404);
         }
 
-        $personalCategory->delete();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal category #'.$id
-        ]);        
-
         return response()->json([
-            'message' => 'Personal category deleted successfully'
+            'message' => 'Personal category deleted successfully',
         ]);
     }
 }

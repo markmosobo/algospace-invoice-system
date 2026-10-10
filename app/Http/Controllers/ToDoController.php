@@ -3,20 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Todo;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ToDoController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of all tasks.
+     * Display all tasks.
      */
     public function index()
     {
-        // Return all tasks including soft-deleted if needed
-        $todos = Todo::with('delegatedUser')->orderBy('priority', 'desc')->orderBy('created_at')->get();
+        $todos = Todo::with('delegatedUser')
+            ->orderBy('priority', 'desc')
+            ->orderBy('created_at')
+            ->get();
+
         return response()->json($todos);
     }
 
+    /**
+     * Display active tasks.
+     */
     public function active()
     {
         $todos = Todo::whereIn('status', ['pending', 'deferred'])
@@ -26,70 +41,149 @@ class ToDoController extends Controller
         return response()->json($todos);
     }
 
+    /**
+     * Display dashboard tasks and status counts.
+     */
     public function dashboard()
     {
-        // 1. Fetch ALL todos (for accurate counts)
         $allTodos = Todo::select('id', 'status')->get();
 
-        // 2. Count ALL statuses
         $statusCounts = $allTodos
             ->groupBy('status')
             ->map(fn ($group) => $group->count());
 
-        // 3. Fetch ONLY todos you want to display
         $todos = Todo::latest()->get();
 
         return response()->json([
             'todos' => $todos,
-            'statusCounts' => $statusCounts
+            'statusCounts' => $statusCounts,
         ]);
     }
 
-    public function markDone(ToDo $todo)
+    /**
+     * Mark a task as completed.
+     */
+    public function markDone(Request $request, Todo $todo)
     {
-        $todo->update([
-            'status' => 'completed'
-        ]);
+        DB::transaction(function () use ($request, $todo) {
+            $todo = Todo::whereKey($todo->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $oldStatus = $todo->status;
+
+            $todo->update([
+                'status' => 'completed',
+            ]);
+
+            $this->auditLogger->record(
+                'todo.completed',
+                'To-do marked as completed',
+                $todo,
+                [
+                    'todo_id' => $todo->id,
+                    'title' => $todo->title,
+                    'old_status' => $oldStatus,
+                    'new_status' => 'completed',
+                ],
+                $request,
+                auth('api')->id()
+            );
+        });
 
         return response()->json([
             'message' => 'To-do marked as done',
-            'todo' => $todo
+            'todo' => $todo->fresh(),
         ]);
-    }    
+    }
 
-    public function defer(Todo $todo)
+    /**
+     * Defer a task.
+     */
+    public function defer(Request $request, Todo $todo)
     {
-        // Prevent deferring completed tasks
         if ($todo->status === 'completed') {
             return response()->json([
-                'message' => 'Completed tasks cannot be deferred'
+                'message' => 'Completed tasks cannot be deferred',
             ], 422);
         }
 
-        $todo->status = 'deferred';
-        $todo->save();
+        DB::transaction(function () use ($request, $todo) {
+            $todo = Todo::whereKey($todo->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($todo->status === 'completed') {
+                abort(422, 'Completed tasks cannot be deferred');
+            }
+
+            $oldStatus = $todo->status;
+            $todo->status = 'deferred';
+            $todo->save();
+
+            $this->auditLogger->record(
+                'todo.deferred',
+                'To-do deferred',
+                $todo,
+                [
+                    'todo_id' => $todo->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => 'deferred',
+                ],
+                $request,
+                auth('api')->id()
+            );
+        });
 
         return response()->json([
-            'todo' => $todo
+            'todo' => $todo->fresh(),
         ]);
     }
-    public function resume(Todo $todo)
+
+    /**
+     * Resume a deferred task.
+     */
+    public function resume(Request $request, Todo $todo)
     {
         if ($todo->status !== 'deferred') {
             return response()->json([
-                'message' => 'Only deferred tasks can be resumed'
+                'message' => 'Only deferred tasks can be resumed',
             ], 422);
         }
 
-        $todo->status = 'pending';
-        $todo->save();
+        DB::transaction(function () use ($request, $todo) {
+            $todo = Todo::whereKey($todo->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($todo->status !== 'deferred') {
+                abort(422, 'Only deferred tasks can be resumed');
+            }
+
+            $todo->status = 'pending';
+            $todo->save();
+
+            $this->auditLogger->record(
+                'todo.resumed',
+                'Deferred to-do resumed',
+                $todo,
+                [
+                    'todo_id' => $todo->id,
+                    'old_status' => 'deferred',
+                    'new_status' => 'pending',
+                ],
+                $request,
+                auth('api')->id()
+            );
+        });
 
         return response()->json([
-            'todo' => $todo
+            'todo' => $todo->fresh(),
         ]);
-    }        
+    }
+
     /**
-     * Store a newly created task.
+     * Create a task.
      */
     public function store(Request $request)
     {
@@ -100,16 +194,34 @@ class ToDoController extends Controller
             'priority' => 'nullable|in:high,medium,low',
         ]);
 
-        $todo = Todo::create($validated);
+        $todo = DB::transaction(function () use ($validated, $request) {
+            $todo = Todo::create($validated);
+
+            $this->auditLogger->record(
+                'todo.created',
+                'To-do task created',
+                $todo,
+                [
+                    'todo_id' => $todo->id,
+                    'title' => $todo->title,
+                    'category' => $todo->category,
+                    'priority' => $todo->priority,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $todo;
+        });
 
         return response()->json([
             'message' => 'Task created successfully',
-            'task' => $todo
+            'task' => $todo,
         ], 201);
     }
 
     /**
-     * Display the specified task.
+     * Display a task.
      */
     public function show(string $id)
     {
@@ -119,56 +231,138 @@ class ToDoController extends Controller
     }
 
     /**
-     * Update the specified task.
-     * Can handle status changes, delegation, deferment, or edits.
+     * Update a task.
      */
     public function update(Request $request, string $id)
     {
-        $todo = Todo::findOrFail($id);
-
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|nullable',
-            'category' => 'sometimes|in:cyber,farm,personal,other',
-            'priority' => 'sometimes|in:high,medium,low',
-            'status' => 'sometimes|in:pending,in_progress,completed,deferred,delegated',
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'category' => 'sometimes|required|in:cyber,farm,personal,other',
+            'priority' => 'sometimes|nullable|in:high,medium,low',
+            'status' => 'sometimes|required|in:pending,in_progress,completed,deferred,delegated',
             'delegated_to' => 'sometimes|nullable|exists:users,id',
         ]);
 
-        // Handle delegation
-        if (isset($validated['status']) && $validated['status'] === 'delegated' && isset($validated['delegated_to'])) {
-            $todo->delegateTo($validated['delegated_to']);
-        }
+        $todo = DB::transaction(function () use (
+            $validated,
+            $request,
+            $id
+        ) {
+            $todo = Todo::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Handle completion/counter-check
-        if (isset($validated['status']) && $validated['status'] === 'completed') {
-            $todo->markChecked();
-        }
+            $before = $todo->only([
+                'title',
+                'description',
+                'category',
+                'priority',
+                'status',
+                'delegated_to',
+            ]);
 
-        // Handle deferment
-        if (isset($validated['status']) && $validated['status'] === 'deferred') {
-            $todo->deferTask();
-        }
+            // Preserve existing model workflow hooks.
+            if (
+                isset($validated['status']) &&
+                $validated['status'] === 'delegated' &&
+                isset($validated['delegated_to'])
+            ) {
+                $todo->delegateTo($validated['delegated_to']);
+            }
 
-        // Update other fields
-        $todo->update($validated);
+            if (
+                isset($validated['status']) &&
+                $validated['status'] === 'completed'
+            ) {
+                $todo->markChecked();
+            }
+
+            if (
+                isset($validated['status']) &&
+                $validated['status'] === 'deferred'
+            ) {
+                $todo->deferTask();
+            }
+
+            $todo->update($validated);
+
+            $after = $todo->only(array_keys($before));
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    if ($field === 'description') {
+                        $changes[$field] = 'changed';
+                    } else {
+                        $changes[$field] = [
+                            'old' => $before[$field] ?? null,
+                            'new' => $value,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($changes)) {
+                $status = $validated['status'] ?? null;
+
+                $event = match ($status) {
+                    'completed' => 'todo.completed',
+                    'deferred' => 'todo.deferred',
+                    'delegated' => 'todo.delegated',
+                    default => 'todo.updated',
+                };
+
+                $this->auditLogger->record(
+                    $event,
+                    'To-do task updated',
+                    $todo,
+                    [
+                        'todo_id' => $todo->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $todo;
+        });
 
         return response()->json([
             'message' => 'Task updated successfully',
-            'task' => $todo
+            'task' => $todo,
         ]);
     }
 
     /**
-     * Remove the specified task (soft delete).
+     * Soft-delete a task.
      */
     public function destroy(string $id)
     {
-        $todo = Todo::findOrFail($id);
-        $todo->delete();
+        DB::transaction(function () use ($id) {
+            $todo = Todo::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->auditLogger->record(
+                'todo.deleted',
+                'To-do task deleted',
+                $todo,
+                [
+                    'todo_id' => $todo->id,
+                    'title' => $todo->title,
+                    'status' => $todo->status,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            $todo->delete();
+        });
 
         return response()->json([
-            'message' => 'Task deleted successfully'
+            'message' => 'Task deleted successfully',
         ]);
     }
 }

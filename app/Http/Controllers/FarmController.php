@@ -3,92 +3,154 @@
 namespace App\Http\Controllers;
 
 use App\Models\Farm;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 
 class FarmController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of farms.
      */
     public function index()
     {
         $farms = Farm::get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved farms'
-        ]); 
-                 
-        return response()->json($farms);        
+        return response()->json($farms);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created farm.
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'size' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
+        ]);
+
         $farm = new Farm();
-        $farm->name = $request->name;
-        $farm->location = $request->location;
-        $farm->size = $request->size;
-        $farm->description = $request->description;
-        $farm->owner_id = auth('api')->user()->id;
+        $farm->name = $validated['name'];
+        $farm->location = $validated['location'] ?? null;
+        $farm->size = $validated['size'] ?? null;
+        $farm->description = $validated['description'] ?? null;
+        $farm->owner_id = auth('api')->id();
         $farm->save();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created farm #'.$farm->id
-        ]);          
-                
-        return response()->json($farm);        
+        app(AuditLogger::class)->record(
+            'farm.created',
+            "Farm created (ID: {$farm->id})",
+            $farm,
+            [
+                'farm_id' => $farm->id,
+                'name' => $farm->name,
+                'location' => $farm->location,
+                'size' => $farm->size,
+                'owner_id' => $farm->owner_id,
+            ],
+            $request,
+            auth('api')->id()
+        );
+
+        return response()->json($farm);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified farm.
      */
     public function show(string $id)
     {
         $farm = Farm::find($id);
-        return response()->json($farm);        
+
+        return response()->json($farm);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified farm.
      */
     public function update(Request $request, Farm $farm)
     {
-        $request->validate([
-            'name' => 'required|string',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'sometimes|nullable|string|max:255',
+            'size' => 'sometimes|nullable|numeric|min:0',
+            'description' => 'sometimes|nullable|string',
         ]);
 
-        $farm->update($request->only([
-            'name','location','size','description'
-        ]));
+        $fields = ['name', 'location', 'size', 'description'];
+        $before = $farm->only($fields);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for farm #'.$farm->id
-        ]);         
+        $farm->update($validated);
+        $farm->refresh();
 
-        return response()->json(['message' => 'Updated']);
+        $changes = [];
+
+        foreach ($fields as $field) {
+            $oldValue = $before[$field] ?? null;
+            $newValue = $farm->getAttribute($field);
+
+            if ($oldValue != $newValue) {
+                $changes[$field] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                ];
+            }
+        }
+
+        if (!empty($changes)) {
+            app(AuditLogger::class)->record(
+                'farm.updated',
+                "Farm updated (ID: {$farm->id})",
+                $farm,
+                [
+                    'farm_id' => $farm->id,
+                    'changes' => $changes,
+                ],
+                $request,
+                auth('api')->id()
+            );
+        }
+
+        return response()->json([
+            'message' => 'Updated',
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified farm.
      */
     public function destroy(string $id)
     {
-        Farm::destroy($id);
+        $farm = Farm::find($id);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted farm #'.$id
-        ]);         
-        return response()->json(['message' => 'Deleted']);        
+        if (!$farm) {
+            return response()->json([
+                'message' => 'Farm not found',
+            ], 404);
+        }
+
+        $farmId = $farm->id;
+        $farmName = $farm->name;
+        $ownerId = $farm->owner_id;
+
+        $farm->delete();
+
+        app(AuditLogger::class)->record(
+            'farm.deleted',
+            "Farm deleted (ID: {$farmId})",
+            $farm,
+            [
+                'farm_id' => $farmId,
+                'name' => $farmName,
+                'owner_id' => $ownerId,
+            ],
+            request(),
+            auth('api')->id()
+        );
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 }

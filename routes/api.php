@@ -46,7 +46,6 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
-use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\ToDoController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\UserController;
@@ -63,6 +62,7 @@ use App\Http\Controllers\CourseSessionTopicController;
 use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\CourseHandbookController;
 use App\Http\Controllers\CourseEnrollmentController;
+use App\Http\Controllers\AuditLogController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -127,7 +127,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('personal-accounts', PersonalAccountController::class);
     Route::apiResource('personal-transactions', PersonalTransactionController::class);
     Route::apiResource('diary-entries', DiaryEntryController::class);
-    Route::apiResource('system-logs', SystemLogController::class);
     Route::apiResource('provider-services', ProviderServiceController::class);
     Route::apiResource('service-providers', ServiceProviderController::class);
     Route::apiResource('expenses', ExpenseController::class);
@@ -151,6 +150,15 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('farm-workers', FarmWorkerController::class);
     Route::apiResource('worker-tasks', FarmWorkerTaskController::class);
     Route::apiResource('farm-assets', FarmAssetController::class);
+
+    // Audit Logs — read-only endpoints
+    Route::prefix('audit-logs')->group(function () {
+        Route::get('/', [AuditLogController::class, 'index']);
+        Route::get('/events', [AuditLogController::class, 'events']);
+
+        Route::get('/{auditLog}', [AuditLogController::class, 'show'])
+            ->whereNumber('auditLog');
+    });
 
     Route::get('/courses', [ServiceController::class, 'courses']);
     Route::get('/courses/{course}', 

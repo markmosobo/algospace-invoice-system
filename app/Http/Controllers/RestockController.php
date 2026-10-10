@@ -5,24 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\Restock;
 use App\Models\Supplier;
 use App\Models\Supply;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RestockController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
+    /**
+     * Display restocks, supplies, and suppliers.
+     */
     public function index()
     {
         $restocks = Restock::with('supplier', 'supply')->get();
         $supplies = Supply::with('supplier')->get();
         $suppliers = Supplier::get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved restocks'
-        ]); 
-
-        // Return as JSON
         return response()->json([
             'restocks' => $restocks,
             'supplies' => $supplies,
@@ -31,102 +35,175 @@ class RestockController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created restock.
      */
     public function store(Request $request)
     {
-        // Validate the incoming request
-        $request->validate([
-            'supply_id'    => 'required|exists:supplies,id',
-            'supplier_id'    => 'required|exists:suppliers,id',
-            'buying_price'   => 'required|numeric|min:0',
-            'quantity'   => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'supply_id' => 'required|exists:supplies,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'buying_price' => 'required|numeric|min:0',
+            'quantity' => 'required|numeric|min:0.01',
+            'status' => 'nullable|string|max:100',
         ]);
 
-        // Create new restock
-        $restock = Restock::create([
-            'supply_id'    => $request->supply_id,
-            'supplier_id'   => $request->supplier_id,
-            'buying_price'       => $request->buying_price,
-            'status'         => $request->status ?? 'pending',
-            'quantity'   => $request->quantity,
-            'user_id' => auth('api')->user()->id
-        ]);
+        $restock = DB::transaction(function () use ($validated, $request) {
+            $restock = Restock::create([
+                'supply_id' => $validated['supply_id'],
+                'supplier_id' => $validated['supplier_id'],
+                'buying_price' => $validated['buying_price'],
+                'quantity' => $validated['quantity'],
+                'status' => $validated['status'] ?? 'pending',
+                'user_id' => auth('api')->id(),
+            ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created restock #'.$restock->id
-        ]);         
+            $this->auditLogger->record(
+                'restock.created',
+                'Restock created',
+                $restock,
+                [
+                    'restock_id' => $restock->id,
+                    'supply_id' => $restock->supply_id,
+                    'supplier_id' => $restock->supplier_id,
+                    'buying_price' => $restock->buying_price,
+                    'quantity' => $restock->quantity,
+                    'status' => $restock->status,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $restock;
+        });
 
         return response()->json([
             'message' => 'Restock created successfully',
-            'restock' => $restock
-        ]);
+            'restock' => $restock,
+        ], 201);
     }
 
-
     /**
-     * Display the specified resource.
+     * Display a specific restock.
      */
     public function show(string $id)
     {
-        $restock = Restock::find($id);
+        $restock = Restock::with('supplier', 'supply')
+            ->findOrFail($id);
+
         return response()->json($restock);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an existing restock.
      */
     public function update(Request $request, string $id)
     {
-        // Find the restock
-        $restock = Restock::findOrFail($id);
-
-        // Validate the incoming request
-        $request->validate([
-            'supply_id'    => 'required|exists:supplies,id',
-            'supplier_id'    => 'required|exists:suppliers,id',
-            'buying_price'   => 'required|numeric|min:0',
-            'quantity'   => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'supply_id' => 'required|exists:supplies,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'buying_price' => 'required|numeric|min:0',
+            'quantity' => 'required|numeric|min:0.01',
+            'status' => 'sometimes|nullable|string|max:100',
         ]);
 
-        // Update invoice
-        $restock->update([
-            'supply_id'    => $request->supply_id,
-            'supplier_id'   => $request->supplier_id,
-            'buying_price'       => $request->buying_price,
-            'quantity'   => $request->quantity,
-            'user_id' => auth('api')->user()->id,
-            'status'         => $request->status ?? $restock->status,
-        ]);
+        $restock = DB::transaction(function () use (
+            $validated,
+            $request,
+            $id
+        ) {
+            $restock = Restock::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated restock #'.$restock->id
-        ]);        
+            $before = $restock->only([
+                'supply_id',
+                'supplier_id',
+                'buying_price',
+                'quantity',
+                'status',
+            ]);
+
+            $restock->supply_id = $validated['supply_id'];
+            $restock->supplier_id = $validated['supplier_id'];
+            $restock->buying_price = $validated['buying_price'];
+            $restock->quantity = $validated['quantity'];
+            $restock->status = $validated['status'] ?? $restock->status;
+            $restock->user_id = auth('api')->id();
+            $restock->save();
+
+            $after = $restock->only([
+                'supply_id',
+                'supplier_id',
+                'buying_price',
+                'quantity',
+                'status',
+            ]);
+
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    $changes[$field] = [
+                        'old' => $before[$field] ?? null,
+                        'new' => $value,
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'restock.updated',
+                    'Restock updated',
+                    $restock,
+                    [
+                        'restock_id' => $restock->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $restock;
+        });
 
         return response()->json([
             'message' => 'Restock updated successfully',
-            'restock' => $restock
+            'restock' => $restock,
         ]);
     }
 
-
     /**
-     * Remove the specified resource from storage.
+     * Delete a restock.
      */
     public function destroy(string $id)
     {
-        Restock::destroy($id);
+        DB::transaction(function () use ($id, $request = request()) {
+            $restock = Restock::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted restock #'.$id
-        ]); 
+            $this->auditLogger->record(
+                'restock.deleted',
+                'Restock deleted',
+                $restock,
+                [
+                    'restock_id' => $restock->id,
+                    'supply_id' => $restock->supply_id,
+                    'supplier_id' => $restock->supplier_id,
+                    'buying_price' => $restock->buying_price,
+                    'quantity' => $restock->quantity,
+                    'status' => $restock->status,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
-        return response()->json(['message' => 'Deleted']);
-    }    
+            $restock->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
+    }
 }

@@ -453,7 +453,7 @@
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="administration-nav" class="nav-content collapse">
-          <li><RouterLink to="/system-logs" class="nav-link"><i class="bi bi-circle"></i> System Logs</RouterLink></li>
+          <li><RouterLink to="/audit-logs" class="nav-link"><i class="bi bi-circle"></i> Audit Logs</RouterLink></li>
         </ul>
       </li>
 

@@ -3,38 +3,57 @@
 namespace App\Http\Controllers;
 
 use App\Models\PersonalAccount;
-use App\Services\LedgerReportService;
+use App\Services\AuditLogger;
 use App\Services\LedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class FirstFruitsController extends Controller
 {
-public function pay(Request $request)
-{
-    $request->validate([
-        'account_id' => 'required|exists:personal_accounts,id',
-        'amount'     => 'required|numeric|min:1',
-    ]);
+    /**
+     * Record a First Fruits payment.
+     */
+    public function pay(Request $request)
+    {
+        $validated = $request->validate([
+            'account_id' => 'required|exists:personal_accounts,id',
+            'amount' => 'required|numeric|min:1',
+        ]);
 
-    DB::transaction(function () use ($request) {
-        $account = PersonalAccount::lockForUpdate()->findOrFail($request->account_id);
+        $amount = (float) $validated['amount'];
 
-        if ($account->balance < $request->amount) {
-            throw new \Exception('Insufficient funds.');
-        }
+        DB::transaction(function () use ($request, $validated, $amount) {
+            $account = PersonalAccount::lockForUpdate()
+                ->findOrFail($validated['account_id']);
 
-        LedgerService::recordFirstFruits(
-            $account,
-            $request->amount,        // <-- passes the user input
-            'First Fruits payment'
-        );
-    });
+            if ($account->balance < $amount) {
+                throw ValidationException::withMessages([
+                    'amount' => ['Insufficient funds.'],
+                ]);
+            }
 
-    return response()->json([
-        'message' => 'First Fruits paid: KES ' . $request->amount
-    ]);
-}
+            LedgerService::recordFirstFruits(
+                $account,
+                $amount,
+                'First Fruits payment'
+            );
 
-   
+            app(AuditLogger::class)->record(
+                'first_fruits.paid',
+                'First Fruits payment recorded',
+                $account,
+                [
+                    'account_id' => $account->id,
+                    'amount' => $amount,
+                ],
+                $request,
+                auth('api')->id()
+            );
+        });
+
+        return response()->json([
+            'message' => 'First Fruits paid: KES ' . $validated['amount'],
+        ]);
+    }
 }

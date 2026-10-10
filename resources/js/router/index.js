@@ -14,6 +14,7 @@ import PendingInvoices from '../views/PendingInvoices.vue';
 import ServiceProviders from '../views/ServiceProviders.vue';
 import Customers from '../views/Customers.vue';
 import Users from '../views/Users.vue';
+import SystemLogs from '../views/SystemLogs.vue';
 import AuditLogs from '../views/AuditLogs.vue';
 import Restocks from '../views/Restocks.vue';
 import Expenses from '../views/Expenses.vue';
@@ -99,6 +100,7 @@ const routes = [
   { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
   { path: '/service-providers', name: 'service-providers', component: ServiceProviders, meta: { requiresAuth: true } },
   { path: '/users', name: 'users', component: Users, meta: { requiresAuth: true } },
+  { path: '/system-logs', name: 'system-logs', component: SystemLogs, meta: { requiresAuth: true } },
   { path: '/audit-logs', name: 'audit-logs', component: AuditLogs, meta: { requiresAuth: true } },
   { path: '/services', name: 'services', component: Services, meta: { requiresAuth: true } },
   { path: '/provider-services', name: 'provider-services', component: ProviderServices, meta: { requiresAuth: true } },

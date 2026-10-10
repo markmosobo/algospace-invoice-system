@@ -57,6 +57,7 @@
                     class="btn btn-outline-secondary w-100"
                     title="Refresh users"
                     @click="loadUsers"
+                    :disabled="initializing"
                   >
                     <i class="bi bi-arrow-clockwise"></i>
                   </button>
@@ -96,11 +97,13 @@
                       <td>{{ user.name }}</td>
                       <td>{{ user.email }}</td>
                       <td>{{ user.phone || 'N/A' }}</td>
+
                       <td>
                         <span class="badge text-bg-secondary">
                           {{ formatLabel(user.role) }}
                         </span>
                       </td>
+
                       <td>
                         <span
                           class="badge"
@@ -109,13 +112,18 @@
                           {{ formatLabel(user.status || 'active') }}
                         </span>
                       </td>
-                      <td>{{ formatLabel(user.membership_type || 'public') }}</td>
+
+                      <td>
+                        {{ formatLabel(user.membership_type || 'public') }}
+                      </td>
+
                       <td>
                         <div class="dropdown">
                           <button
                             class="btn btn-sm btn-primary rounded-pill green-btn dropdown-toggle"
                             type="button"
                             data-bs-toggle="dropdown"
+                            aria-expanded="false"
                           >
                             Action
                           </button>
@@ -124,25 +132,46 @@
                             <li>
                               <button
                                 class="dropdown-item"
+                                type="button"
                                 @click="viewUser(user)"
                               >
-                                <i class="bi bi-eye me-2"></i>View
+                                <i class="bi bi-eye me-2"></i>
+                                View
                               </button>
                             </li>
+
                             <li>
                               <button
                                 class="dropdown-item"
-                                @click="openEditModal(user)"
+                                type="button"
+                                @click="viewAuditLogs(user)"
                               >
-                                <i class="bi bi-pencil me-2"></i>Edit
+                                <i class="bi bi-clock-history me-2"></i>
+                                Audit History
                               </button>
                             </li>
+
+                            <li>
+                              <button
+                                class="dropdown-item"
+                                type="button"
+                                @click="openEditModal(user)"
+                              >
+                                <i class="bi bi-pencil me-2"></i>
+                                Edit
+                              </button>
+                            </li>
+
+                            <li><hr class="dropdown-divider" /></li>
+
                             <li>
                               <button
                                 class="dropdown-item text-danger"
+                                type="button"
                                 @click="deleteUser(user)"
                               >
-                                <i class="bi bi-trash me-2"></i>Delete
+                                <i class="bi bi-trash me-2"></i>
+                                Delete
                               </button>
                             </li>
                           </ul>
@@ -174,16 +203,21 @@
         class="modal fade"
         id="viewUserModal"
         tabindex="-1"
+        aria-labelledby="viewUserModalLabel"
         aria-hidden="true"
       >
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">User Details</h5>
+              <h5 class="modal-title" id="viewUserModalLabel">
+                User Details
+              </h5>
+
               <button
                 type="button"
                 class="btn-close"
                 data-bs-dismiss="modal"
+                aria-label="Close"
               ></button>
             </div>
 
@@ -211,7 +245,7 @@
 
                 <div class="col-md-6">
                   <strong>Role</strong>
-                  <div>{{ formatLabel(selectedUser.role) || 'N/A' }}</div>
+                  <div>{{ formatLabel(selectedUser.role) }}</div>
                 </div>
 
                 <div class="col-md-6">
@@ -221,7 +255,9 @@
 
                 <div class="col-md-6">
                   <strong>Membership Type</strong>
-                  <div>{{ formatLabel(selectedUser.membership_type || 'public') }}</div>
+                  <div>
+                    {{ formatLabel(selectedUser.membership_type || 'public') }}
+                  </div>
                 </div>
 
                 <div class="col-md-6">
@@ -254,7 +290,11 @@
             </div>
 
             <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-bs-dismiss="modal"
+              >
                 Close
               </button>
             </div>
@@ -267,18 +307,21 @@
         class="modal fade"
         id="userFormModal"
         tabindex="-1"
+        aria-labelledby="userFormModalLabel"
         aria-hidden="true"
       >
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">
+              <h5 class="modal-title" id="userFormModalLabel">
                 {{ editing ? 'Edit User' : 'Add User' }}
               </h5>
+
               <button
                 type="button"
                 class="btn-close"
                 data-bs-dismiss="modal"
+                aria-label="Close"
               ></button>
             </div>
 
@@ -334,11 +377,7 @@
 
                   <div class="col-md-6">
                     <label class="form-label">Role *</label>
-                    <select
-                      v-model="form.role"
-                      class="form-select"
-                      required
-                    >
+                    <select v-model="form.role" class="form-select" required>
                       <option value="borrower">Borrower</option>
                       <option value="partner">Partner</option>
                       <option value="staff">Staff</option>
@@ -437,10 +476,214 @@
                     v-if="submitting"
                     class="spinner-border spinner-border-sm me-1"
                   ></span>
-                  {{ submitting ? 'Saving...' : (editing ? 'Save Changes' : 'Create User') }}
+
+                  {{
+                    submitting
+                      ? 'Saving...'
+                      : editing
+                        ? 'Save Changes'
+                        : 'Create User'
+                  }}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Audit History Modal -->
+      <div
+        class="modal fade"
+        id="userAuditModal"
+        tabindex="-1"
+        aria-labelledby="userAuditModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <div>
+                <h5 class="modal-title" id="userAuditModalLabel">
+                  <i class="bi bi-clock-history me-2"></i>
+                  User Audit History
+                </h5>
+
+                <small v-if="selectedAuditUser">
+                  {{ selectedAuditUser.name }}
+                  <span v-if="selectedAuditUser.email">
+                    — {{ selectedAuditUser.email }}
+                  </span>
+                </small>
+              </div>
+
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+
+            <div class="modal-body">
+              <div v-if="loadingAuditLogs" class="text-center py-5">
+                <div
+                  class="spinner-border text-success"
+                  role="status"
+                >
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+
+                <p class="text-muted mt-2 mb-0">
+                  Loading audit history...
+                </p>
+              </div>
+
+              <div
+                v-else-if="auditError"
+                class="alert alert-danger"
+              >
+                {{ auditError }}
+
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  @click="loadAuditPage(auditPagination.current_page || 1)"
+                >
+                  Retry
+                </button>
+              </div>
+
+              <div
+                v-else-if="auditLogs.length === 0"
+                class="text-center py-5"
+              >
+                <i class="bi bi-journal-text display-5 text-muted"></i>
+
+                <h6 class="mt-3">No audit history found</h6>
+
+                <p class="text-muted mb-0">
+                  No recorded events are available for this user.
+                </p>
+              </div>
+
+              <template v-else>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                  <span class="text-muted small">
+                    {{ auditPagination.total }} record(s)
+                  </span>
+
+                  <button
+                    class="btn btn-sm btn-outline-success"
+                    type="button"
+                    @click="loadAuditPage(auditPagination.current_page)"
+                    :disabled="loadingAuditLogs"
+                  >
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Refresh History
+                  </button>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Event</th>
+                        <th>Description</th>
+                        <th>Performed By</th>
+                        <th>IP Address</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr
+                        v-for="log in auditLogs"
+                        :key="log.id"
+                      >
+                        <td class="text-nowrap">
+                          {{ formatAuditDate(log.created_at) }}
+                        </td>
+
+                        <td>
+                          <span class="badge bg-success-subtle text-success border">
+                            {{ log.event || 'event' }}
+                          </span>
+                        </td>
+
+                        <td class="audit-description">
+                          {{ log.description || 'No description provided' }}
+                        </td>
+
+                        <td>
+                          <template v-if="log.user">
+                            <div>{{ log.user.name }}</div>
+                            <small class="text-muted">
+                              {{ log.user.email }}
+                            </small>
+                          </template>
+
+                          <span v-else class="text-muted">
+                            System / unavailable
+                          </span>
+                        </td>
+
+                        <td>
+                          {{ log.ip_address || '—' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div
+                  v-if="auditPagination.last_page > 1"
+                  class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"
+                >
+                  <small class="text-muted">
+                    Page {{ auditPagination.current_page }}
+                    of {{ auditPagination.last_page }}
+                  </small>
+
+                  <div class="btn-group">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      :disabled="
+                        loadingAuditLogs ||
+                        auditPagination.current_page <= 1
+                      "
+                      @click="loadAuditPage(auditPagination.current_page - 1)"
+                    >
+                      <i class="bi bi-chevron-left"></i>
+                      Previous
+                    </button>
+
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      :disabled="
+                        loadingAuditLogs ||
+                        auditPagination.current_page >= auditPagination.last_page
+                      "
+                      @click="loadAuditPage(auditPagination.current_page + 1)"
+                    >
+                      Next
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div class="modal-footer">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-bs-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -471,6 +714,17 @@ export default {
     return {
       users: [],
       selectedUser: null,
+      selectedAuditUser: null,
+
+      auditLogs: [],
+      loadingAuditLogs: false,
+      auditError: '',
+
+      auditPagination: {
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+      },
 
       initializing: false,
       submitting: false,
@@ -495,7 +749,9 @@ export default {
         const matchesSearch =
           !query ||
           [user.name, user.email, user.phone, user.city]
-            .some((value) => String(value || '').toLowerCase().includes(query));
+            .some((value) =>
+              String(value || '').toLowerCase().includes(query)
+            );
 
         const matchesRole =
           !this.roleFilter || user.role === this.roleFilter;
@@ -566,9 +822,13 @@ export default {
 
       try {
         const response = await axios.get('/api/users');
-        this.users = Array.isArray(response.data) ? response.data : [];
+
+        this.users = Array.isArray(response.data)
+          ? response.data
+          : response.data.data || [];
       } catch (error) {
         console.error('Failed to load users:', error);
+
         this.errorMessage =
           error.response?.data?.message || 'Unable to load users.';
       } finally {
@@ -580,6 +840,7 @@ export default {
       this.editing = false;
       this.formError = '';
       this.form = this.emptyForm();
+
       this.showModal('userFormModal');
     },
 
@@ -606,9 +867,75 @@ export default {
       this.showModal('userFormModal');
     },
 
-    async viewUser(user) {
+    viewUser(user) {
       this.selectedUser = user;
       this.showModal('viewUserModal');
+    },
+
+    async viewAuditLogs(user) {
+      this.selectedAuditUser = user;
+      this.auditLogs = [];
+      this.auditError = '';
+
+      this.auditPagination = {
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+      };
+
+      this.showModal('userAuditModal');
+
+      await this.loadAuditPage(1);
+    },
+
+    async loadAuditPage(page = 1) {
+      if (!this.selectedAuditUser) return;
+
+      this.loadingAuditLogs = true;
+      this.auditError = '';
+
+      try {
+        const response = await axios.get(
+          `/api/users/${this.selectedAuditUser.id}/audit-logs`,
+          {
+            params: { page },
+          }
+        );
+
+        const result = response.data;
+
+        this.auditLogs = Array.isArray(result.data)
+          ? result.data
+          : [];
+
+        this.auditPagination = {
+          current_page: result.current_page || 1,
+          last_page: result.last_page || 1,
+          total: result.total || 0,
+        };
+      } catch (error) {
+        console.error('Failed to load audit history:', error);
+
+        this.auditLogs = [];
+
+        this.auditError =
+          error.response?.data?.message ||
+          'Unable to load audit history. Check your access permissions and try again.';
+      } finally {
+        this.loadingAuditLogs = false;
+      }
+    },
+
+    formatAuditDate(value) {
+      if (!value) return '—';
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return date.toLocaleString();
     },
 
     async saveUser() {
@@ -695,7 +1022,8 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Delete failed',
-          text: error.response?.data?.message ||
+          text:
+            error.response?.data?.message ||
             'The user could not be deleted.',
         });
       }
@@ -722,5 +1050,11 @@ export default {
 
 .table th {
   white-space: nowrap;
+}
+
+.audit-description {
+  min-width: 220px;
+  max-width: 360px;
+  overflow-wrap: anywhere;
 }
 </style>

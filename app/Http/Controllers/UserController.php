@@ -514,4 +514,36 @@ class UserController extends Controller
             'message' => 'Password changed successfully.',
         ]);
     }
+
+
+    /**
+     * Get audit history for a specific user.
+     */
+    public function auditLogs(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $logs = \App\Models\AuditLog::query()
+            ->with('user:id,name,email')
+            ->where(function ($query) use ($user) {
+                // Events directly associated with this user record.
+                $query->where(function ($q) use ($user) {
+                    $q->where(
+                        'auditable_type',
+                        $user->getMorphClass()
+                    )->where('auditable_id', $user->id);
+                });
+
+                // Events that identify the affected user in properties.
+                $query->orWhere(
+                    'properties->user_id',
+                    $user->id
+                );
+            })
+            ->latest('created_at')
+            ->paginate(20);
+
+        return response()->json($logs);
+    }
+
 }

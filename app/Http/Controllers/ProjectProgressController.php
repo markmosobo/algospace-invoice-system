@@ -119,4 +119,56 @@ class ProjectProgressController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Replace a photo on an existing project progress record.
+     */
+    public function replacePhoto(Request $request, ProjectMedia $media)
+    {
+        $validated = $request->validate([
+            'image' => 'required|image|max:5120',
+        ]);
+
+        $oldPath = $media->file_path;
+
+        // Store the replacement first so the old photo is preserved
+        // if the new upload fails.
+        $newPath = $request->file('image')->store(
+            'project_media',
+            'public'
+        );
+
+        if (!$newPath) {
+            return response()->json([
+                'message' => 'Unable to store the replacement photo.',
+            ], 500);
+        }
+
+        try {
+            $media->file_path = $newPath;
+            $media->file_name = $request->file('image')
+                ->getClientOriginalName();
+            $media->type = 'image';
+            $media->save();
+        } catch (\Throwable $e) {
+            // Remove the new file if the database update fails.
+            Storage::disk('public')->delete($newPath);
+
+            report($e);
+
+            return response()->json([
+                'message' => 'Failed to update the photo record.',
+            ], 500);
+        }
+
+        // Delete the old file only after the database update succeeds.
+        if ($oldPath && $oldPath !== $newPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        return response()->json([
+            'message' => 'Photo replaced successfully.',
+            'data' => $media->fresh(),
+        ]);
+    }    
 }

@@ -63,26 +63,41 @@
             v-for="p in groupedProgress[stage.key]"
             :key="p.id"
           >
-            <div class="card mb-3">
+<div class="card mb-3">
 
-              <img
-                v-if="p.file_path"
-                :src="'/storage/' + p.file_path"
-                class="progress-img"
-                @click="openImagePreview(p)"
-              />
+  <div class="position-relative">
 
-              <div class="card-body">
-                <p class="mb-1">{{ p.notes }}</p>
-                <small class="text-muted">
-                  <span class="text-success">
-                    ● {{ p.stage }}
-                  </span>
-                  {{ formatDate(p.created_at) }}
-                </small>
-              </div>
+    <img
+      :src="p.file_path
+        ? '/storage/' + p.file_path
+        : '/images/photo-placeholder.png'"
+      class="progress-img"
+      @error="handleImageError"
+      @click="p.file_path && openImagePreview(p)"
+      :style="{ cursor: p.file_path ? 'pointer' : 'default' }"
+      alt="Project progress photo"
+    />
 
-            </div>
+    <button
+      class="btn btn-sm btn-dark position-absolute bottom-0 end-0 m-2"
+      @click.stop="openPhotoEditor(p)"
+    >
+      <i class="bi bi-camera"></i>
+      {{ p.file_path ? 'Replace Photo' : 'Upload Photo' }}
+    </button>
+
+  </div>
+
+  <div class="card-body">
+    <p class="mb-1">{{ p.notes }}</p>
+
+    <small class="text-muted">
+      <span class="text-success">● {{ p.stage }}</span>
+      {{ formatDate(p.created_at) }}
+    </small>
+  </div>
+
+</div>
           </div>
         </div>
 
@@ -157,61 +172,110 @@
 
       </div>
 
-    <!-- IMAGE PREVIEW MODAL -->
-    <div
-      class="modal fade"
-      id="ImagePreviewModal"
-      tabindex="-1"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
+<div v-if="showPhotoEditor" class="modal-overlay">
+  <div class="modal-box">
 
-          <div class="modal-header">
-            <h5 class="modal-title">Project Image</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
+    <div class="modal-header">
+      <h5>Replace Project Photo</h5>
+      <button class="btn-close" @click="closePhotoEditor">×</button>
+    </div>
 
-          <div class="modal-body">
+    <div class="modal-body">
 
-            <!-- IMAGE -->
-            <div class="text-center mb-3">
-              <img
-                :src="previewImage"
-                class="img-fluid rounded"
-                style="max-height: 65vh;"
-              />
+      <p class="text-muted">
+        Select a replacement photo for this progress update.
+        Your existing notes and stage will remain unchanged.
+      </p>
+
+      <input
+        ref="photoInput"
+        type="file"
+        accept="image/*"
+        class="form-control mb-3"
+        @change="handlePhotoSelection"
+      />
+
+      <img
+        v-if="photoPreview"
+        :src="photoPreview"
+        class="img-fluid rounded"
+        style="max-height: 300px; width: 100%; object-fit: contain;"
+      />
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" @click="closePhotoEditor">
+        Cancel
+      </button>
+
+      <button
+        class="btn btn-success"
+        :disabled="!selectedPhoto || isUploadingPhoto"
+        @click="uploadReplacementPhoto"
+      >
+        {{ isUploadingPhoto ? 'Uploading...' : 'Save Photo' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+      <!-- IMAGE PREVIEW MODAL -->
+      <div
+        class="modal fade"
+        id="ImagePreviewModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title">Project Image</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
             </div>
 
-            <!-- META INFO -->
-            <div v-if="previewProgress" class="px-2">
+            <div class="modal-body">
 
-              <p class="mb-1">
-                <strong>Notes:</strong><br>
-                {{ previewProgress.notes || '—' }}
-              </p>
+              <!-- IMAGE -->
+              <div class="text-center mb-3">
+                <img
+                  :src="previewImage"
+                  class="img-fluid rounded"
+                  style="max-height: 65vh;"
+                />
+              </div>
 
-              <div class="d-flex justify-content-between align-items-center mt-2">
-                <span class="badge bg-success">
-                  {{ previewProgress.stage }}
-                </span>
+              <!-- META INFO -->
+              <div v-if="previewProgress" class="px-2">
 
-                <small class="text-muted">
-                  {{ formatDate(previewProgress.created_at) }}
-                </small>
+                <p class="mb-1">
+                  <strong>Notes:</strong><br>
+                  {{ previewProgress.notes || '—' }}
+                </p>
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <span class="badge bg-success">
+                    {{ previewProgress.stage }}
+                  </span>
+
+                  <small class="text-muted">
+                    {{ formatDate(previewProgress.created_at) }}
+                  </small>
+                </div>
+
               </div>
 
             </div>
 
           </div>
-
         </div>
-      </div>
-    </div>      
+      </div>      
 
     </section>
   </Master>
@@ -240,6 +304,12 @@ export default {
       showModal: false,
       previewImage: null,
       previewProgress: null,
+
+      showPhotoEditor: false,
+selectedProgress: null,
+selectedPhoto: null,
+photoPreview: null,
+isUploadingPhoto: false,
 
       STAGES: [
         { key: "ideation", label: "Ideation" },
@@ -283,6 +353,87 @@ export default {
   },
 
   methods: {
+openPhotoEditor(p) {
+  this.selectedProgress = p;
+  this.selectedPhoto = null;
+  this.photoPreview = null;
+  this.showPhotoEditor = true;
+},
+
+handlePhotoSelection(e) {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    toast.fire({
+      icon: 'error',
+      title: 'Please select an image'
+    });
+    e.target.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.fire({
+      icon: 'error',
+      title: 'Image must not exceed 5 MB'
+    });
+    e.target.value = '';
+    return;
+  }
+
+  this.selectedPhoto = file;
+  this.photoPreview = URL.createObjectURL(file);
+},
+
+closePhotoEditor() {
+  if (this.photoPreview) {
+    URL.revokeObjectURL(this.photoPreview);
+  }
+
+  this.showPhotoEditor = false;
+  this.selectedProgress = null;
+  this.selectedPhoto = null;
+  this.photoPreview = null;
+},
+
+handleImageError(e) {
+  e.target.onerror = null;
+  e.target.src = '/images/photo-placeholder.png';
+},
+
+uploadReplacementPhoto() {
+  if (!this.selectedProgress || !this.selectedPhoto) return;
+
+  this.isUploadingPhoto = true;
+
+  const fd = new FormData();
+  fd.append('image', this.selectedPhoto);
+
+  axios.post(
+    `/api/project-progress/${this.selectedProgress.id}/photo`,
+    fd
+  )
+  .then(() => {
+    toast.fire({
+      icon: 'success',
+      title: 'Photo replaced successfully'
+    });
+
+    this.closePhotoEditor();
+    this.load();
+  })
+  .catch(error => {
+    toast.fire({
+      icon: 'error',
+      title: error.response?.data?.message || 'Photo upload failed'
+    });
+  })
+  .finally(() => {
+    this.isUploadingPhoto = false;
+  });
+},    
     openImagePreview(p) {
       this.previewProgress = p;
       this.previewImage = p.file_path

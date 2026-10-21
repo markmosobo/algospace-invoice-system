@@ -1000,9 +1000,6 @@ export default {
 
       step: 1,
       invoiceId: null,
-      invoicePdfUrl: null,
-      previewPdf: null, // URL of generated preview PDF
-      printUrl: null,   // print URL
 
       customerForm: { customer_id: null, type: 'existing', name: '', email: '', phone: '' },
       invoiceForm: { due_date: new Date().toISOString().substr(0, 10), total_amount: 0, items: [] },
@@ -1207,35 +1204,6 @@ export default {
     goToFootTraffic() {
         this.$router.push({ name: 'FootTraffic' });
     },
-    async previewInvoice() {
-    if (!this.invoiceForm.items.length) {
-        toast.fire({ icon: 'warning', title: 'Add at least one item to preview' });
-        return;
-    }
-
-    if (this.isGenerating) return; // prevent double clicks
-    this.isGenerating = true;
-
-    try {
-        const res = await axios.post('/api/invoices/preview', {
-        customer: this.customerForm,
-        items: this.invoiceForm.items,
-        due_date: this.invoiceForm.due_date
-        });
-
-        this.previewPdf = res.data.pdf_url;      // HTML iframe
-        this.printUrl = res.data.print_url;
-        this.invoiceNo = res.data.invoice_no;
-        this.pdfFileUrl = res.data.pdf_file_url; // real PDF for sharing
-
-        toast.fire({ icon: 'success', title: 'Preview generated!' });
-    } catch (err) {
-        console.error(err);
-        toast.fire({ icon: 'error', title: 'Failed to generate preview' });
-    } finally {
-        this.isGenerating = false; // reset flag
-    }
-    },
 
     // Format date as dd/mm/yyyy
     formatDate(date) {
@@ -1246,95 +1214,6 @@ export default {
         const year = d.getFullYear();
         return `${day}/${month}/${year}`;
     },
-    shareWhatsApp() {
-        // Check if preview exists
-        if (!this.pdfFileUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
-
-        // Check if customer provided phone
-        if (!this.customerForm.phone) return toast.fire({ icon: 'warning', title: 'Customer phone number is required' });
-
-        const amount = this.invoiceForm.total_amount;
-        const dueDate = this.invoiceForm.due_date;
-        const invoiceNo = this.invoiceNo || 'PREVIEW';
-        const customerName = this.customerForm.name || 'Customer';
-
-        const text = `
-    Dear ${customerName},
-
-    🧾 *INVOICE PREVIEW*
-    Invoice No: ${invoiceNo}
-    Amount Due: KES ${amount}
-    Due Date: ${dueDate}
-
-    💳 *Payment Options*
-    • Cash
-    • M-Pesa Pochi: 0112514440
-    Account: INVOICE-${invoiceNo}
-    • Bank Transfer (on request)
-
-    📄 Download Invoice:
-    ${this.pdfFileUrl}
-
-    Thank you for choosing AlgoSpace Cyber & Tech Services.
-        `.trim();
-
-        // Open WhatsApp with message
-        window.open(
-            `https://wa.me/?text=${encodeURIComponent(text)}`,
-            '_blank'
-        );
-    },
-
-
-
-
-    shareEmail() {
-        // Check if PDF is ready
-        if (!this.pdfFileUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
-
-        // Check if customer has provided email
-        if (!this.customerForm.email || this.customerForm.email.trim() === '') {
-            return toast.fire({ icon: 'warning', title: 'Customer has no email provided' });
-        }
-
-        axios.post('/api/invoices/preview/email', {
-            email: this.customerForm.email,
-            pdf_path: this.pdfFileUrl
-        }).then(() => {
-            toast.fire({ icon: 'success', title: 'Preview emailed!' });
-        }).catch(() => {
-            toast.fire({ icon: 'error', title: 'Failed to email preview' });
-        });
-    },
-
-
-
-    downloadInvoice() {
-        if (!this.pdfFileUrl) {
-            return toast.fire({ icon: 'info', title: 'Generate preview first' });
-        }
-
-        // Create a temporary link for downloading
-        const link = document.createElement('a');
-        link.href = this.pdfFileUrl; // server URL to the saved file
-        link.download = `${this.invoiceNo || 'PREVIEW'}-invoice.pdf`; // filename suggestion
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        toast.fire({ icon: 'success', title: 'Invoice downloaded!' });
-    },
-
-    printInvoice() {
-        if (!this.printUrl) return toast.fire({ icon: 'info', title: 'Generate preview first' });
-
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(this.printUrl); // raw HTML
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-    },
-
     async confirmWalkIn() {
         try {
             await axios.post('/api/anon-foot-traffic', {

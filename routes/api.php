@@ -316,7 +316,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::get('/projects/{project}/progress', [ProjectProgressController::class, 'index']);
     Route::post('/projects/{project}/progress', [ProjectProgressController::class, 'storeProgress']);   
-     
+    Route::post('/project-progress/{media}/photo', [ProjectProgressController::class, 'replacePhoto']);     
     Route::patch('/projects/{project}/toggle-board', [ProjectController::class, 'toggleBoardType']);
 
     Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote']);

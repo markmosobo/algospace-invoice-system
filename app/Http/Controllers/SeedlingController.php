@@ -4,119 +4,185 @@ namespace App\Http\Controllers;
 
 use App\Models\FarmVenture;
 use App\Models\Seedling;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SeedlingController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display farm ventures and seedlings.
      */
     public function index()
     {
         $farmventures = FarmVenture::with('farm')->get();
         $seedlings = Seedling::with('venture')->get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved seedlings'
-        ]); 
-
         return response()->json([
             'farmventures' => $farmventures,
-            'seedlings' => $seedlings
-        ]);         
+            'seedlings' => $seedlings,
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created seedling.
      */
     public function store(Request $request)
     {
-        // Validate incoming request
-        $request->validate([
-            'venture_id'        => 'required|exists:farm_ventures,id',
-            'seedling_type'     => 'required|string|max:100',
-            'species_name'      => 'required|string|max:100',
-            'date_planted'      => 'required|date',
-            'quantity'          => 'required|integer|min:1',
-            'expected_ready_date'=> 'nullable|date|after_or_equal:date_planted',
-            'survival_rate'      => 'nullable|string|max:100',
+        $validated = $request->validate([
+            'venture_id' => 'required|exists:farm_ventures,id',
+            'seedling_type' => 'required|string|max:100',
+            'species_name' => 'required|string|max:100',
+            'date_planted' => 'required|date',
+            'quantity' => 'required|integer|min:1',
+            'expected_ready_date' => 'nullable|date|after_or_equal:date_planted',
+            'survival_rate' => 'nullable|string|max:100',
         ]);
 
-        // Create seedling using mass assignment
-        $seedling = Seedling::create($request->only([
-            'venture_id',
-            'seedling_type',
-            'species_name',
-            'date_planted',
-            'quantity',
-            'expected_ready_date',
-            'survival_rate'
-        ]));
+        $seedling = DB::transaction(function () use ($validated, $request) {
+            $seedling = Seedling::create($validated);
 
-        // Record system log
-        SystemLog::create([
-            'user_id'     => auth('api')->user()->id,
-            'description' => auth('api')->user()->name . ' created seedling #' . $seedling->id,
-        ]);
+            $this->auditLogger->record(
+                'seedling.created',
+                'Seedling record created',
+                $seedling,
+                [
+                    'seedling_id' => $seedling->id,
+                    'venture_id' => $seedling->venture_id,
+                    'seedling_type' => $seedling->seedling_type,
+                    'species_name' => $seedling->species_name,
+                    'quantity' => $seedling->quantity,
+                    'date_planted' => $seedling->date_planted,
+                    'expected_ready_date' => $seedling->expected_ready_date,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
-        return response()->json($seedling, 201); // return 201 Created
+            return $seedling;
+        });
+
+        return response()->json($seedling, 201);
     }
 
-
     /**
-     * Display the specified resource.
+     * Display a specific seedling.
      */
     public function show(string $id)
     {
-        $seedling = Seedling::find($id);
-        return response()->json($seedling);         
+        $seedling = Seedling::with('venture')->findOrFail($id);
+
+        return response()->json($seedling);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an existing seedling.
      */
     public function update(Request $request, Seedling $seedling)
     {
-        // Validate incoming request
-        $request->validate([
-            'venture_id'        => 'required|exists:farm_ventures,id',
-            'seedling_type'     => 'required|string|max:100',
-            'species_name'      => 'required|string|max:100',
-            'date_planted'      => 'required|date',
-            'quantity'          => 'required|integer|min:1',
-            'expected_ready_date'=> 'nullable|date|after_or_equal:date_planted',
-            'survival_rate'      => 'nullable|string|max:100',
+        $validated = $request->validate([
+            'venture_id' => 'required|exists:farm_ventures,id',
+            'seedling_type' => 'required|string|max:100',
+            'species_name' => 'required|string|max:100',
+            'date_planted' => 'required|date',
+            'quantity' => 'required|integer|min:1',
+            'expected_ready_date' => 'nullable|date|after_or_equal:date_planted',
+            'survival_rate' => 'nullable|string|max:100',
         ]);
 
-        $seedling->update($request->only([
-            'venture_id','seedling_type','species_name','date_planted','quantity',
-            'expected_ready_date','survival_rate'
-        ]));
+        DB::transaction(function () use (
+            $request,
+            $seedling,
+            $validated
+        ) {
+            $seedling = Seedling::whereKey($seedling->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for seedling #'.$seedling->id
-        ]);         
+            $fields = [
+                'venture_id',
+                'seedling_type',
+                'species_name',
+                'date_planted',
+                'quantity',
+                'expected_ready_date',
+                'survival_rate',
+            ];
 
-        return response()->json(['message' => 'Updated']);
+            $before = $seedling->only($fields);
+
+            $seedling->fill($validated);
+            $seedling->save();
+
+            $after = $seedling->only($fields);
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    $changes[$field] = [
+                        'old' => $before[$field] ?? null,
+                        'new' => $value,
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'seedling.updated',
+                    'Seedling record updated',
+                    $seedling,
+                    [
+                        'seedling_id' => $seedling->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+        });
+
+        return response()->json([
+            'message' => 'Updated',
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a seedling.
      */
     public function destroy(string $id)
     {
-        Seedling::destroy($id);
+        DB::transaction(function () use ($id, $request = request()) {
+            $seedling = Seedling::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted seedling #'.$id
-        ]);         
-        return response()->json(['message' => 'Deleted']);          
+            $this->auditLogger->record(
+                'seedling.deleted',
+                'Seedling record deleted',
+                $seedling,
+                [
+                    'seedling_id' => $seedling->id,
+                    'venture_id' => $seedling->venture_id,
+                    'seedling_type' => $seedling->seedling_type,
+                    'species_name' => $seedling->species_name,
+                    'quantity' => $seedling->quantity,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            $seedling->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 }

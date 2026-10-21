@@ -4,30 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\LoyaltyCard;
-use App\Models\SystemLog;
 use App\Models\CustomerHistory;
 use App\Models\CustomerNote;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of customers.
      */
     public function index()
     {
-        $customers = Customer::with('visits','loyaltyCards')->withCount('visits')->get();        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved customers'
-        ]); 
-                 
-        return response()->json($customers);      
+        $customers = Customer::with('visits', 'loyaltyCards')
+            ->withCount('visits')
+            ->get();
+
+        return response()->json($customers);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created customer.
      */
     public function store(Request $request)
     {
@@ -35,10 +33,12 @@ class CustomerController extends Controller
         $customer->name = $request->name;
         $customer->phone = $request->phone;
         $customer->email = $request->email;
-        $customer->gender = $request->gender; 
+        $customer->gender = $request->gender;
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('customers', 'public');
+            $path = $request->file('image')
+                ->store('customers', 'public');
+
             $customer->image = $path;
         }
 
@@ -47,34 +47,38 @@ class CustomerController extends Controller
         CustomerHistory::create([
             'customer_id' => $customer->id,
             'action' => 'Customer Created',
-            'description' => 'Customer profile created'
+            'description' => 'Customer profile created',
         ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created customer #'.$customer->id
-        ]);          
-                
+        app(AuditLogger::class)->record(
+            'customer.created',
+            "Customer profile created (ID: {$customer->id})",
+            $customer,
+            [
+                'customer_id' => $customer->id,
+                'has_image' => !empty($customer->image),
+            ],
+            $request,
+            auth('api')->id()
+        );
+
         return response()->json($customer);
     }
 
     /**
-     * Display the specified resource.
+     * Display a specific customer.
      */
     public function show($id)
     {
-        // Fetch customer with total visits count
         $customer = Customer::with([
             'notes',
             'history',
             'loyaltyCards',
-            'visits'
+            'visits',
         ])
-        ->withCount('visits')
-        ->findOrFail($id);
-        
-        // Fetch active loyalty card only
+            ->withCount('visits')
+            ->findOrFail($id);
+
         $activeCard = LoyaltyCard::where('customer_id', $customer->id)
             ->where('status', 'active')
             ->first();
@@ -89,23 +93,22 @@ class CustomerController extends Controller
             'updated_at' => $customer->updated_at,
 
             // Visits
-            'total_visits' => $customer->visits_count,           // all visits ever
-            'loyalty_visits' => $activeCard ? $activeCard->visits : 0,  // only active card
+            'total_visits' => $customer->visits_count,
+            'loyalty_visits' => $activeCard ? $activeCard->visits : 0,
             'visits' => $customer->visits,
-            
-            // Active card info
+
+            // Active card information
             'cardIssued' => $activeCard ? true : false,
             'card_serial' => $activeCard ? $activeCard->serial : null,
             'status' => $activeCard ? $activeCard->status : null,
 
             'notes' => $customer->notes,
-
-            'history' => $customer->history
+            'history' => $customer->history,
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a customer profile.
      */
     public function update(Request $request, $id)
     {
@@ -115,74 +118,151 @@ class CustomerController extends Controller
 
         $customer = Customer::findOrFail($id);
 
+        $before = $customer->only([
+            'name',
+            'email',
+            'phone',
+            'gender',
+        ]);
+
+        $oldImage = $customer->image;
+        $newImage = null;
+
         $customer->name = $request->name;
         $customer->email = $request->email;
         $customer->phone = $request->phone;
-        $customer->gender = $request->gender; 
+        $customer->gender = $request->gender;
 
         if ($request->hasFile('image')) {
+            $newImage = $request->file('image')
+                ->store('customers', 'public');
 
-            // OPTIONAL: delete old image
-            if ($customer->image && Storage::disk('public')->exists($customer->image)) {
-                Storage::disk('public')->delete($customer->image);
-            }
-
-            $path = $request->file('image')->store('customers', 'public');
-            $customer->image = $path;
+            $customer->image = $newImage;
         }
 
-        $customer->save();
+        try {
+            $customer->save();
+        } catch (\Throwable $e) {
+            if ($newImage) {
+                Storage::disk('public')->delete($newImage);
+            }
 
-        CustomerHistory::create([
-            'customer_id' => $customer->id,
-            'action' => 'Profile Updated',
-            'description' => 'Customer details updated'
+            throw $e;
+        }
+
+        // Delete the previous image only after the profile is saved.
+        if (
+            $newImage &&
+            $oldImage &&
+            $oldImage !== $newImage
+        ) {
+            Storage::disk('public')->delete($oldImage);
+        }
+
+        $customer->refresh();
+
+        $after = $customer->only([
+            'name',
+            'email',
+            'phone',
+            'gender',
         ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for customer #'.$customer->id
-        ]);         
+        $changedFields = [];
 
-        return response()->json(['message' => 'Updated']);
+        foreach ($after as $field => $value) {
+            if (($before[$field] ?? null) != $value) {
+                $changedFields[] = $field;
+            }
+        }
+
+        if ($newImage) {
+            $changedFields[] = 'image';
+        }
+
+        if (!empty($changedFields)) {
+            app(AuditLogger::class)->record(
+                'customer.updated',
+                "Customer profile updated (ID: {$customer->id})",
+                $customer,
+                [
+                    'customer_id' => $customer->id,
+                    'changed_fields' => $changedFields,
+                    'image_replaced' => (bool) $newImage,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            CustomerHistory::create([
+                'customer_id' => $customer->id,
+                'action' => 'Profile Updated',
+                'description' => 'Customer details updated',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Updated',
+        ]);
     }
-
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a customer.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        Customer::destroy($id);
+        $customer = Customer::findOrFail($id);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted customer #'.$id
-        ]);         
-        return response()->json(['message' => 'Deleted']);
+        app(AuditLogger::class)->record(
+            'customer.deleted',
+            "Customer deleted (ID: {$customer->id})",
+            $customer,
+            [
+                'customer_id' => $customer->id,
+                'has_image' => !empty($customer->image),
+            ],
+            $request,
+            auth('api')->id()
+        );
+
+        $customer->delete();
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 
+    /**
+     * Add a note to a customer.
+     */
     public function storeNote(Request $request, $customerId)
     {
         $request->validate([
             'note' => 'required|string|min:3',
         ]);
 
+        $customer = Customer::findOrFail($customerId);
+
         $note = CustomerNote::create([
-            'customer_id' => $customerId,
+            'customer_id' => $customer->id,
             'note' => $request->note,
         ]);
 
-        SystemLog::create([
-            'user_id' => auth('api')->id(),
-            'description' => auth('api')->user()->name.' added note to customer #'.$customerId,
-        ]);
+        app(AuditLogger::class)->record(
+            'customer.note_added',
+            "Note added to customer (ID: {$customer->id})",
+            $note,
+            [
+                'customer_id' => $customer->id,
+                'note_id' => $note->id,
+            ],
+            $request,
+            auth('api')->id()
+        );
 
         return response()->json([
             'message' => 'Note added',
             'note' => $note,
         ]);
-    }    
+    }
 }

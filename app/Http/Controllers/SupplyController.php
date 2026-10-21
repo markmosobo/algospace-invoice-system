@@ -5,172 +5,256 @@ namespace App\Http\Controllers;
 use App\Models\Restock;
 use App\Models\Supplier;
 use App\Models\Supply;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class SupplyController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display supplies and suppliers.
      */
     public function index()
     {
-        $supplies = Supply::with('supplier')->get();
-        $suppliers = Supplier::get();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved products'
-        ]);
-
-        // Return as JSON
         return response()->json([
-            'supplies' => $supplies,
-            'suppliers' => $suppliers,
-        ]);         
+            'supplies' => Supply::with('supplier')->get(),
+            'suppliers' => Supplier::get(),
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Create a supply item.
      */
     public function store(Request $request)
     {
-        // Validate the incoming request
-        $request->validate([
+        $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'quantity'   => 'required|integer|min:1',
+            'item' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
+            'payment_date' => 'nullable|date',
+            'payment_method' => 'nullable|string|max:100',
+            'status' => 'nullable|string|max:50',
         ]);
 
-        // Calculate total
-        $total = $request->quantity * $request->unit_price;
+        $supply = DB::transaction(function () use ($validated, $request) {
+            $total = $validated['quantity'] * $validated['unit_price'];
 
-        // Create new invoice item
-        $supply = Supply::create([
-            'supplier_id' => $request->supplier_id,
-            'item' => $request->item,
-            'quantity'   => $request->quantity,
-            'unit_price' => $request->unit_price,
-            'total'      => $total,
-            'payment_date'      => $request->payment_date,
-            'method'      => $request->payment_method,
-            'status'      => $request->status,
-        ]);
+            $supply = Supply::create([
+                'supplier_id' => $validated['supplier_id'],
+                'item' => $validated['item'],
+                'quantity' => $validated['quantity'],
+                'unit_price' => $validated['unit_price'],
+                'total' => $total,
+                'payment_date' => $validated['payment_date'] ?? null,
+                'method' => $validated['payment_method'] ?? null,
+                'status' => $validated['status'] ?? null,
+            ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created product #'.$supply->id
-        ]);        
+            $this->auditLogger->record(
+                'supply.created',
+                'Supply item created',
+                $supply,
+                [
+                    'supply_id' => $supply->id,
+                    'supplier_id' => $supply->supplier_id,
+                    'item' => $supply->item,
+                    'quantity' => $supply->quantity,
+                    'unit_price' => $supply->unit_price,
+                    'total' => $supply->total,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $supply;
+        });
 
         return response()->json([
             'message' => 'Supply created successfully',
-            'supply' => $supply
-        ]);        
+            'supply' => $supply,
+        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display a supply item.
      */
     public function show(string $id)
     {
-        $supply = Supply::find($id);
-        return response()->json($supply);        
+        return response()->json(
+            Supply::with('supplier')->findOrFail($id)
+        );
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a supply item.
      */
     public function update(Request $request, string $id)
     {
-        // Find the invoice item or fail with 404
-        $supply = Supply::findOrFail($id);
-
-        // Validate request
-        $request->validate([
+        $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'quantity'   => 'required|integer|min:1',
+            'item' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
+            'payment_date' => 'nullable|date',
+            'payment_method' => 'nullable|string|max:100',
+            'status' => 'nullable|string|max:50',
         ]);
 
-        // Recalculate total
-        $total = $request->quantity * $request->unit_price;
+        $supply = DB::transaction(function () use (
+            $validated,
+            $request,
+            $id
+        ) {
+            $supply = Supply::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Update supply item
-        $supply->update([
-            'supplier_id' => $request->supplier_id,
-            'item' => $request->item,
-            'quantity'   => $request->quantity,
-            'unit_price' => $request->unit_price,
-            'total'      => $total,
-            'payment_date'      => $request->payment_date,
-            'method'      => $request->payment_method,
-            'status'      => $request->status,
-        ]);
+            $before = $supply->only([
+                'supplier_id',
+                'item',
+                'quantity',
+                'unit_price',
+                'total',
+                'payment_date',
+                'method',
+                'status',
+            ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated product #'.$supply->id
-        ]);          
+            $total = $validated['quantity'] * $validated['unit_price'];
+
+            $supply->supplier_id = $validated['supplier_id'];
+            $supply->item = $validated['item'];
+            $supply->quantity = $validated['quantity'];
+            $supply->unit_price = $validated['unit_price'];
+            $supply->total = $total;
+            $supply->payment_date = $validated['payment_date'] ?? null;
+            $supply->method = $validated['payment_method'] ?? null;
+            $supply->status = $validated['status'] ?? null;
+            $supply->save();
+
+            $after = $supply->only(array_keys($before));
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    $changes[$field] = [
+                        'old' => $before[$field] ?? null,
+                        'new' => $value,
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'supply.updated',
+                    'Supply item updated',
+                    $supply,
+                    [
+                        'supply_id' => $supply->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $supply;
+        });
 
         return response()->json([
             'message' => 'Supply item updated successfully',
-            'supply' => $supply
-        ]);        
+            'supply' => $supply,
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a supply item.
      */
     public function destroy(string $id)
     {
-        Supply::destroy($id);
+        DB::transaction(function () use ($id) {
+            $supply = Supply::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted product #'.$id
-        ]);  
+            $this->auditLogger->record(
+                'supply.deleted',
+                'Supply item deleted',
+                $supply,
+                [
+                    'supply_id' => $supply->id,
+                    'item' => $supply->item,
+                    'quantity' => $supply->quantity,
+                ],
+                request(),
+                auth('api')->id()
+            );
 
-        return response()->json(['message' => 'Deleted']);        
+            $supply->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 
-        public function restock(Request $request)
+    /**
+     * Restock an existing supply item.
+     */
+    public function restock(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'supply_id' => 'required|integer|exists:supplies,id',
             'quantity' => 'required|integer|min:1',
-            'buying_price' => 'required|numeric',
+            'buying_price' => 'required|numeric|min:0',
             'supplier_id' => 'required|integer|exists:suppliers,id',
         ]);
 
-        $product = Supply::find($request->supply_id);
+        DB::transaction(function () use ($validated, $request) {
+            $product = Supply::whereKey($validated['supply_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // 1️⃣ Update product quantity
-        $product->quantity += $request->quantity;
-        $product->save();
+            $product->quantity += $validated['quantity'];
+            $product->save();
 
-        // 2️⃣ Save restock history
-        Restock::create([
-            'supply_id' => $request->supply_id,
-            'quantity' => $request->quantity,
-            'buying_price' => $request->buying_price,
-            'supplier_id' => $request->supplier_id,
-            'user_id' => auth('api')->id(),
-        ]);
+            $restock = Restock::create([
+                'supply_id' => $product->id,
+                'quantity' => $validated['quantity'],
+                'buying_price' => $validated['buying_price'],
+                'supplier_id' => $validated['supplier_id'],
+                'user_id' => auth('api')->id(),
+            ]);
 
-            //record system log
-            SystemLog::create([
-                'user_id' => auth('api')->user()->id,
-                'description' => auth('api')->user()->name.' restocked product #'.$product->id
-            ]);      
+            $this->auditLogger->record(
+                'supply.restocked',
+                'Supply item restocked',
+                $product,
+                [
+                    'supply_id' => $product->id,
+                    'restock_id' => $restock->id,
+                    'supplier_id' => $validated['supplier_id'],
+                    'quantity_added' => $validated['quantity'],
+                    'quantity_after' => $product->quantity,
+                    'buying_price' => $validated['buying_price'],
+                ],
+                $request,
+                auth('api')->id()
+            );
+        });
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Product restocked successfully'
+            'message' => 'Product restocked successfully',
         ]);
-        }
-
     }
+}

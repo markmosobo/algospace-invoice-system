@@ -3,214 +3,292 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use App\Models\SystemLog;
-use Illuminate\Http\Request;
+use App\Services\AuditLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display all services.
      */
     public function index()
     {
-        $services = Service::get();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved services'
-        ]); 
-
-        return response()->json($services);
+        return response()->json(Service::get());
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Create a service or training course.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name'      => 'required|string|max:255',
-            'category'  => 'required|string|max:255',
-            'price'     => 'required|numeric|min:0',
-            'unit'      => 'required|string|max:50',
-
-            // Training-specific
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'unit' => 'required|string|max:50',
             'type' => 'sometimes|in:service,course',
-            'tier' => 'nullable| string',
+            'tier' => 'nullable|string|max:100',
             'schedule_type' => 'nullable|in:saturday,weekday,custom',
             'duration_units' => 'nullable|numeric|min:0.5',
             'session_hours' => 'nullable|numeric|min:0.5',
-
             'is_bundle' => 'sometimes|boolean',
         ]);
 
-        // Defaults for non-training services
-        $type = $request->category === 'Training'
-            ? ($request->type ?? 'course')
-            : 'service';
+        $service = DB::transaction(function () use ($validated, $request) {
+            $type = $validated['category'] === 'Training'
+                ? ($validated['type'] ?? 'course')
+                : 'service';
 
-        $service = Service::create([
-            'name'      => $request->name,
-            'category'  => $request->category,
-            'price'     => $request->price,
-            'unit'      => $request->unit,
+            $service = new Service();
 
-            'type'      => $type,
-            'tier'      => $request->tier,
-            'schedule_type' => $request->schedule_type ?? 'saturday',
-            'duration_units' => $request->duration_units,
-            'session_hours' => $request->session_hours ?? 1.5,
+            $service->name = $validated['name'];
+            $service->category = $validated['category'];
+            $service->price = $validated['price'];
+            $service->unit = $validated['unit'];
+            $service->type = $type;
+            $service->tier = $validated['tier'] ?? null;
+            $service->schedule_type = $validated['schedule_type'] ?? 'saturday';
+            $service->duration_units = $validated['duration_units'] ?? null;
+            $service->session_hours = $validated['session_hours'] ?? 1.5;
+            $service->is_bundle = $validated['is_bundle'] ?? false;
+            $service->save();
 
-            'is_bundle' => $request->is_bundle ?? false,
-        ]);
+            $this->auditLogger->record(
+                'service.created',
+                'Service created',
+                $service,
+                [
+                    'service_id' => $service->id,
+                    'name' => $service->name,
+                    'category' => $service->category,
+                    'type' => $service->type,
+                    'price' => $service->price,
+                    'tier' => $service->tier,
+                    'is_bundle' => (bool) $service->is_bundle,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created service #'.$service->id
-        ]);
+            return $service;
+        });
 
         return response()->json([
             'message' => 'Service created successfully',
-            'service' => $service
-        ]);
+            'service' => $service,
+        ], 201);
     }
 
-
-
     /**
-     * Display the specified resource.
+     * Display a specific service.
      */
     public function show(string $id)
     {
-        $service = Service::find($id);
-        return response()->json($service);
+        return response()->json(Service::findOrFail($id));
     }
 
+    /**
+     * Display a specific course.
+     */
     public function showCourse($id)
     {
         $course = Service::findOrFail($id);
 
         return response()->json([
-            'data' => $course
+            'data' => $course,
         ]);
-    }    
+    }
 
     /**
-     * Update the specified resource in storage.
+     * Update a service or course.
      */
     public function update(Request $request, string $id)
     {
-        // Find the service or fail
-        $service = Service::findOrFail($id);
-
-        // Validate request
-        $request->validate([
-            'name'      => 'required|string|max:255',
-            'category'  => 'required|string|max:255',
-            'price'     => 'required|numeric|min:0',
-            'unit'      => 'required|string|max:50',
-
-            // Training-related
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'unit' => 'required|string|max:50',
             'type' => 'sometimes|in:service,course',
-            'tier' => 'nullable| string',
-            'schedule_type' => 'nullable|in:saturday,weekday,custom',
-            'duration_units' => 'nullable|numeric|min:0.5',
-            'session_hours' => 'nullable|numeric|min:0.5',
-
+            'tier' => 'sometimes|nullable|string|max:100',
+            'schedule_type' => 'sometimes|nullable|in:saturday,weekday,custom',
+            'duration_units' => 'sometimes|nullable|numeric|min:0.5',
+            'session_hours' => 'sometimes|nullable|numeric|min:0.5',
             'is_bundle' => 'sometimes|boolean',
         ]);
 
-        // Determine correct type
-        $type = $request->category === 'Training'
-            ? ($request->type ?? $service->type ?? 'course')
-            : 'service';
+        $service = DB::transaction(function () use (
+            $validated,
+            $request,
+            $id
+        ) {
+            $service = Service::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Update service (only overwrite when value is present)
-        $service->update([
-            'name'      => $request->name,
-            'category'  => $request->category,
-            'price'     => $request->price,
-            'unit'      => $request->unit,
+            $fields = [
+                'name',
+                'category',
+                'price',
+                'unit',
+                'type',
+                'tier',
+                'schedule_type',
+                'duration_units',
+                'session_hours',
+                'is_bundle',
+            ];
 
-            'type'      => $type,
-            'tier'      => $request->filled('tier') ? $request->tier : $service->tier,
-            'schedule_type' => $request->filled('schedule_type')
-                ? $request->schedule_type
-                : $service->schedule_type,
+            $before = $service->only($fields);
 
-            'duration_units' => $request->filled('duration_units')
-                ? $request->duration_units
-                : $service->duration_units,
+            $service->name = $validated['name'];
+            $service->category = $validated['category'];
+            $service->price = $validated['price'];
+            $service->unit = $validated['unit'];
 
-            'session_hours' => $request->filled('session_hours')
-                ? $request->session_hours
-                : $service->session_hours,
+            $service->type = $validated['category'] === 'Training'
+                ? ($validated['type'] ?? $service->type ?? 'course')
+                : 'service';
 
-            'is_bundle' => $request->has('is_bundle')
-                ? $request->is_bundle
-                : $service->is_bundle,
-        ]);
+            foreach ([
+                'tier',
+                'schedule_type',
+                'duration_units',
+                'session_hours',
+                'is_bundle',
+            ] as $field) {
+                if (array_key_exists($field, $validated)) {
+                    $service->{$field} = $validated[$field];
+                }
+            }
 
-        // Optional: enforce refresher rules
-        if ($service->tier === 'refresher') {
-            $service->update([
-                'duration_units' => 1,
-                'session_hours' => 1,
-            ]);
-        }
+            // Preserve refresher-course rules.
+            if ($service->tier === 'refresher') {
+                $service->duration_units = 1;
+                $service->session_hours = 1;
+            }
 
-        // System log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' =>
-                auth('api')->user()->name.' updated service #'.$service->id
-        ]);
+            $service->save();
+
+            $after = $service->only($fields);
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    $changes[$field] = [
+                        'old' => $before[$field] ?? null,
+                        'new' => $value,
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'service.updated',
+                    'Service updated',
+                    $service,
+                    [
+                        'service_id' => $service->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $service;
+        });
 
         return response()->json([
             'message' => 'Service updated successfully',
-            'service' => $service
+            'service' => $service,
         ]);
     }
 
-
-
     /**
-     * Remove the specified resource from storage.
+     * Delete a service.
      */
     public function destroy(string $id)
     {
-        Service::destroy($id);
+        DB::transaction(function () use ($id) {
+            $service = Service::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted service #'.$id
-        ]); 
+            $this->auditLogger->record(
+                'service.deleted',
+                'Service deleted',
+                $service,
+                [
+                    'service_id' => $service->id,
+                    'name' => $service->name,
+                    'category' => $service->category,
+                    'type' => $service->type,
+                ],
+                request(),
+                auth('api')->id()
+            );
 
-        return response()->json(['message' => 'Deleted']);
+            $service->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 
-    // ServiceController.php
+    /**
+     * Toggle active status.
+     */
     public function toggleActive($id)
     {
-        $service = Service::findOrFail($id);
+        $service = DB::transaction(function () use ($id) {
+            $service = Service::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $service->is_active = !$service->is_active;
-        $service->save();
+            $oldStatus = (bool) $service->is_active;
+
+            $service->is_active = !$service->is_active;
+            $service->save();
+
+            $this->auditLogger->record(
+                'service.active_status_toggled',
+                'Service active status changed',
+                $service,
+                [
+                    'service_id' => $service->id,
+                    'previous_is_active' => $oldStatus,
+                    'new_is_active' => (bool) $service->is_active,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            return $service;
+        });
 
         return response()->json([
             'message' => 'Service status updated',
-            'is_active' => $service->is_active
+            'is_active' => $service->is_active,
         ]);
     }
-    
 
+    /**
+     * Export all services as PDF.
+     */
     public function exportPdf()
     {
         $services = Service::all();
-        // dd($services);
 
         $grouped = $services->groupBy(function ($service) {
             return $service->category ?? 'Uncategorized';
@@ -225,8 +303,11 @@ class ServiceController extends Controller
             ->setPaper('a4', 'portrait');
 
         return $pdf->download('ALGOSPACE_SERVICES.pdf');
-    } 
-    
+    }
+
+    /**
+     * List training courses.
+     */
     public function courses()
     {
         $courses = Service::where('category', 'Training')
@@ -235,10 +316,13 @@ class ServiceController extends Controller
             ->get();
 
         return response()->json([
-            'data' => $courses
+            'data' => $courses,
         ]);
-    }  
-    
+    }
+
+    /**
+     * Stream training courses PDF.
+     */
     public function pdf()
     {
         $courses = Service::where('category', 'Training')
@@ -249,5 +333,5 @@ class ServiceController extends Controller
         $pdf = Pdf::loadView('pdf.courses', compact('courses'));
 
         return $pdf->stream('AlgoSpace-Training-Courses.pdf');
-    }    
+    }
 }

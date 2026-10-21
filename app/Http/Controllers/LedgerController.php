@@ -2,44 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\PersonalAccount;
+use App\Services\AuditLogger;
 use App\Services\LedgerReportService;
 use App\Services\LedgerService;
-use App\Models\PersonalAccount;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LedgerController extends Controller
 {
     public function profitLoss(Request $request)
     {
-        $from = $request->start_date;;
-        $to   = $request->end_date;
+        $data = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
 
-        return response()->json(LedgerReportService::getProfitLoss($from, $to));
+        return response()->json(
+            LedgerReportService::getProfitLoss(
+                $data['start_date'] ?? null,
+                $data['end_date'] ?? null
+            )
+        );
     }
 
     public function titheAmount(Request $request)
     {
-        $from = $request->from;
-        $to   = $request->to;
+        $data = $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+        ]);
 
         return response()->json([
-            'tithe_due' => LedgerReportService::getTitheAmount($from, $to)
+            'tithe_due' => LedgerReportService::getTitheAmount(
+                $data['from'] ?? null,
+                $data['to'] ?? null
+            ),
         ]);
     }
 
     public function payTithe(Request $request)
     {
-        $request->validate([
-            'payment_account_id' => 'required|exists:personal_accounts,id'
+        $data = $request->validate([
+            'payment_account_id' => 'required|exists:personal_accounts,id',
         ]);
 
-        $account = PersonalAccount::findOrFail($request->payment_account_id);
+        $account = PersonalAccount::findOrFail(
+            $data['payment_account_id']
+        );
 
-        $entry = LedgerService::recordTithe($account);
+        $entry = DB::transaction(function () use ($account, $request) {
+            $entry = LedgerService::recordTithe($account);
+
+            if ($entry) {
+                app(AuditLogger::class)->record(
+                    'ledger.tithe_paid',
+                    'Tithe payment recorded',
+                    $entry,
+                    [
+                        'payment_account_id' => $account->id,
+                        'ledger_entry_id' => $entry->id,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $entry;
+        });
 
         return response()->json([
             'message' => $entry ? 'Tithe recorded successfully' : 'No tithe due',
-            'ledger_entry' => $entry
+            'ledger_entry' => $entry,
         ]);
-    }    
+    }
 }

@@ -3,128 +3,189 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceItem;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 
 class InvoiceItemController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of invoice items.
      */
     public function index()
     {
         $invoiceitems = InvoiceItem::get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved invoice items'
-        ]);
-
         return response()->json($invoiceitems);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created invoice item.
      */
     public function store(Request $request)
     {
-        // Validate the incoming request
-        $request->validate([
+        $validated = $request->validate([
             'invoice_id' => 'required|exists:invoices,id',
             'service_id' => 'required|exists:services,id',
-            'quantity'   => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
         ]);
 
-        // Calculate total
-        $total = $request->quantity * $request->unit_price;
+        $total = $validated['quantity'] * $validated['unit_price'];
 
-        // Create new invoice item
         $invoiceItem = InvoiceItem::create([
-            'invoice_id' => $request->invoice_id,
-            'service_id' => $request->service_id,
-            'quantity'   => $request->quantity,
-            'unit_price' => $request->unit_price,
-            'total'      => $total,
+            'invoice_id' => $validated['invoice_id'],
+            'service_id' => $validated['service_id'],
+            'quantity' => $validated['quantity'],
+            'unit_price' => $validated['unit_price'],
+            'total' => $total,
         ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created invoice item #'.$invoiceItem->id
-        ]);        
+        app(AuditLogger::class)->record(
+            'invoice_item.created',
+            "Invoice item created (ID: {$invoiceItem->id})",
+            $invoiceItem,
+            [
+                'invoice_item_id' => $invoiceItem->id,
+                'invoice_id' => $invoiceItem->invoice_id,
+                'service_id' => $invoiceItem->service_id,
+                'quantity' => $invoiceItem->quantity,
+                'unit_price' => $invoiceItem->unit_price,
+                'total' => $invoiceItem->total,
+            ],
+            $request,
+            auth('api')->id()
+        );
 
         return response()->json([
             'message' => 'Invoice item created successfully',
-            'invoice_item' => $invoiceItem
+            'invoice_item' => $invoiceItem,
         ]);
     }
 
-
     /**
-     * Display the specified resource.
+     * Display the specified invoice item.
      */
     public function show(string $id)
     {
         $invoiceitem = InvoiceItem::find($id);
+
+        if (!$invoiceitem) {
+            return response()->json([
+                'message' => 'Invoice item not found',
+            ], 404);
+        }
+
         return response()->json($invoiceitem);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified invoice item.
      */
     public function update(Request $request, string $id)
     {
-        // Find the invoice item or fail with 404
         $invoiceItem = InvoiceItem::findOrFail($id);
 
-        // Validate request
-        $request->validate([
+        $validated = $request->validate([
             'invoice_id' => 'required|exists:invoices,id',
             'service_id' => 'required|exists:services,id',
-            'quantity'   => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
         ]);
 
-        // Recalculate total
-        $total = $request->quantity * $request->unit_price;
+        $fields = [
+            'invoice_id',
+            'service_id',
+            'quantity',
+            'unit_price',
+            'total',
+        ];
 
-        // Update invoice item
+        $before = $invoiceItem->only($fields);
+
+        $total = $validated['quantity'] * $validated['unit_price'];
+
         $invoiceItem->update([
-            'invoice_id' => $request->invoice_id,
-            'service_id' => $request->service_id,
-            'quantity'   => $request->quantity,
-            'unit_price' => $request->unit_price,
-            'total'      => $total,
+            'invoice_id' => $validated['invoice_id'],
+            'service_id' => $validated['service_id'],
+            'quantity' => $validated['quantity'],
+            'unit_price' => $validated['unit_price'],
+            'total' => $total,
         ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated invoice item #'.$invoiceItem->id
-        ]);        
+        $invoiceItem->refresh();
+
+        $changes = [];
+
+        foreach ($fields as $field) {
+            $oldValue = $before[$field] ?? null;
+            $newValue = $invoiceItem->getAttribute($field);
+
+            if ($oldValue != $newValue) {
+                $changes[$field] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                ];
+            }
+        }
+
+        if (!empty($changes)) {
+            app(AuditLogger::class)->record(
+                'invoice_item.updated',
+                "Invoice item updated (ID: {$invoiceItem->id})",
+                $invoiceItem,
+                [
+                    'invoice_item_id' => $invoiceItem->id,
+                    'changes' => $changes,
+                ],
+                $request,
+                auth('api')->id()
+            );
+        }
 
         return response()->json([
             'message' => 'Invoice item updated successfully',
-            'invoice_item' => $invoiceItem
+            'invoice_item' => $invoiceItem,
         ]);
     }
 
-
     /**
-     * Remove the specified resource from storage.
+     * Delete the specified invoice item.
      */
     public function destroy(string $id)
     {
-        InvoiceItem::destroy($id);
+        $invoiceItem = InvoiceItem::find($id);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted invoice item #'.$id
+        if (!$invoiceItem) {
+            return response()->json([
+                'message' => 'Invoice item not found',
+            ], 404);
+        }
+
+        $itemId = $invoiceItem->id;
+        $invoiceId = $invoiceItem->invoice_id;
+        $serviceId = $invoiceItem->service_id;
+        $quantity = $invoiceItem->quantity;
+        $total = $invoiceItem->total;
+
+        $invoiceItem->delete();
+
+        app(AuditLogger::class)->record(
+            'invoice_item.deleted',
+            "Invoice item deleted (ID: {$itemId})",
+            $invoiceItem,
+            [
+                'invoice_item_id' => $itemId,
+                'invoice_id' => $invoiceId,
+                'service_id' => $serviceId,
+                'quantity' => $quantity,
+                'total' => $total,
+            ],
+            request(),
+            auth('api')->id()
+        );
+
+        return response()->json([
+            'message' => 'Deleted',
         ]);
-
-        return response()->json(['message' => 'Deleted']);
     }
 }

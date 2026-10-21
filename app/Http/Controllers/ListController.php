@@ -3,21 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\DiaryEntry;
 use App\Models\FootTraffic;
 use App\Models\Payment;
 use App\Models\Service;
-use App\Models\SystemLog;
-use Illuminate\Http\Request;
+use App\Services\AuditLogger;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ListController extends Controller
 {
-    public function quickSales()
+    public function quickSales(Request $request)
     {
         $sales = Payment::with(['invoice.customer'])
-            ->whereHas('invoice', function ($q) {
-                $q->where('invoice_type', 'sales');
+            ->whereHas('invoice', function ($query) {
+                $query->where('invoice_type', 'sales');
             })
             ->orderBy('payment_date', 'desc')
             ->get()
@@ -33,30 +32,39 @@ class ListController extends Controller
                 ];
             });
 
+        // Load customers for the quick-sales wizard.
+        $customers = Customer::with(['activeCard', 'loyaltyCards'])
+            ->withCount('visits')
+            ->get();
 
-        // Load customers for wizard dropdown
-        // $customers = Customer::with('visits','loyaltyCards')->withCount('visits')->get();        //record system log
-        $customers = Customer::with(['activeCard','loyaltyCards'])
-        ->withCount('visits')
-        ->get();
-        // Get today's date
         $todayDate = Carbon::today();
-        $todayfoottraffic = FootTraffic::latest()->whereDate('created_at', $todayDate)->count();
+
+        $todayFootTraffic = FootTraffic::whereDate(
+            'created_at',
+            $todayDate
+        )->count();
+
         $services = Service::get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved quick sales'
-        ]);        
+        app(AuditLogger::class)->record(
+            'quick_sales.list_viewed',
+            'Quick sales data retrieved',
+            null,
+            [
+                'sales_count' => $sales->count(),
+                'customers_count' => $customers->count(),
+                'services_count' => $services->count(),
+                'today_foot_traffic' => $todayFootTraffic,
+            ],
+            $request,
+            auth('api')->id()
+        );
 
         return response()->json([
             'quickSales' => $sales,
             'customers' => $customers,
             'services' => $services,
-            'todayfoottraffic' => $todayfoottraffic
+            'todayfoottraffic' => $todayFootTraffic,
         ]);
     }
-
-    
 }

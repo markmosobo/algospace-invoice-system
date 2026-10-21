@@ -2,33 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Enrollment;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\SystemLog;
 use App\Models\PersonalAccount;
-use App\Models\Enrollment;
-use App\Services\LedgerService;
 use App\Models\PersonalTransaction;
+use App\Services\AuditLogger;
+use App\Services\LedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * List payments and pending invoices.
      */
     public function index()
     {
         $payments = Payment::with('invoice')->get();
-        $invoices = Invoice::with('customer')->where('status', 'pending')->get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved payments'
-        ]);
+        $invoices = Invoice::with('customer')
+            ->where('status', 'pending')
+            ->get();
 
-        // Return as JSON
         return response()->json([
             'payments' => $payments,
             'invoices' => $invoices,
@@ -36,409 +32,466 @@ class PaymentController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Record a payment.
      */
-
     public function store(Request $request)
     {
-        $request->validate([
-            'invoice_id'   => 'required|exists:invoices,id',
-            'amount'       => 'required|numeric|min:0',
+        $data = $request->validate([
+            'invoice_id' => 'required|exists:invoices,id',
+            'amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',
-            'method'       => 'required|in:cash,mpesa,bank,card,other',
-            'mpesa_code'   => 'nullable|required_if:method,mpesa|string|max:20',
-            'comment'      => 'nullable|string|max:255',
+            'method' => 'required|in:cash,mpesa,bank,card,other',
+            'mpesa_code' => 'nullable|required_if:method,mpesa|string|max:20',
+            'comment' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($request, &$payment) {
+        $payment = DB::transaction(function () use ($data, $request) {
+            $actorId = auth('api')->id();
 
-            /* ===============================
-            FETCH INVOICE (LOCKED)
-            =============================== */
+            // Lock the invoice before recording payment.
             $invoice = Invoice::lockForUpdate()
-                ->findOrFail($request->invoice_id);
+                ->findOrFail($data['invoice_id']);
 
-            /* ===============================
-            RESOLVE TARGET ACCOUNT
-            =============================== */
+            // Resolve the receiving account.
             $account = null;
 
-            if ($request->method === 'cash') {
-                $account = PersonalAccount::lockForUpdate()
-                    ->where('name', 'CASH')
+            if ($data['method'] === 'cash') {
+                $account = PersonalAccount::where('name', 'CASH')
+                    ->lockForUpdate()
                     ->firstOrFail();
+            } elseif ($data['method'] === 'mpesa') {
+                $account = PersonalAccount::where('name', 'POCHI MPESA')
+                    ->lockForUpdate()
+                    ->firstOrFail();
+            } elseif ($data['method'] === 'bank') {
+                $account = PersonalAccount::where(
+                    'name',
+                    'I&M ALGOSPACE CYBER PAYBILL'
+                )->lockForUpdate()->firstOrFail();
             }
 
-            if ($request->method === 'mpesa') {
-                $account = PersonalAccount::lockForUpdate()
-                    ->whereIn('name', ['POCHI MPESA'])
-                    ->firstOrFail();
-            }
+            $amount = (float) $data['amount'];
 
-            if ($request->method === 'bank') {
-                $account = PersonalAccount::lockForUpdate()
-                    ->where('name', 'I&M ALGOSPACE CYBER PAYBILL')
-                    ->firstOrFail();
-            }
-
-            /* ===============================
-            CREATE PAYMENT
-            =============================== */
             $payment = Payment::create([
-                'invoice_id'   => $invoice->id,
-                'amount'       => $request->amount,
-                'payment_date' => $request->payment_date,
-                'method'       => $request->method,
-                'mpesa_code'   => $request->method === 'mpesa'
-                                    ? $request->mpesa_code
-                                    : null,
-                'comment'      => $request->comment,
+                'invoice_id' => $invoice->id,
+                'amount' => $amount,
+                'payment_date' => $data['payment_date'],
+                'method' => $data['method'],
+                'mpesa_code' => $data['method'] === 'mpesa'
+                    ? ($data['mpesa_code'] ?? null)
+                    : null,
+                'comment' => $data['comment'] ?? null,
             ]);
 
-            /* ===============================
-            CREDIT ACCOUNT (KEY PART)
-            =============================== */
+            // Credit the receiving account where applicable.
             if ($account) {
-                $account->balance += $request->amount;
+                $account->balance += $amount;
                 $account->save();
 
-                // Optional but recommended
                 PersonalTransaction::create([
                     'account_id' => $account->id,
-                    'type'       => 'income',
-                    'amount'     => $request->amount,
-                    'reference'  => 'Invoice #' . $invoice->id,
-                    'source'     => 'payment',
+                    'type' => 'income',
+                    'amount' => $amount,
+                    'reference' => 'Invoice #' . $invoice->id,
+                    'source' => 'payment',
                     'created_at' => now(),
                 ]);
 
-                    // ===============================
-                    // LEDGER ENTRY
-                    // ===============================
-                    $revenueAccount = PersonalAccount::where('name', 'SALES REVENUE')->first();
+                $revenueAccount = PersonalAccount::where(
+                    'name',
+                    'SALES REVENUE'
+                )->first();
 
-                    if (!$revenueAccount) {
-                        throw new \Exception('SALES REVENUE account is not configured');
-                    }
-                    if ($request->amount > 0) {
-                        LedgerService::recordSale(
-                            $account, // DEBIT → asset increased
-                            $revenueAccount, // CREDIT → income earned
-                            $request->amount,
-                            'Invoice #' . $invoice->id
-                        );
-                    }
+                if (!$revenueAccount) {
+                    throw new \RuntimeException(
+                        'SALES REVENUE account is not configured'
+                    );
+                }
+
+                if ($amount > 0) {
+                    LedgerService::recordSale(
+                        $account,
+                        $revenueAccount,
+                        $amount,
+                        'Invoice #' . $invoice->id
+                    );
+                }
             }
 
-/* ===============================
-UPDATE INVOICE
-=============================== */
+            // Update invoice payment status.
+            $invoice->amount_paid += $amount;
 
-$invoice->amount_paid += $request->amount;
+            if ($invoice->amount_paid >= $invoice->total_amount) {
+                $invoice->status = 'paid';
+            }
 
-if ($invoice->amount_paid >= $invoice->total_amount) {
-    $invoice->status = 'paid';
-}
+            $invoice->save();
 
-$invoice->save();
+            // Automatically create course enrolments where applicable.
+            if ($amount > 0) {
+                $this->createCourseEnrollments($invoice);
+            }
 
+            app(AuditLogger::class)->record(
+                'payment.recorded',
+                'Payment recorded',
+                $payment,
+                [
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $amount,
+                    'method' => $payment->method,
+                    'payment_date' => $payment->payment_date,
+                    'account_id' => $account?->id,
+                    'invoice_status' => $invoice->status,
+                ],
+                $request,
+                $actorId
+            );
 
-
-
-
-/* ===============================
-AUTO CREATE COURSE ENROLLMENTS
-=============================== */
-
-if($request->amount > 0){
-
-    $this->createCourseEnrollments($invoice);
-
-}
-
-            /* ===============================
-            SYSTEM LOG
-            =============================== */
-            SystemLog::create([
-                'user_id' => auth('api')->user()->id,
-                'description' =>
-                    auth('api')->user()->name .
-                    ' recorded payment #' . $payment->id
-            ]);
+            return $payment;
         });
 
         return response()->json([
             'message' => 'Payment recorded and account credited successfully',
-            'payment' => $payment
+            'payment' => $payment,
         ], 201);
     }
 
-
-
-
-
     /**
-     * Display the specified resource.
+     * Display a payment.
      */
     public function show(string $id)
     {
         $payment = Payment::find($id);
+
         return response()->json($payment);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a payment.
      */
     public function update(Request $request, string $id)
     {
-        $payment = Payment::findOrFail($id);
-
-        $request->validate([
-            'invoice_id'   => 'required|exists:invoices,id',
-            'amount'       => 'required|numeric|min:0.01',
+        $data = $request->validate([
+            'invoice_id' => 'required|exists:invoices,id',
+            'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'nullable|date',
-            'method'       => 'required|in:cash,mpesa,bank',
-            'mpesa_code'   => 'sometimes|required_if:method,mpesa|string|max:20',
+            'method' => 'required|in:cash,mpesa,bank',
+            'mpesa_code' => 'sometimes|required_if:method,mpesa|string|max:20',
+            'comment' => 'nullable|string|max:255',
         ]);
 
-        $payment->update([
-            'invoice_id'   => $request->invoice_id,
-            'amount'       => $request->amount,
-            'payment_date' => $request->payment_date ?? $payment->payment_date,
-            'method'       => $request->method ?? $payment->method,
-            'mpesa_code'   => $request->mpesa_code ?? $payment->mpesa_code,
-            'comment'   => $request->comment,
-        ]);
+        $payment = DB::transaction(function () use ($data, $id, $request) {
+            $payment = Payment::lockForUpdate()->findOrFail($id);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated payment #'.$payment->id
-        ]);         
+            $before = [
+                'invoice_id' => $payment->invoice_id,
+                'amount' => $payment->amount,
+                'payment_date' => $payment->payment_date,
+                'method' => $payment->method,
+            ];
+
+            $payment->update([
+                'invoice_id' => $data['invoice_id'],
+                'amount' => $data['amount'],
+                'payment_date' => $data['payment_date']
+                    ?? $payment->payment_date,
+                'method' => $data['method'],
+                'mpesa_code' => $data['mpesa_code']
+                    ?? $payment->mpesa_code,
+                'comment' => $data['comment'] ?? null,
+            ]);
+
+            app(AuditLogger::class)->record(
+                'payment.updated',
+                'Payment updated',
+                $payment,
+                [
+                    'before' => $before,
+                    'after' => [
+                        'invoice_id' => $payment->invoice_id,
+                        'amount' => $payment->amount,
+                        'payment_date' => $payment->payment_date,
+                        'method' => $payment->method,
+                    ],
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $payment;
+        });
 
         return response()->json([
             'message' => 'Payment updated successfully',
-            'payment' => $payment
+            'payment' => $payment,
         ]);
     }
 
-
     /**
-     * Remove the specified resource from storage.
+     * Delete a payment.
      */
     public function destroy(string $id)
     {
-        Payment::destroy($id);
+        DB::transaction(function () use ($id, &$payment) {
+            $payment = Payment::lockForUpdate()->findOrFail($id);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted payment #'.$id
-        ]); 
+            app(AuditLogger::class)->record(
+                'payment.deleted',
+                'Payment deleted',
+                $payment,
+                [
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $payment->invoice_id,
+                    'amount' => $payment->amount,
+                    'method' => $payment->method,
+                ],
+                request(),
+                auth('api')->id()
+            );
 
-        return response()->json(['message' => 'Deleted']);
+            $payment->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 
+    /**
+     * Delete a sale and its invoice.
+     */
     public function destroySale($id)
     {
         DB::transaction(function () use ($id) {
-
-            $payment = Payment::findOrFail($id);
+            $payment = Payment::lockForUpdate()->findOrFail($id);
             $invoice = $payment->invoice;
+
+            app(AuditLogger::class)->record(
+                'payment.sale_deleted',
+                'Sale payment and associated invoice deleted',
+                $payment,
+                [
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice?->id,
+                    'amount' => $payment->amount,
+                    'method' => $payment->method,
+                ],
+                request(),
+                auth('api')->id()
+            );
 
             $payment->delete();
 
             if ($invoice) {
                 $invoice->delete();
             }
-
         });
 
-        return response()->json(['message' => 'Sale deleted successfully']);
-    }
-
-public function complete($id)
-{
-    $payment = Payment::findOrFail($id);
-    $invoice = $payment->invoice;
-
-    // Total already paid
-    $totalPaid = $invoice->payments()->sum('amount');
-
-    // Remaining balance
-    $balance = $invoice->total_amount - $totalPaid;
-
-    // If there is a balance, store it as a payment
-    if ($balance > 0) {
-        Payment::create([
-            'invoice_id'   => $invoice->id,
-            'amount'       => $balance,
-            'payment_date' => now(),
-            'method'       => $payment->method,
-            'mpesa_code'   => $payment->mpesa_code,
-            'comment'      => 'Balance cleared',
+        return response()->json([
+            'message' => 'Sale deleted successfully',
         ]);
-
-        // Update totalPaid to reflect the new payment
-        $totalPaid += $balance;
     }
 
-    // 🔑 FORCE invoice to reflect reality
-    $invoice->update([
-        'amount_paid' => $totalPaid,
-        'status'      => 'paid',
-    ]);
+    /**
+     * Complete an invoice by recording the remaining balance.
+     */
+    public function complete($id)
+    {
+        $result = DB::transaction(function () use ($id) {
+            $payment = Payment::findOrFail($id);
 
-    return response()->json([
-        'message'        => 'Invoice fully paid',
-        'amount_paid'    => $invoice->amount_paid,
-        'total_amount'   => $invoice->total_amount,
-        'invoice_status' => 'paid',
-    ]);
-}
+            $invoice = Invoice::lockForUpdate()
+                ->findOrFail($payment->invoice_id);
 
+            $totalPaid = $invoice->payments()->sum('amount');
+            $balance = $invoice->total_amount - $totalPaid;
 
+            $completionPayment = null;
 
+            if ($balance > 0) {
+                $completionPayment = Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'amount' => $balance,
+                    'payment_date' => now(),
+                    'method' => $payment->method,
+                    'mpesa_code' => $payment->mpesa_code,
+                    'comment' => 'Balance cleared',
+                ]);
+
+                $totalPaid += $balance;
+            }
+
+            $invoice->update([
+                'amount_paid' => $totalPaid,
+                'status' => 'paid',
+            ]);
+
+            app(AuditLogger::class)->record(
+                'payment.invoice_completed',
+                'Invoice marked fully paid',
+                $invoice,
+                [
+                    'invoice_id' => $invoice->id,
+                    'trigger_payment_id' => $payment->id,
+                    'completion_payment_id' => $completionPayment?->id,
+                    'balance_cleared' => max(0, $balance),
+                    'amount_paid' => $totalPaid,
+                    'total_amount' => $invoice->total_amount,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            return [
+                'invoice' => $invoice,
+                'amount_paid' => $totalPaid,
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Invoice fully paid',
+            'amount_paid' => $result['invoice']->amount_paid,
+            'total_amount' => $result['invoice']->total_amount,
+            'invoice_status' => 'paid',
+        ]);
+    }
+
+    /**
+     * Display sale details.
+     */
     public function showSale($id)
     {
         $payment = Payment::with([
             'invoice.items',
-            'invoice.customer'
+            'invoice.customer',
         ])->findOrFail($id);
 
         $invoice = $payment->invoice;
 
         return response()->json([
-            'invoice_no'     => $invoice->invoice_number,
-            'customer_name'  => $invoice->customer->name,
-            'items'          => $invoice->items,
-            'invoice_total'  => $invoice->total_amount,
-            'total_paid'     => $invoice->payments()->sum('amount'),
-            'status'         => $invoice->status,
-            'method'         => $payment->method,
-            'payment_date'   => $payment->payment_date,
-            'mpesa_code'     => $payment->mpesa_code,
-            'comment'        => $payment->comment,
+            'invoice_no' => $invoice->invoice_number,
+            'customer_name' => $invoice->customer->name,
+            'items' => $invoice->items,
+            'invoice_total' => $invoice->total_amount,
+            'total_paid' => $invoice->payments()->sum('amount'),
+            'status' => $invoice->status,
+            'method' => $payment->method,
+            'payment_date' => $payment->payment_date,
+            'mpesa_code' => $payment->mpesa_code,
+            'comment' => $payment->comment,
         ]);
     }
 
+    /**
+     * Update a sale payment.
+     */
     public function updateSale(Request $request, $id)
-{
-    // 1. Validate input
-    $validated = $request->validate([
-        'amount'       => 'required|numeric|min:1',
-        'method'       => 'required|in:cash,mpesa,bank',
-        'payment_date' => 'required|date',
-        'mpesa_code'   => 'nullable|string',
-    ]);
+    {
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'method' => 'required|in:cash,mpesa,bank',
+            'payment_date' => 'required|date',
+            'mpesa_code' => 'nullable|string|max:20',
+        ]);
 
-    // 2. Find payment
-    $payment = Payment::findOrFail($id);
+        $result = DB::transaction(function () use ($data, $id, $request) {
+            $payment = Payment::lockForUpdate()->findOrFail($id);
+            $invoice = Invoice::lockForUpdate()
+                ->findOrFail($payment->invoice_id);
 
-    // 3. Update payment
-    $payment->update($validated);
+            $before = [
+                'amount' => $payment->amount,
+                'method' => $payment->method,
+                'payment_date' => $payment->payment_date,
+            ];
 
-    // 4. Get related invoice
-    $invoice = $payment->invoice;
+            $payment->update($data);
 
-    // 5. Recalculate total paid
-    $totalPaid = $invoice->payments()->sum('amount');
+            $totalPaid = $invoice->payments()->sum('amount');
 
-    // 6. Flip invoice status correctly
-    $invoice->update([
-        'status' => $totalPaid >= $invoice->total_amount ? 'paid' : 'pending'
-    ]);
-
-    return response()->json([
-        'message' => 'Payment updated successfully',
-        'invoice_status' => $invoice->status
-    ]);
-}
-
-
-private function createCourseEnrollments($invoice)
-{
-
-    $invoice->load([
-        'customer',
-        'items.service.sessions'
-    ]);
-
-
-    foreach($invoice->items as $item){
-
-
-        $service = $item->service;
-
-
-        if(!$service){
-            continue;
-        }
-
-
-        // only courses
-        if($service->type !== 'course'){
-            continue;
-        }
-
-
-
-        $enrollment = Enrollment::firstOrCreate(
-
-            [
-                'customer_id'=>$invoice->customer_id,
-                'service_id'=>$service->id
-            ],
-
-            [
-                'invoice_id'=>$invoice->id,
-                'status'=>'active',
-                'is_paid'=>false,
-                'amount_paid'=>0,
-                'enrolled_at'=>now(),
-                'starts_at'=>now()
-            ]
-
-        );
-
-
-        // CREATE STUDENT COURSE SESSION TRACKING
-
-        foreach($service->sessions as $session){
-
-            $enrollment->sessions()->firstOrCreate([
-
-                'course_session_id'=>$session->id
-
+            $invoice->update([
+                'amount_paid' => $totalPaid,
+                'status' => $totalPaid >= $invoice->total_amount
+                    ? 'paid'
+                    : 'pending',
             ]);
 
-        }
+            app(AuditLogger::class)->record(
+                'payment.sale_updated',
+                'Sale payment updated',
+                $payment,
+                [
+                    'invoice_id' => $invoice->id,
+                    'before' => $before,
+                    'after' => [
+                        'amount' => $payment->amount,
+                        'method' => $payment->method,
+                        'payment_date' => $payment->payment_date,
+                    ],
+                    'invoice_status' => $invoice->status,
+                    'total_paid' => $totalPaid,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
+            return $invoice;
+        });
 
-
-        // UPDATE PAYMENT PROGRESS
-
-        $enrollment->amount_paid =
-            $invoice->payments()->sum('amount');
-
-
-
-        // FULL PAYMENT CHECK
-
-        if($enrollment->amount_paid >= $item->amount){
-
-            $enrollment->is_paid = true;
-            $enrollment->paid_at = now();
-
-        }
-
-
-        $enrollment->save();
-
-
+        return response()->json([
+            'message' => 'Payment updated successfully',
+            'invoice_status' => $result->status,
+        ]);
     }
 
+    /**
+     * Create course enrolments for courses on the invoice.
+     */
+    private function createCourseEnrollments($invoice)
+    {
+        $invoice->load([
+            'customer',
+            'items.service.sessions',
+        ]);
 
-}
+        foreach ($invoice->items as $item) {
+            $service = $item->service;
 
+            if (!$service || $service->type !== 'course') {
+                continue;
+            }
+
+            $enrollment = Enrollment::firstOrCreate(
+                [
+                    'customer_id' => $invoice->customer_id,
+                    'service_id' => $service->id,
+                ],
+                [
+                    'invoice_id' => $invoice->id,
+                    'status' => 'active',
+                    'is_paid' => false,
+                    'amount_paid' => 0,
+                    'enrolled_at' => now(),
+                    'starts_at' => now(),
+                ]
+            );
+
+            foreach ($service->sessions as $session) {
+                $enrollment->sessions()->firstOrCreate([
+                    'course_session_id' => $session->id,
+                ]);
+            }
+
+            $enrollment->amount_paid = $invoice->payments()->sum('amount');
+
+            if ($enrollment->amount_paid >= $item->amount) {
+                $enrollment->is_paid = true;
+                $enrollment->paid_at = now();
+            }
+
+            $enrollment->save();
+        }
+    }
 }

@@ -5,44 +5,38 @@ namespace App\Http\Controllers;
 use App\Models\PersonalAccount;
 use App\Models\PersonalCategory;
 use App\Models\PersonalTransaction;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PersonalTransactionController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display transactions, accounts and categories.
      */
     public function index()
     {
         $accounts = PersonalAccount::all();
         $categories = PersonalCategory::all();
-        $personalTransactions = PersonalTransaction::with('account', 'category')->get();
 
-        // Record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved personal transactions'
-        ]);
+        $personalTransactions = PersonalTransaction::with(
+            'account',
+            'category'
+        )->get();
 
         return response()->json([
             'personalTransactions' => $personalTransactions,
-            'accounts'     => $accounts,
-            'categories'   => $categories
+            'accounts' => $accounts,
+            'categories' => $categories,
         ]);
     }
 
-
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created transaction.
      */
-
-
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'account_id' => 'required|exists:personal_accounts,id',
             'category_id' => 'nullable|exists:personal_categories,id',
             'type' => 'required|in:income,expense',
@@ -52,51 +46,57 @@ class PersonalTransactionController extends Controller
             'transaction_date' => 'nullable|date',
         ]);
 
-        DB::transaction(function () use ($request, &$personalTransaction) {
+        $personalTransaction = DB::transaction(function () use (
+            $data,
+            $request
+        ) {
+            $account = PersonalAccount::whereKey($data['account_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $transactionDate = $request->transaction_date ?? Carbon::now();
+            $amount = (float) $data['amount'];
 
-            // Lock the account row to prevent race conditions
-            $account = PersonalAccount::lockForUpdate()->findOrFail($request->account_id);
-
-            // Create transaction
-            $personalTransaction = PersonalTransaction::create([
+            $transaction = PersonalTransaction::create([
                 'account_id' => $account->id,
-                'category_id' => $request->category_id,
-                'type' => $request->type,
-                'amount' => $request->amount,
-                'payment_method' => $request->payment_method,
-                'description' => $request->description,
-                'transaction_date' => $transactionDate,
+                'category_id' => $data['category_id'] ?? null,
+                'type' => $data['type'],
+                'amount' => $amount,
+                'payment_method' => $data['payment_method'] ?? null,
+                'description' => $data['description'] ?? null,
+                'transaction_date' => $data['transaction_date'] ?? now(),
             ]);
 
-            // Update account balance
-            if ($request->type === 'income') {
-                $account->balance += $request->amount;
-            } else {
-                $account->balance -= $request->amount;
-            }
-
+            $this->applyBalanceEffect($account, $data['type'], $amount);
             $account->save();
 
-            // Log
-            SystemLog::create([
-                'user_id' => auth('api')->user()->id,
-                'description' =>
-                    auth('api')->user()->name .
-                    ' created personal transaction #' .
-                    $personalTransaction->id
-            ]);
+            app(AuditLogger::class)->record(
+                'personal_transaction.created',
+                'Personal transaction created',
+                $transaction,
+                [
+                    'transaction_id' => $transaction->id,
+                    'account_id' => $account->id,
+                    'category_id' => $transaction->category_id,
+                    'type' => $transaction->type,
+                    'amount' => $amount,
+                    'transaction_date' => $transaction->transaction_date,
+                    'account_balance_after' => $account->balance,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $transaction;
         });
 
         return response()->json([
             'message' => 'Personal transaction created successfully',
-            'transaction' => $personalTransaction
+            'transaction' => $personalTransaction,
         ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified transaction.
      */
     public function show(string $id)
     {
@@ -104,7 +104,7 @@ class PersonalTransactionController extends Controller
 
         if (!$transaction) {
             return response()->json([
-                'message' => 'Transaction not found'
+                'message' => 'Transaction not found',
             ], 404);
         }
 
@@ -112,75 +112,229 @@ class PersonalTransactionController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a transaction and reconcile account balances.
      */
     public function update(Request $request, string $id)
     {
-        $transaction = PersonalTransaction::find($id);
+        $data = $request->validate([
+            'account_id' => 'sometimes|required|exists:personal_accounts,id',
+            'category_id' => 'sometimes|nullable|exists:personal_categories,id',
+            'type' => 'sometimes|required|in:income,expense',
+            'amount' => 'sometimes|required|numeric|min:0',
+            'payment_method' => 'sometimes|nullable|string|max:50',
+            'description' => 'sometimes|nullable|string',
+            'transaction_date' => 'sometimes|nullable|date',
+        ]);
+
+        $transaction = DB::transaction(function () use (
+            $data,
+            $id,
+            $request
+        ) {
+            $transaction = PersonalTransaction::whereKey($id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$transaction) {
+                return null;
+            }
+
+            $before = [
+                'account_id' => $transaction->account_id,
+                'category_id' => $transaction->category_id,
+                'type' => $transaction->type,
+                'amount' => (float) $transaction->amount,
+                'transaction_date' => $transaction->transaction_date,
+            ];
+
+            $oldAccountId = (int) $transaction->account_id;
+            $newAccountId = (int) ($data['account_id'] ?? $oldAccountId);
+
+            // Lock account rows in a consistent order.
+            $accountIds = array_values(array_unique([
+                $oldAccountId,
+                $newAccountId,
+            ]));
+
+            sort($accountIds);
+
+            $accounts = PersonalAccount::whereIn('id', $accountIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $oldAccount = $accounts->get($oldAccountId);
+            $newAccount = $accounts->get($newAccountId);
+
+            if (!$oldAccount || !$newAccount) {
+                abort(404, 'Personal account not found');
+            }
+
+            // Reverse the original transaction's balance effect.
+            $this->reverseBalanceEffect(
+                $oldAccount,
+                $transaction->type,
+                (float) $transaction->amount
+            );
+
+            // Apply the updated transaction's balance effect.
+            $newType = $data['type'] ?? $transaction->type;
+            $newAmount = (float) ($data['amount'] ?? $transaction->amount);
+
+            $this->applyBalanceEffect(
+                $newAccount,
+                $newType,
+                $newAmount
+            );
+
+            $oldAccount->save();
+
+            if ($newAccountId !== $oldAccountId) {
+                $newAccount->save();
+            }
+
+            // Update only fields provided by the request.
+            foreach ([
+                'account_id',
+                'category_id',
+                'type',
+                'amount',
+                'payment_method',
+                'description',
+                'transaction_date',
+            ] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $transaction->{$field} = $data[$field];
+                }
+            }
+
+            $transaction->save();
+
+            app(AuditLogger::class)->record(
+                'personal_transaction.updated',
+                'Personal transaction updated',
+                $transaction,
+                [
+                    'transaction_id' => $transaction->id,
+                    'before' => $before,
+                    'after' => [
+                        'account_id' => $transaction->account_id,
+                        'category_id' => $transaction->category_id,
+                        'type' => $transaction->type,
+                        'amount' => (float) $transaction->amount,
+                        'transaction_date' => $transaction->transaction_date,
+                    ],
+                    'old_account_balance_after' => $oldAccount->balance,
+                    'new_account_balance_after' => $newAccount->balance,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $transaction;
+        });
 
         if (!$transaction) {
             return response()->json([
-                'message' => 'Transaction not found'
+                'message' => 'Transaction not found',
             ], 404);
         }
 
-        // Validate input
-        $request->validate([
-            'account_id' => 'sometimes|integer|min:1',
-            'category_id' => 'sometimes|integer|min:1',
-            'type'   => 'sometimes|in:income,expense',
-            'amount' => 'sometimes|numeric|min:0',
-            'payment_method' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'transaction_date' => 'nullable|date',
-        ]);
-
-        // Update fields if provided
-        $transaction->account_id = $request->account_id ?? $transaction->account_id;
-        $transaction->category_id = $request->category_id ?? $transaction->category_id;
-        $transaction->type = $request->type ?? $transaction->type;
-        $transaction->amount = $request->amount ?? $transaction->amount;
-        $transaction->payment_method = $request->payment_method ?? $transaction->payment_method;
-        $transaction->description = $request->description ?? $transaction->description;
-        $transaction->transaction_date = $request->transaction_date ?? $transaction->transaction_date;
-
-        $transaction->save();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated personal transaction #'.$transaction->id
-        ]);         
-
         return response()->json([
             'message' => 'Transaction updated successfully',
-            'transaction' => $transaction
+            'transaction' => $transaction,
         ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a transaction and reverse its balance effect.
      */
     public function destroy(string $id)
     {
-        $transaction = PersonalTransaction::find($id);
+        $deleted = DB::transaction(function () use ($id) {
+            $transaction = PersonalTransaction::whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-        if (!$transaction) {
+            if (!$transaction) {
+                return false;
+            }
+
+            $account = PersonalAccount::whereKey($transaction->account_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $amount = (float) $transaction->amount;
+
+            $this->reverseBalanceEffect(
+                $account,
+                $transaction->type,
+                $amount
+            );
+
+            $account->save();
+
+            app(AuditLogger::class)->record(
+                'personal_transaction.deleted',
+                'Personal transaction deleted',
+                $transaction,
+                [
+                    'transaction_id' => $transaction->id,
+                    'account_id' => $transaction->account_id,
+                    'category_id' => $transaction->category_id,
+                    'type' => $transaction->type,
+                    'amount' => $amount,
+                    'transaction_date' => $transaction->transaction_date,
+                    'account_balance_after' => $account->balance,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            $transaction->delete();
+
+            return true;
+        });
+
+        if (!$deleted) {
             return response()->json([
-                'message' => 'Transaction not found'
+                'message' => 'Transaction not found',
             ], 404);
         }
 
-        $transaction->delete();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal transaction #'.$id
-        ]);         
-
         return response()->json([
-            'message' => 'Transaction deleted successfully'
+            'message' => 'Transaction deleted successfully',
         ]);
+    }
+
+    /**
+     * Apply a transaction's effect to an account balance.
+     */
+    private function applyBalanceEffect(
+        PersonalAccount $account,
+        string $type,
+        float $amount
+    ): void {
+        if ($type === 'income') {
+            $account->balance += $amount;
+        } else {
+            $account->balance -= $amount;
+        }
+    }
+
+    /**
+     * Reverse a transaction's original effect on an account balance.
+     */
+    private function reverseBalanceEffect(
+        PersonalAccount $account,
+        string $type,
+        float $amount
+    ): void {
+        if ($type === 'income') {
+            $account->balance -= $amount;
+        } else {
+            $account->balance += $amount;
+        }
     }
 }

@@ -4,95 +4,183 @@ namespace App\Http\Controllers;
 
 use App\Models\ProviderService;
 use App\Models\ServiceProvider;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ServiceProviderController extends Controller
 {
+    protected AuditLogger $auditLogger;
+
+    public function __construct(AuditLogger $auditLogger)
+    {
+        $this->auditLogger = $auditLogger;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display service providers and provider services.
      */
     public function index()
     {
-        $serviceProviders = ServiceProvider::get();
-        $providerServices = ProviderService::get();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved service providers'
-        ]);
-
-        // Return as JSON
         return response()->json([
-            'serviceProviders' => $serviceProviders,
-            'providerServices' => $providerServices,
-        ]);        
+            'serviceProviders' => ServiceProvider::get(),
+            'providerServices' => ProviderService::get(),
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Create a service provider.
      */
     public function store(Request $request)
     {
-        $serviceProvider = new ServiceProvider();
-        $serviceProvider->name = $request->name;
-        $serviceProvider->phone = $request->phone;
-        $serviceProvider->email = $request->email;
-        $serviceProvider->save();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+        ]);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created service provider #'.$serviceProvider->id
-        ]);          
-                
-        return response()->json($serviceProvider);        
+        $serviceProvider = DB::transaction(function () use (
+            $validated,
+            $request
+        ) {
+            $serviceProvider = new ServiceProvider();
+            $serviceProvider->name = $validated['name'];
+            $serviceProvider->phone = $validated['phone'] ?? null;
+            $serviceProvider->email = $validated['email'] ?? null;
+            $serviceProvider->save();
+
+            $this->auditLogger->record(
+                'service_provider.created',
+                'Service provider created',
+                $serviceProvider,
+                [
+                    'service_provider_id' => $serviceProvider->id,
+                    'name' => $serviceProvider->name,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $serviceProvider;
+        });
+
+        return response()->json($serviceProvider, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display a specific service provider.
      */
     public function show(string $id)
     {
-        $serviceProvider = ServiceProvider::find($id);
-        return response()->json($serviceProvider);        
+        return response()->json(
+            ServiceProvider::findOrFail($id)
+        );
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a service provider.
      */
     public function update(Request $request, ServiceProvider $serviceProvider)
     {
-        $request->validate([
-            'name' => 'required|string',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'sometimes|nullable|string|max:30',
+            'email' => [
+                'sometimes',
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('service_providers', 'email')
+                    ->ignore($serviceProvider->id),
+            ],
+            'gender' => 'sometimes|nullable|string|max:50',
         ]);
 
-        $serviceProvider->update($request->only([
-            'name','email','phone','gender'
-        ]));
+        DB::transaction(function () use (
+            $validated,
+            $request,
+            $serviceProvider
+        ) {
+            $serviceProvider = ServiceProvider::whereKey($serviceProvider->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated details for service provider #'.$serviceProvider->id
-        ]);         
+            $fields = ['name', 'phone', 'email', 'gender'];
+            $before = $serviceProvider->only($fields);
 
-        return response()->json(['message' => 'Updated']);        
+            foreach ($fields as $field) {
+                if (array_key_exists($field, $validated)) {
+                    $serviceProvider->{$field} = $validated[$field];
+                }
+            }
+
+            $serviceProvider->save();
+
+            $after = $serviceProvider->only($fields);
+            $changes = [];
+
+            foreach ($after as $field => $value) {
+                if (($before[$field] ?? null) != $value) {
+                    // Avoid exposing personal contact details in audit properties.
+                    if (in_array($field, ['phone', 'email'], true)) {
+                        $changes[$field] = 'changed';
+                    } else {
+                        $changes[$field] = [
+                            'old' => $before[$field] ?? null,
+                            'new' => $value,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($changes)) {
+                $this->auditLogger->record(
+                    'service_provider.updated',
+                    'Service provider updated',
+                    $serviceProvider,
+                    [
+                        'service_provider_id' => $serviceProvider->id,
+                        'changes' => $changes,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+        });
+
+        return response()->json([
+            'message' => 'Updated',
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a service provider.
      */
     public function destroy(string $id)
     {
-        ServiceProvider::destroy($id);
+        DB::transaction(function () use ($id) {
+            $serviceProvider = ServiceProvider::whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted service provider #'.$id
-        ]);         
-        return response()->json(['message' => 'Deleted']);        
+            $this->auditLogger->record(
+                'service_provider.deleted',
+                'Service provider deleted',
+                $serviceProvider,
+                [
+                    'service_provider_id' => $serviceProvider->id,
+                    'name' => $serviceProvider->name,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            $serviceProvider->delete();
+        });
+
+        return response()->json([
+            'message' => 'Deleted',
+        ]);
     }
 }

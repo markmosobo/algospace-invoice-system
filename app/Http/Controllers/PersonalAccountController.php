@@ -2,40 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SystemLog;
-use Illuminate\Http\Request;
 use App\Models\PersonalAccount;
+use App\Services\AuditLogger;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PersonalAccountController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of personal accounts and totals.
      */
     public function index()
     {
         $personalAccounts = PersonalAccount::all();
-        $accountTotal = PersonalAccount::sum('balance');
-        $liquidTotal = PersonalAccount::where('name','POCHI MPESA')
-        ->orWhere('name','CASH')
-        ->orWhere('name','PERSONAL MPESA')
-        ->orWhere('name','I&M BANK')
-        ->sum('balance');
-        $semiLiquidTotal = PersonalAccount::where('name','POSTBANK')
-        ->orWhere('name','EQUITY BANK ACCOUNT')
-        ->orWhere('name','JAR SAVINGS')
-        ->orWhere('name','MUM/MARK JAR')
-        ->sum('balance');
-        $savingsTotal = PersonalAccount::where('name','CARITAS JIKAZE NRB SAVINGS')
-        ->orWhere('name','STAWISHA SACCO - FARM')
-        ->orWhere('name','STAWISHA SACCO - SHOP')
-        ->orWhere('name','I&M ALGOSPACE LIMITED')
-        ->sum('balance');
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved personal accounts'
-        ]);
+        $accountTotal = PersonalAccount::sum('balance');
+
+        $liquidTotal = PersonalAccount::whereIn('name', [
+            'POCHI MPESA',
+            'CASH',
+            'PERSONAL MPESA',
+            'I&M BANK',
+        ])->sum('balance');
+
+        $semiLiquidTotal = PersonalAccount::whereIn('name', [
+            'POSTBANK',
+            'EQUITY BANK ACCOUNT',
+            'JAR SAVINGS',
+            'MUM/MARK JAR',
+        ])->sum('balance');
+
+        $savingsTotal = PersonalAccount::whereIn('name', [
+            'CARITAS JIKAZE NRB SAVINGS',
+            'STAWISHA SACCO - FARM',
+            'STAWISHA SACCO - SHOP',
+            'I&M ALGOSPACE LIMITED',
+        ])->sum('balance');
 
         return response()->json([
             'message' => 'Whatsapp receipt count updated successfully',
@@ -43,46 +45,51 @@ class PersonalAccountController extends Controller
             'accountTotal' => $accountTotal,
             'liquidTotal' => $liquidTotal,
             'semiLiquidTotal' => $semiLiquidTotal,
-            'savingsTotal' => $savingsTotal
+            'savingsTotal' => $savingsTotal,
         ]);
-
-        // return response()->json($personalAccounts);        
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created personal account.
      */
     public function store(Request $request)
     {
-        // Validate incoming request
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
+            'sub_type' => 'nullable|string|max:255',
             'balance' => 'required|numeric|min:0',
             'currency' => 'required|string|max:50',
         ]);
 
-        // Create the personal account
-        $personalAccount = PersonalAccount::create([
-            'name' => $request->name,
-            'sub_type' => $request->sub_type,
-            'balance' => $request->balance,
-            'currency' => $request->currency,
-        ]);
+        $personalAccount = DB::transaction(function () use ($data, $request) {
+            $account = PersonalAccount::create($data);
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created personal account #'.$personalAccount->id
-        ]);        
+            app(AuditLogger::class)->record(
+                'personal_account.created',
+                'Personal account created',
+                $account,
+                [
+                    'account_id' => $account->id,
+                    'name' => $account->name,
+                    'sub_type' => $account->sub_type,
+                    'initial_balance' => $account->balance,
+                    'currency' => $account->currency,
+                ],
+                $request,
+                auth('api')->id()
+            );
+
+            return $account;
+        });
 
         return response()->json([
             'message' => 'Personal account created successfully',
-            'personalAccount' => $personalAccount
-        ], 201);        
+            'personalAccount' => $personalAccount,
+        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified personal account.
      */
     public function show(string $id)
     {
@@ -90,7 +97,7 @@ class PersonalAccountController extends Controller
 
         if (!$personalAccount) {
             return response()->json([
-                'message' => 'Personal account not found'
+                'message' => 'Personal account not found',
             ], 404);
         }
 
@@ -98,89 +105,142 @@ class PersonalAccountController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified personal account.
      */
     public function update(Request $request, string $id)
     {
-        $personalAccount = PersonalAccount::find($id);
-
-        if (!$personalAccount) {
-            return response()->json([
-                'message' => 'Personal account not found'
-            ], 404);
-        }
-
-        // Validate request
-        $request->validate([
+        $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+            'sub_type' => 'sometimes|nullable|string|max:255',
             'balance' => 'sometimes|required|numeric|min:0',
             'currency' => 'sometimes|required|string|max:50',
         ]);
 
-        // Update fields if provided
-        if ($request->has('name')) {
-            $personalAccount->name = $request->name;
-        }
-        if ($request->has('sub_type')) {
-            $personalAccount->sub_type = $request->sub_type;
-        }
-        if ($request->has('balance')) {
-            $personalAccount->balance = $request->balance;
-        }
-        if ($request->has('currency')) {
-            $personalAccount->currency = $request->currency;
-        }
+        $personalAccount = DB::transaction(function () use (
+            $data,
+            $id,
+            $request
+        ) {
+            $account = PersonalAccount::whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-        $personalAccount->save();
+            if (!$account) {
+                return null;
+            }
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated personal account #'.$personalAccount->id
-        ]);        
+            $before = [
+                'name' => $account->name,
+                'sub_type' => $account->sub_type,
+                'balance' => $account->balance,
+                'currency' => $account->currency,
+            ];
+
+            $account->fill($data);
+            $changes = $account->getDirty();
+
+            if (!empty($changes)) {
+                $account->save();
+
+                $after = [
+                    'name' => $account->name,
+                    'sub_type' => $account->sub_type,
+                    'balance' => $account->balance,
+                    'currency' => $account->currency,
+                ];
+
+                app(AuditLogger::class)->record(
+                    'personal_account.updated',
+                    'Personal account updated',
+                    $account,
+                    [
+                        'account_id' => $account->id,
+                        'before' => $before,
+                        'after' => $after,
+                        'changed_fields' => array_keys($changes),
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+            }
+
+            return $account;
+        });
+
+        if (!$personalAccount) {
+            return response()->json([
+                'message' => 'Personal account not found',
+            ], 404);
+        }
 
         return response()->json([
             'message' => 'Personal account updated successfully',
-            'personalAccount' => $personalAccount
+            'personalAccount' => $personalAccount,
         ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified personal account.
      */
     public function destroy(string $id)
     {
-        $personalAccount = PersonalAccount::find($id);
+        $deleted = DB::transaction(function () use ($id) {
+            $account = PersonalAccount::whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-        if (!$personalAccount) {
+            if (!$account) {
+                return false;
+            }
+
+            app(AuditLogger::class)->record(
+                'personal_account.deleted',
+                'Personal account deleted',
+                $account,
+                [
+                    'account_id' => $account->id,
+                    'name' => $account->name,
+                    'balance_at_deletion' => $account->balance,
+                    'currency' => $account->currency,
+                ],
+                request(),
+                auth('api')->id()
+            );
+
+            $account->delete();
+
+            return true;
+        });
+
+        if (!$deleted) {
             return response()->json([
-                'message' => 'Personal account not found'
+                'message' => 'Personal account not found',
             ], 404);
         }
 
-        $personalAccount->delete();
-
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted personal account #'.$id
-        ]);        
-
         return response()->json([
-            'message' => 'Personal account deleted successfully'
+            'message' => 'Personal account deleted successfully',
         ]);
     }
-        public function titheOptions()
-        {
-            // Get only cash/mpesa/bank accounts under shop_working_capital with balance > 0
-            $accounts = PersonalAccount::where('category', 'shop_working_capital')
-                ->whereIn('account_type', ['cash', 'mpesa', 'bank'])
-                ->where('balance', '>', 0)
-                ->get(['id','name','balance','account_type','category']);
 
-            return response()->json([
-                'personalAccounts' => $accounts
+    /**
+     * Get eligible accounts for tithe payments.
+     */
+    public function titheOptions()
+    {
+        $accounts = PersonalAccount::where('category', 'shop_working_capital')
+            ->whereIn('account_type', ['cash', 'mpesa', 'bank'])
+            ->where('balance', '>', 0)
+            ->get([
+                'id',
+                'name',
+                'balance',
+                'account_type',
+                'category',
             ]);
-        }
 
+        return response()->json([
+            'personalAccounts' => $accounts,
+        ]);
+    }
 }

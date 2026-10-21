@@ -8,140 +8,266 @@ use App\Models\Invoice;
 use App\Models\LedgerEntry;
 use App\Models\LoyaltyCard;
 use App\Models\Reward;
+use App\Services\AuditLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FootTrafficController extends Controller
 {
-    // Log traffic
+    /**
+     * Log customer traffic and process loyalty rewards.
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'service_id'  => 'nullable|exists:services,id',
-            'invoice_id'  => 'nullable|exists:invoices,id'
+            'service_id' => 'nullable|exists:services,id',
+            'invoice_id' => 'nullable|exists:invoices,id',
         ]);
 
-        // 1️⃣ Log foot traffic
-        $footTraffic = FootTraffic::create($data);
+        $result = DB::transaction(function () use ($request, $data) {
+            // Lock the customer to reduce concurrent loyalty-processing conflicts.
+            $customer = Customer::whereKey($data['customer_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // 2️⃣ Fetch customer with total visits
-        $customer = Customer::withCount('visits')->findOrFail($request->customer_id);
-        $totalVisits = $customer->visits_count;
+            $footTraffic = FootTraffic::create($data);
 
-        // 3️⃣ Fetch loyalty card (ANY status)
-        $loyaltyCard = LoyaltyCard::where('customer_id', $customer->id)->first();
+            app(AuditLogger::class)->record(
+                'foot_traffic.logged',
+                "Customer foot traffic logged (ID: {$footTraffic->id})",
+                $footTraffic,
+                [
+                    'foot_traffic_id' => $footTraffic->id,
+                    'customer_id' => $customer->id,
+                    'service_id' => $footTraffic->service_id,
+                    'invoice_id' => $footTraffic->invoice_id,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
-        $responseMessage = null;
-        $rewardCreated   = false;
+            $customer->loadCount('visits');
+            $totalVisits = $customer->visits_count;
 
-        // 4️⃣ Issue first loyalty card ONLY ONCE
-        if (!$loyaltyCard && $totalVisits >= 5) {
-            $loyaltyCard = LoyaltyCard::create([
-                'customer_id' => $customer->id,
-                'serial'      => 'CYB-' . str_pad($customer->id, 4, '0', STR_PAD_LEFT),
-                'visits'      => 0,
-                'status'      => 'active'
-            ]);
+            // Retrieve a loyalty card regardless of its status.
+            $loyaltyCard = LoyaltyCard::where('customer_id', $customer->id)
+                ->lockForUpdate()
+                ->first();
 
-            $responseMessage = "✨ First loyalty card issued!";
-        }
+            $responseMessage = null;
+            $rewardCreated = false;
 
-        // 5️⃣ Increment visits ONLY if card is active
-        if ($loyaltyCard && $loyaltyCard->status === 'active') {
-            $previousVisits = $loyaltyCard->visits;
+            // Issue the first loyalty card after five visits.
+            if (!$loyaltyCard && $totalVisits >= 5) {
+                $loyaltyCard = LoyaltyCard::create([
+                    'customer_id' => $customer->id,
+                    'serial' => 'CYB-' . str_pad(
+                        $customer->id,
+                        4,
+                        '0',
+                        STR_PAD_LEFT
+                    ),
+                    'visits' => 0,
+                    'status' => 'active',
+                ]);
 
-            $loyaltyCard->increment('visits');
-            $loyaltyCard->refresh();
-
-            // 6️⃣ Handle 10th visit reward
-            if ($previousVisits < 10 && $loyaltyCard->visits >= 10) {
-                $loyaltyCard->update(['status' => 'completed']);
-
-                if ($request->invoice_id) {
-                    $invoice = Invoice::find($request->invoice_id);
-                    $rewardValue = $invoice ? $invoice->total_amount : 0;
-
-                    // Create reward
-                    Reward::create([
+                app(AuditLogger::class)->record(
+                    'loyalty_card.created',
+                    "Loyalty card issued to customer #{$customer->id}",
+                    $loyaltyCard,
+                    [
+                        'loyalty_card_id' => $loyaltyCard->id,
                         'customer_id' => $customer->id,
-                        'reward_type' => 'gift',
-                        'value'       => $rewardValue,
-                        'visits'      => $loyaltyCard->visits
+                        'serial' => $loyaltyCard->serial,
+                    ],
+                    $request,
+                    auth('api')->id()
+                );
+
+                $responseMessage = 'First loyalty card issued!';
+            }
+
+            // Increment visits only while the card is active.
+            if ($loyaltyCard && $loyaltyCard->status === 'active') {
+                $previousVisits = $loyaltyCard->visits;
+
+                $loyaltyCard->increment('visits');
+                $loyaltyCard->refresh();
+
+                // Handle the 10th visit.
+                if (
+                    $previousVisits < 10 &&
+                    $loyaltyCard->visits >= 10
+                ) {
+                    $loyaltyCard->update([
+                        'status' => 'completed',
                     ]);
 
-                    // Ledger entry
-                    LedgerEntry::create([
-                        'customer_id' => $customer->id,
-                        'value'       => $rewardValue,
-                        'description' => "Reward for customer #{$customer->id}"
-                    ]);
+                    app(AuditLogger::class)->record(
+                        'loyalty_card.completed',
+                        "Loyalty card completed for customer #{$customer->id}",
+                        $loyaltyCard,
+                        [
+                            'loyalty_card_id' => $loyaltyCard->id,
+                            'customer_id' => $customer->id,
+                            'visits' => $loyaltyCard->visits,
+                        ],
+                        $request,
+                        auth('api')->id()
+                    );
 
-                    $rewardCreated   = true;
-                    $responseMessage = "🎉 Customer reached 10 visits! Reward issued.";
+                    if (!empty($data['invoice_id'])) {
+                        $invoice = Invoice::findOrFail($data['invoice_id']);
+                        $rewardValue = $invoice->total_amount;
+
+                        $reward = Reward::create([
+                            'customer_id' => $customer->id,
+                            'reward_type' => 'gift',
+                            'value' => $rewardValue,
+                            'visits' => $loyaltyCard->visits,
+                        ]);
+
+                        app(AuditLogger::class)->record(
+                            'loyalty_reward.issued',
+                            "Loyalty reward issued to customer #{$customer->id}",
+                            $reward,
+                            [
+                                'reward_id' => $reward->id,
+                                'customer_id' => $customer->id,
+                                'value' => $rewardValue,
+                                'visits' => $loyaltyCard->visits,
+                                'invoice_id' => $invoice->id,
+                            ],
+                            $request,
+                            auth('api')->id()
+                        );
+
+                        LedgerEntry::create([
+                            'customer_id' => $customer->id,
+                            'value' => $rewardValue,
+                            'description' => "Reward for customer #{$customer->id}",
+                        ]);
+
+                        app(AuditLogger::class)->record(
+                            'loyalty_reward.ledger_recorded',
+                            "Ledger entry recorded for loyalty reward #{$reward->id}",
+                            $reward,
+                            [
+                                'reward_id' => $reward->id,
+                                'customer_id' => $customer->id,
+                                'value' => $rewardValue,
+                            ],
+                            $request,
+                            auth('api')->id()
+                        );
+
+                        $rewardCreated = true;
+                        $responseMessage =
+                            'Customer reached 10 visits! Reward issued.';
+                    }
                 }
             }
-        }
 
-        return response()->json([
-            'foot_traffic'   => $footTraffic,
-            'total_visits'   => $totalVisits,
-            'loyalty_card'   => $loyaltyCard,
-            'message'        => $responseMessage,
-            'reward_created' => $rewardCreated
-        ], 201);
+            return [
+                'foot_traffic' => $footTraffic,
+                'total_visits' => $totalVisits,
+                'loyalty_card' => $loyaltyCard,
+                'message' => $responseMessage,
+                'reward_created' => $rewardCreated,
+            ];
+        });
+
+        return response()->json($result, 201);
     }
 
-    // List traffic (optional for dashboard)
+    /**
+     * List foot traffic.
+     */
     public function index()
     {
-        $traffic = FootTraffic::with(['customer', 'service', 'invoice'])
-                    ->orderBy('arrival_time', 'desc')
-                    ->get();
+        $traffic = FootTraffic::with([
+            'customer',
+            'service',
+            'invoice',
+        ])
+            ->orderBy('arrival_time', 'desc')
+            ->get();
 
         return response()->json($traffic);
     }
 
+    /**
+     * Log anonymous or basic foot traffic.
+     */
     public function storeAnon(Request $request)
     {
-        FootTraffic::create([
-            'customer_id' => $request->customer_id,
-            'service_id' => $request->service_id,
-            'invoice_id' => $request->invoice_id
+        $data = $request->validate([
+            'customer_id' => 'nullable|exists:customers,id',
+            'service_id' => 'nullable|exists:services,id',
+            'invoice_id' => 'nullable|exists:invoices,id',
         ]);
-        
+
+        $footTraffic = FootTraffic::create($data);
+
+        app(AuditLogger::class)->record(
+            'foot_traffic.anonymous_logged',
+            "Basic foot traffic logged (ID: {$footTraffic->id})",
+            $footTraffic,
+            [
+                'foot_traffic_id' => $footTraffic->id,
+                'customer_id' => $footTraffic->customer_id,
+                'service_id' => $footTraffic->service_id,
+                'invoice_id' => $footTraffic->invoice_id,
+            ],
+            $request,
+            auth('api')->id()
+        );
+
         return response()->json([
-            'message' => 'Foot traffic logged'
+            'message' => 'Foot traffic logged',
         ]);
     }
 
-    // Dashboard data: total count + breakdown
+    /**
+     * Dashboard traffic totals and service breakdown.
+     */
     public function dashboard()
     {
-        $today = Carbon::today();
-
-        $footTrafficList = FootTraffic::with(['customer', 'service'])
+        $footTrafficList = FootTraffic::with([
+            'customer',
+            'service',
+        ])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Count by service
-        $serviceCounts = $footTrafficList->groupBy(function($ft){
-            return $ft->service ? $ft->service->name : 'General';
-        })->map(fn($group) => count($group));
+        $serviceCounts = $footTrafficList
+            ->groupBy(function ($ft) {
+                return $ft->service
+                    ? $ft->service->name
+                    : 'General';
+            })
+            ->map(fn ($group) => $group->count());
 
         return response()->json([
             'total' => $footTrafficList->count(),
-            'footTrafficList' => $footTrafficList->map(function($ft){
+
+            'footTrafficList' => $footTrafficList->map(function ($ft) {
                 return [
                     'id' => $ft->id,
-                    'customer_name' => $ft->customer ? $ft->customer->name : null,
-                    'service_name' => $ft->service ? $ft->service->name : 'General',
+                    'customer_name' => $ft->customer
+                        ? $ft->customer->name
+                        : null,
+                    'service_name' => $ft->service
+                        ? $ft->service->name
+                        : 'General',
                     'time_in' => $ft->created_at,
-                    'invoice_id' => $ft->invoice_id
+                    'invoice_id' => $ft->invoice_id,
                 ];
             }),
-            'serviceCounts' => $serviceCounts
-        ]);
-    }    
-}
 
+            'serviceCounts' => $serviceCounts,
+        ]);
+    }
+}

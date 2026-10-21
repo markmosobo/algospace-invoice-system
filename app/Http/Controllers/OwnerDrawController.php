@@ -2,77 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\PersonalAccount;
+use App\Services\AuditLogger;
 use App\Services\LedgerReportService;
 use App\Services\LedgerService;
-use App\Models\PersonalAccount;
-use App\Models\SystemLog;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OwnerDrawController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'payment_account_id' => 'required|exists:personal_accounts,id',
             'from' => 'nullable|date',
-            'to' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
         ]);
 
-        $ownerDrawAmount = DB::transaction(function () use ($request) {
-
-            /** 🔒 Lock payment account */
+        $ownerDrawAmount = DB::transaction(function () use ($data, $request) {
+            // Lock the payment account to prevent concurrent balance changes.
             $paymentAccount = PersonalAccount::lockForUpdate()
-                ->findOrFail($request->payment_account_id);
+                ->findOrFail($data['payment_account_id']);
 
-            /** ✅ Get profit/loss report for filtered dates */
+            // Calculate profit/loss for the requested period.
             $report = LedgerReportService::getProfitLoss(
-                $request->from,
-                $request->to
+                $data['from'] ?? null,
+                $data['to'] ?? null
             );
 
-            /** ❌ Enforce tithe rule */
+            // Tithe must be paid before an owner draw.
             if (!$report['tithe_paid']) {
-                throw new \Exception('Tithe must be paid before owner draw.');
+                throw ValidationException::withMessages([
+                    'tithe' => ['Tithe must be paid before owner draw.'],
+                ]);
             }
 
-            /** ✅ Calculate owner draw (30% of profit after tithe) */
-            $maxOwnerDraw = $report['profit_after_tithe'] * 0.3;
+            // Owner draw is capped at 30% of profit after tithe.
+            $maxOwnerDraw = (float) $report['profit_after_tithe'] * 0.3;
 
             if ($maxOwnerDraw <= 0) {
-                throw new \Exception('No available profit for owner draw.');
+                throw ValidationException::withMessages([
+                    'amount' => ['No available profit for owner draw.'],
+                ]);
             }
 
-            /** ❌ Insufficient cash */
             if ($paymentAccount->balance < $maxOwnerDraw) {
-                throw new \Exception('Insufficient account balance for owner draw.');
+                throw ValidationException::withMessages([
+                    'payment_account_id' => [
+                        'Insufficient account balance for owner draw.',
+                    ],
+                ]);
             }
 
-            /** ✅ Deduct money from account */
             $paymentAccount->balance -= $maxOwnerDraw;
             $paymentAccount->save();
 
-            /** ✅ Ledger entry */
-            LedgerService::recordOwnerDraw(
+            $entry = LedgerService::recordOwnerDraw(
                 $paymentAccount,
                 $maxOwnerDraw,
                 'Owner draw (30% of profit after tithe)'
             );
 
-            /** 🧾 Log */
-            SystemLog::create([
-                'user_id' => auth()->id(),
-                'description' =>
-                    auth()->user()->name .
-                    ' withdrew owner draw of KES ' . $maxOwnerDraw
-            ]);
+            app(AuditLogger::class)->record(
+                'owner_draw.recorded',
+                'Owner draw recorded',
+                $entry instanceof \Illuminate\Database\Eloquent\Model
+                    ? $entry
+                    : null,
+                [
+                    'payment_account_id' => $paymentAccount->id,
+                    'amount' => $maxOwnerDraw,
+                    'profit_after_tithe' => $report['profit_after_tithe'],
+                    'draw_percentage' => 30,
+                    'from' => $data['from'] ?? null,
+                    'to' => $data['to'] ?? null,
+                    'ledger_entry_id' => $entry?->id,
+                ],
+                $request,
+                auth('api')->id()
+            );
 
             return $maxOwnerDraw;
         });
 
         return response()->json([
             'message' => 'Owner draw recorded successfully',
-            'amount' => $ownerDrawAmount
+            'amount' => $ownerDrawAmount,
         ]);
     }
 }

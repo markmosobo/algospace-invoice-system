@@ -4,19 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\SystemLog;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use App\Mail\VerifyEmailMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use App\Mail\VerifyEmailMail;
 
 class AuthController extends Controller
 {
     /**
-     * Register a new user and return JWT
+     * Register a new user and return verification instructions.
      */
     public function register(Request $request)
     {
@@ -32,26 +30,39 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $user = User::create([
-            'name'   => trim($request->first_name . ' ' . $request->last_name),
-            'email'  => $request->email,
-            'password' => Hash::make($request->password),
-            'role'   => $request->role ?? 'client',
-            'status' => 'pending',
-            'phone' => $request->phone,
-            'dob' => $request->dob ?? null,
-            'address' => $request->address ?? null,
-            'city' => $request->city ?? null,
-            'postal_code' => $request->postal_code ?? null,
+            'name'            => trim($request->first_name . ' ' . $request->last_name),
+            'email'           => $request->email,
+            'password'        => Hash::make($request->password),
+            'role'            => $request->role,
+            'status'          => 'pending',
+            'phone'           => $request->phone,
+            'dob'             => $request->dob ?? null,
+            'address'         => $request->address ?? null,
+            'city'            => $request->city ?? null,
+            'postal_code'     => $request->postal_code ?? null,
             'membership_type' => $request->membership_type ?? 'basic',
-            'borrow_limit' => $request->borrow_limit ?? 0,
+            'borrow_limit'    => $request->borrow_limit ?? 0,
         ]);
 
-        // 🔐 CREATE SIGNED VERIFICATION LINK
+        // Record successful account creation.
+        app(AuditLogger::class)->record(
+            'user.registered',
+            "User account created: {$user->name}",
+            $user,
+            [
+                'role' => $user->role,
+                'status' => $user->status,
+            ],
+            $request,
+            $user->id
+        );
+
+        // Create a signed email verification link.
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
@@ -61,15 +72,10 @@ class AuthController extends Controller
             ]
         );
 
-        // 📧 SEND EMAIL MANUALLY
+        // Send the verification email.
         Mail::to($user->email)->send(
             new VerifyEmailMail($verificationUrl)
         );
-
-        SystemLog::create([
-            'user_id' => $user->id,
-            'description' => $user->name . ' created account'
-        ]);
 
         return response()->json([
             'status'  => 'success',
@@ -78,51 +84,75 @@ class AuthController extends Controller
         ], 201);
     }
 
-
     /**
-     * Login user and return JWT
+     * Login user and return JWT.
      */
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
-        // attempt login first
+        // Record failed authentication attempts.
         if (!$token = auth('api')->attempt($credentials)) {
+            app(AuditLogger::class)->record(
+                'auth.login_failed',
+                'Login failed: invalid credentials',
+                null,
+                [
+                    'attempted_email' => $request->input('email'),
+                    'reason' => 'invalid_credentials',
+                ],
+                $request
+            );
+
             return response()->json([
-                'error' => 'Invalid credentials'
+                'error' => 'Invalid credentials',
             ], 401);
         }
 
-        // get authenticated user
         $user = auth('api')->user();
 
-        // 🔴 EMAIL VERIFICATION CHECK (IMPORTANT)
+        // Require email verification before allowing login.
         if (!$user->hasVerifiedEmail()) {
+            app(AuditLogger::class)->record(
+                'auth.login_blocked',
+                "Login blocked: email not verified for user ID {$user->id}",
+                $user,
+                [
+                    'reason' => 'email_not_verified',
+                ],
+                $request,
+                $user->id
+            );
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Please verify your email first'
+                'message' => 'Please verify your email first',
             ], 403);
         }
 
-        // record system log
-        SystemLog::create([
-            'user_id' => $user->id,
-            'description' => $user->name . ' logged in'
-        ]);
+        // Record successful login.
+        app(AuditLogger::class)->record(
+            'auth.login',
+            "User logged in: {$user->name}",
+            $user,
+            [],
+            $request,
+            $user->id
+        );
 
         return response()->json([
             'status' => 'success',
             'user' => $user,
             'token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
         ]);
     }
 
     /**
-     * Logout user (invalidate token)
+     * Logout user and invalidate JWT.
      */
-    public function logout()
+    public function logout(Request $request)
     {
         try {
             $user = auth('api')->user();
@@ -130,48 +160,86 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Unauthenticated'
+                    'message' => 'Unauthenticated',
                 ], 401);
             }
 
+            // Capture the user before invalidating the token.
             auth('api')->logout();
 
-            SystemLog::create([
-                'user_id' => $user->id,
-                'description' => $user->name . ' logged out'
-            ]);
+            app(AuditLogger::class)->record(
+                'auth.logout',
+                "User logged out: {$user->name}",
+                $user,
+                [],
+                $request,
+                $user->id
+            );
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'User logged out successfully.'
+                'message' => 'User logged out successfully.',
             ]);
+        } catch (\Throwable $e) {
+            report($e);
 
-        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Logout failed'
+                'message' => 'Logout failed',
             ], 500);
         }
     }
 
     /**
-     * Get authenticated user
+     * Get authenticated user.
      */
     public function me()
     {
-        return response()->json(['status' => 'success', 'user' => auth('api')->user()]);
+        return response()->json([
+            'status' => 'success',
+            'user' => auth('api')->user(),
+        ]);
     }
 
     /**
-     * Refresh token
+     * Refresh authentication token.
      */
-    public function refresh()
+    public function refresh(Request $request)
     {
-        return response()->json([
-            'status' => 'success',
-            'token' => auth('api')->refresh(),
-            'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60
-        ]);
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthenticated',
+                ], 401);
+            }
+
+            $token = auth('api')->refresh();
+
+            app(AuditLogger::class)->record(
+                'auth.token_refreshed',
+                "Authentication token refreshed for user ID {$user->id}",
+                $user,
+                [],
+                $request,
+                $user->id
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token refresh failed',
+            ], 401);
+        }
     }
 }

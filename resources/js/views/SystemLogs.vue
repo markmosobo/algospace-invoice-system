@@ -1,343 +1,354 @@
 <template>
-    <Master>
-        <section class="section dashboard">
-          <div class="row">
-    
-                <!-- Top Selling -->
-                <div class="col-12">
-                  <div class="card top-selling overflow-auto">
-    
-                    <div class="filter">
-                      <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li class="dropdown-header text-start">
-                          <h6>Filter</h6>
-                        </li>
-    
-                        <li>
-                          <router-link to="/todayactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              Today
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/yesterdayactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              Yesterday
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/monthactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              This Month
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/lastmonthactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              Last Month
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/yearactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              This Year
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/lastyearactivities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              Last Year
-                            </a>
-                          </router-link>
-                        </li>
-                        <li>
-                          <router-link to="/activities" custom v-slot="{ href, navigate, isActive }">
-                            <a
-                                :href="href"
-                                :class="{ active: isActive }"
-                                class="dropdown-item"
-                                @click="navigate"
-                            >
-                              All Time
-                            </a>
-                          </router-link>
-                        </li>
-                      </ul>
-                    </div>
-    
-                    <div class="card-body">
-                      <h5 class="card-title">System Logs <span>| All Time </span></h5>
+  <Master>
+    <div class="container-fluid py-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+          <h4 class="mb-1">System Logs</h4>
+          <p class="text-muted mb-0">
+            Application errors, warnings and diagnostic messages.
+          </p>
+        </div>
 
-                      <!-- Tabs -->
-                      <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                          <li class="nav-item" role="presentation">
-                              <button class="nav-link active custom-active-btn" id="pills-profile-tab" 
-                                      data-bs-toggle="pill" data-bs-target="#pills-profile" 
-                                      type="button" role="tab" aria-controls="pills-profile" aria-selected="false">
-                                  Tabular
-                              </button>
-                          </li>                        
-                          <li class="nav-item" role="presentation">
-                              <button class="nav-link custom-active-btn" id="pills-home-tab" 
-                                      data-bs-toggle="pill" data-bs-target="#pills-home" 
-                                      type="button" role="tab" aria-controls="pills-home" aria-selected="true">
-                                  Sequential
-                              </button>
-                          </li>
-                      </ul>
+        <button
+          class="btn btn-outline-success"
+          :disabled="loading"
+          @click="fetchLogs"
+        >
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          Refresh
+        </button>
+      </div>
 
-                      <div class="tab-content pt-2" id="myTabContent">
-                        <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="home-tab">
-                          <div class="card-body">
+      <!-- Summary -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <small class="text-muted">Matching entries</small>
+              <h3 class="mb-0">{{ total }}</h3>
+            </div>
+          </div>
+        </div>
 
-                            <div class="activity">
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <small class="text-muted">Current page</small>
+              <h3 class="mb-0">{{ currentPage }} / {{ lastPage }}</h3>
+            </div>
+          </div>
+        </div>
 
-                             <div v-for="item in systemLogs" :key="item.id" class="activity-item d-flex">
-                              <div class="activite-label">{{ getRelativeTime(item.created_at) }}</div>
-                              <i
-                                class="bi bi-circle-fill activity-badge align-self-start"
-                                :class="getRandomBadgeClass()"
-                              ></i>
-                              <div class="activity-content">
-                                {{ item.description }}
-                              </div>
-                            </div>
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <small class="text-muted">Log retention</small>
+              <h3 class="mb-0">14 days</h3>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                            </div>
+      <!-- Filters -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Search logs</label>
+              <input
+                v-model="search"
+                type="search"
+                class="form-control"
+                placeholder="Search message, context or exception..."
+                @keyup.enter="applyFilters"
+              />
+            </div>
 
-                          </div>
+            <div class="col-md-4">
+              <label class="form-label">Severity</label>
+              <select v-model="level" class="form-select">
+                <option value="">All levels</option>
+                <option value="EMERGENCY">Emergency</option>
+                <option value="ALERT">Alert</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="ERROR">Error</option>
+                <option value="WARNING">Warning</option>
+                <option value="NOTICE">Notice</option>
+                <option value="INFO">Info</option>
+                <option value="DEBUG">Debug</option>
+              </select>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+              <button
+                class="btn btn-success"
+                :disabled="loading"
+                @click="applyFilters"
+              >
+                Search
+              </button>
+
+              <button
+                class="btn btn-outline-secondary"
+                @click="clearFilters"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error message -->
+      <div v-if="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <!-- Logs table -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div v-if="loading" class="text-center py-5">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="mt-2 text-muted">Loading system logs...</p>
+          </div>
+
+          <div v-else-if="logs.length === 0" class="text-center py-5">
+            <i class="bi bi-journal-check fs-1 text-muted"></i>
+            <p class="mt-2 mb-0">No matching log entries found.</p>
+          </div>
+
+          <div v-else class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Severity</th>
+                  <th>Message</th>
+                  <th>Log file</th>
+                  <th class="text-end">Details</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <template v-for="(log, index) in logs" :key="`${log.file}-${log.timestamp}-${index}`">
+                  <tr>
+                    <td class="text-nowrap">
+                      <small>{{ log.timestamp }}</small>
+                    </td>
+
+                    <td>
+                      <span :class="levelClass(log.level)">
+                        {{ log.level }}
+                      </span>
+                    </td>
+
+                    <td class="log-message">
+                      {{ log.message }}
+                    </td>
+
+                    <td>
+                      <small class="text-muted">{{ log.file }}</small>
+                    </td>
+
+                    <td class="text-end">
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="toggleDetails(index)"
+                      >
+                        {{ expandedIndex === index ? 'Hide' : 'View' }}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr v-if="expandedIndex === index">
+                    <td colspan="5" class="bg-body-tertiary">
+                      <div class="p-2">
+                        <p class="mb-2">
+                          <strong>Environment:</strong>
+                          {{ log.environment }}
+                        </p>
+
+                        <div v-if="log.context" class="mb-3">
+                          <strong>Context</strong>
+                          <pre class="log-details mt-2">{{ log.context }}</pre>
                         </div>
-                        <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="profile-tab">
-                          <div class="card-body pb-0">
 
-                            <table id="AllActivitiesTable" class="table table-borderless">
-                              <thead>
-                                <tr>
-                                  <th scope="col">Timestamp</th>
-                                  <th scope="col">Description</th>
-                                </tr>
-                              </thead>
-                              <!-- Spinner shown while data is initializing -->
-                              <tbody v-if="initializing">
-                                <tr>
-                                  <td colspan="7" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                      <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                              <tbody v-else>
-                                <tr v-for="item in systemLogs" :key="item.id">
-                                  <td>{{formatDateTime(item.created_at)}}</td>
-                                  <td>{{item.description}}</td>
-                                </tr>
-                              </tbody>
-                            </table>
-          
-                          </div>
+                        <div v-if="log.details" class="mb-3">
+                          <strong>Exception / stack trace</strong>
+                          <pre class="log-details mt-2">{{ log.details }}</pre>
+                        </div>
+
+                        <div v-if="!log.context && !log.details" class="text-muted">
+                          No additional details were parsed from this entry.
                         </div>
                       </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
 
-                    </div>
-    
-                  </div>
-                </div><!-- End Top Selling -->
-    
+          <!-- Pagination -->
+          <div
+            v-if="!loading && total > 0"
+            class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3"
+          >
+            <small class="text-muted">
+              {{ total }} matching entries
+            </small>
+
+            <div class="d-flex align-items-center gap-2">
+              <button
+                class="btn btn-sm btn-outline-success"
+                :disabled="currentPage <= 1"
+                @click="changePage(currentPage - 1)"
+              >
+                Previous
+              </button>
+
+              <span class="small">
+                {{ currentPage }} / {{ lastPage }}
+              </span>
+
+              <button
+                class="btn btn-sm btn-outline-success"
+                :disabled="currentPage >= lastPage"
+                @click="changePage(currentPage + 1)"
+              >
+                Next
+              </button>
             </div>
-        </section>
-    </Master>
-    </template>
-    
-    <script>
-     import Master from "@/components/Master.vue";
-     import axios from "axios";
-    import Swal from 'sweetalert2';
-    import "jquery/dist/jquery.min.js";
-    import "datatables.net-dt/js/dataTables.dataTables";
-    import "datatables.net-dt/css/jquery.dataTables.min.css";
-    import $ from "jquery";
-    import moment from 'moment';
-    
-    const toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000
-    });
-    
-    window.toast = toast;
-    
-    export default {
-      data(){
-        return {
-          systemLogs: [],
-          initializing: true,
-          badgeClasses: [
-            'text-success',
-            'text-danger',
-            'text-primary',
-            'text-info',
-            'text-warning',
-            'text-muted',
-          ],
+          </div>
+        </div>
+      </div>
+    </div>
+  </Master>
+</template>
 
+<script>
+import axios from 'axios';
+import Master from '@/components/Master.vue';
+
+export default {
+  name: 'SystemLogs',
+
+  components: {
+    Master,
+  },
+
+  data() {
+    return {
+      logs: [],
+      search: '',
+      level: '',
+      currentPage: 1,
+      lastPage: 1,
+      total: 0,
+      perPage: 20,
+      loading: false,
+      error: '',
+      expandedIndex: null,
+    };
+  },
+
+  mounted() {
+    this.fetchLogs();
+  },
+
+  methods: {
+    async fetchLogs() {
+      this.loading = true;
+      this.error = '';
+      this.expandedIndex = null;
+
+      try {
+        const response = await axios.get('/api/system-logs', {
+          params: {
+            search: this.search.trim() || undefined,
+            level: this.level || undefined,
+            page: this.currentPage,
+            per_page: this.perPage,
+          },
+        });
+
+        const result = response.data;
+
+        this.logs = result.data || [];
+        this.currentPage = result.current_page || 1;
+        this.lastPage = result.last_page || 1;
+        this.total = result.total || 0;
+      } catch (error) {
+        console.error('Failed to load system logs:', error);
+
+        if (error.response?.status === 401) {
+          this.error = 'Your session has expired. Please sign in again.';
+        } else if (error.response?.status === 403) {
+          this.error = 'You are not authorized to view system logs.';
+        } else {
+          this.error = 'Unable to load system logs. Check the API route and server logs.';
         }
-      },
-      methods: {
-        format_date(value){
-          if(value){
-            return moment(String(value)).format('MMM Do YYYY')
-          }
-        },
-        getRandomBadgeClass() {
-          // Select a random class from the badgeClasses array
-          const randomIndex = Math.floor(Math.random() * this.badgeClasses.length);
-          return this.badgeClasses[randomIndex];
-        },
-        getRelativeTime(createdAt) {
-          const currentTime = new Date();
-          const activityTime = new Date(createdAt);
-          const differenceInSeconds = (currentTime - activityTime) / 1000;
-
-          if (differenceInSeconds < 60) return `${Math.floor(differenceInSeconds)} seconds ago`;
-          const differenceInMinutes = differenceInSeconds / 60;
-          if (differenceInMinutes < 60) return `${Math.floor(differenceInMinutes)} mins ago`;
-          const differenceInHours = differenceInMinutes / 60;
-          if (differenceInHours < 24) return `${Math.floor(differenceInHours)} hrs ago`;
-          const differenceInDays = differenceInHours / 24;
-          if (differenceInDays < 7) return `${Math.floor(differenceInDays)} days ago`;
-          const differenceInWeeks = differenceInDays / 7;
-          return `${Math.floor(differenceInWeeks)} weeks ago`;
-        },        
-        navigateTo(location){
-            this.$router.push(location)
-        },
-        formatDateTime(dateTime) {
-          const date = new Date(dateTime);
-
-          // Format date components
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-          const year = date.getFullYear();
-
-          // Format time components
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
-
-          // Combine to format 'DD/MM/YYYY HH:mm:ss'
-          return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-        },
-        deleteCategory(id){
-                Swal.fire({
-                  title: 'Are you sure?',
-                  text: "You won't be able to revert this!",
-                  icon: 'warning',
-                  showCancelButton: true,
-                  confirmButtonColor: '#3085d6',
-                  cancelButtonColor: '#d33',
-                  confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                  if (result.isConfirmed) { 
-                  //send request to the server
-                  axios.delete('/api/category/'+id).then(() => {
-                  toast.fire(
-                    'Deleted!',
-                    'Category has been deleted.',
-                    'success'
-                  )
-                  this.loadLists();
-                  }).catch(() => {
-                    Swal.fire(
-                    'Failed!',
-                    'There was something wrong.',
-                    'warning'
-                  )
-                  }); 
-                  }else if(result.isDenied) {
-                    console.log('cancelled')
-                  }
-                                   
-                })
-        },
-        loadLists() {
-          this.initializing = true; // Start spinner
-          axios.get('/api/system-logs')
-            .then((response) => {
-              this.systemLogs = response.data;
-
-              setTimeout(() => {
-                $("#AllActivitiesTable").DataTable();
-              }, 10);
-            })
-            .catch((error) => {
-              console.error('Error fetching user list:', error);
-            })
-            .finally(() => {
-              this.initializing = false; // Stop spinner
-            });
-        },
-      },
-      components : {
-          Master,
-      },
-      mounted(){
-        this.loadLists();
-        this.currentUser = JSON.parse(localStorage.getItem('user')) || {};
-        this.current_user_id = this.currentUser.id;
-        this.current_user = this.currentUser.first_name + " " + this.currentUser.last_name;
+      } finally {
+        this.loading = false;
       }
-    }
-    </script>
-    
-    
-    <style>
-      /* Custom active color for the buttons */
-      .nav-pills .nav-link.custom-active-btn.active {
-          background-color: #006400; /* Dark Green */
-          color: #fff; /* White text */
-      }
+    },
 
-      /* Hover effect (optional) */
-      .nav-pills .nav-link.custom-active-btn:hover {
-          background-color: #004d00; /* Darker Green on hover */
-      }
+    applyFilters() {
+      this.currentPage = 1;
+      this.fetchLogs();
+    },
 
-    </style>
+    clearFilters() {
+      this.search = '';
+      this.level = '';
+      this.currentPage = 1;
+      this.fetchLogs();
+    },
+
+    changePage(page) {
+      if (page < 1 || page > this.lastPage) return;
+
+      this.currentPage = page;
+      this.fetchLogs();
+    },
+
+    toggleDetails(index) {
+      this.expandedIndex = this.expandedIndex === index ? null : index;
+    },
+
+    levelClass(level) {
+      const classes = {
+        EMERGENCY: 'badge bg-danger',
+        ALERT: 'badge bg-danger',
+        CRITICAL: 'badge bg-danger',
+        ERROR: 'badge bg-danger',
+        WARNING: 'badge bg-warning text-dark',
+        NOTICE: 'badge bg-info text-dark',
+        INFO: 'badge bg-success',
+        DEBUG: 'badge bg-secondary',
+      };
+
+      return classes[level] || 'badge bg-secondary';
+    },
+  },
+};
+</script>
+
+<style scoped>
+.log-message {
+  min-width: 220px;
+  max-width: 460px;
+  overflow-wrap: anywhere;
+}
+
+.log-details {
+  max-height: 350px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--bs-tertiary-bg);
+  font-size: 12px;
+}
+</style>

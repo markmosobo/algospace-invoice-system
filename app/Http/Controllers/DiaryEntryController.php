@@ -2,39 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SystemLog;
-use Illuminate\Http\Request;
 use App\Models\DiaryEntry;
+use App\Services\AuditLogger;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class DiaryEntryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of diary entries.
      */
     public function index()
     {
         $diaryEntries = DiaryEntry::orderBy('entry_date', 'desc')->get();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' retrieved diary entries'
-        ]);
-
-        return response()->json($diaryEntries);        
+        return response()->json($diaryEntries);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created diary entry.
      */
     public function store(Request $request)
     {
-        // Validate incoming request
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|string|max:50', 
-            // note | credit | debit | reminder | event
+            'type' => 'required|string|max:50',
             'amount' => 'nullable|numeric|min:0',
             'category' => 'nullable|string|max:100',
             'tags' => 'nullable|string|max:255',
@@ -42,42 +34,47 @@ class DiaryEntryController extends Controller
             'attachment' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'entry_date' => 'nullable|date',
-            'remind_at' => 'nullable|date', // <--- added
+            'remind_at' => 'nullable|date',
         ]);
 
-        // Default dates
-        $entryDate = $request->entry_date ?? Carbon::now();
-        $remindAt = $request->remind_at ?? null; // only set if provided
-
-        // Create the diary entry
         $diaryEntry = DiaryEntry::create([
-            'title' => $request->title,
-            'type' => $request->type,
-            'amount' => $request->amount,
-            'category' => $request->category,
-            'tags' => $request->tags,
-            'description' => $request->description,
-            'attachment' => $request->attachment,
-            'entry_date' => $entryDate,
-            'status' => $request->status ?? 'pending',
-            'remind_at' => $remindAt, // <--- added
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'amount' => $validated['amount'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'tags' => $validated['tags'] ?? null,
+            'description' => $validated['description'],
+            'attachment' => $validated['attachment'] ?? null,
+            'entry_date' => $validated['entry_date'] ?? Carbon::now(),
+            'status' => $validated['status'] ?? 'pending',
+            'remind_at' => $validated['remind_at'] ?? null,
         ]);
 
-        // Record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' created diary entry #'.$diaryEntry->id
-        ]);          
+        app(AuditLogger::class)->record(
+            'diary_entry.created',
+            "Diary entry created (ID: {$diaryEntry->id})",
+            $diaryEntry,
+            [
+                'diary_entry_id' => $diaryEntry->id,
+                'type' => $diaryEntry->type,
+                'category' => $diaryEntry->category,
+                'status' => $diaryEntry->status,
+                'amount' => $diaryEntry->amount,
+                'has_reminder' => !empty($diaryEntry->remind_at),
+                'has_attachment' => !empty($diaryEntry->attachment),
+            ],
+            $request,
+            auth('api')->id()
+        );
 
         return response()->json([
             'message' => 'Diary entry created successfully',
-            'diaryEntry' => $diaryEntry
-        ], 201);          
+            'diaryEntry' => $diaryEntry,
+        ], 201);
     }
 
-
     /**
-     * Display the specified resource.
+     * Display a specific diary entry.
      */
     public function show(string $id)
     {
@@ -85,15 +82,15 @@ class DiaryEntryController extends Controller
 
         if (!$diaryEntry) {
             return response()->json([
-                'message' => 'Diary entry not found'
+                'message' => 'Diary entry not found',
             ], 404);
         }
 
-        return response()->json($diaryEntry);        
+        return response()->json($diaryEntry);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an existing diary entry.
      */
     public function update(Request $request, string $id)
     {
@@ -101,53 +98,83 @@ class DiaryEntryController extends Controller
 
         if (!$diaryEntry) {
             return response()->json([
-                'message' => 'Diary entry not found'
+                'message' => 'Diary entry not found',
             ], 404);
         }
 
-        // Validate input
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
             'type' => 'sometimes|string|max:50',
-            'amount' => 'nullable|numeric|min:0',
-            'category' => 'nullable|string|max:100',
-            'tags' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'attachment' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:50',
-            'entry_date' => 'nullable|date',
-            'remind_at' => 'nullable|date', // <--- added
+            'amount' => 'sometimes|nullable|numeric|min:0',
+            'category' => 'sometimes|nullable|string|max:100',
+            'tags' => 'sometimes|nullable|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'attachment' => 'sometimes|nullable|string|max:255',
+            'status' => 'sometimes|nullable|string|max:50',
+            'entry_date' => 'sometimes|nullable|date',
+            'remind_at' => 'sometimes|nullable|date',
         ]);
 
-        // Update fields safely
-        $diaryEntry->title = $request->title ?? $diaryEntry->title;
-        $diaryEntry->type = $request->type ?? $diaryEntry->type;
-        $diaryEntry->amount = $request->amount ?? $diaryEntry->amount;
-        $diaryEntry->category = $request->category ?? $diaryEntry->category;
-        $diaryEntry->tags = $request->tags ?? $diaryEntry->tags;
-        $diaryEntry->description = $request->description ?? $diaryEntry->description;
-        $diaryEntry->attachment = $request->attachment ?? $diaryEntry->attachment;
-        $diaryEntry->status = $request->status ?? $diaryEntry->status;
-        $diaryEntry->entry_date = $request->entry_date ?? $diaryEntry->entry_date;
-        $diaryEntry->remind_at = $request->remind_at ?? $diaryEntry->remind_at; // <--- added
+        $fieldsToAudit = [
+            'title',
+            'type',
+            'amount',
+            'category',
+            'tags',
+            'description',
+            'attachment',
+            'status',
+            'entry_date',
+            'remind_at',
+        ];
 
+        $before = $diaryEntry->only($fieldsToAudit);
+
+        // Only update fields actually provided in the request.
+        $diaryEntry->fill($validated);
         $diaryEntry->save();
 
-        // Record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' updated diary entry #'.$id
-        ]);           
+        $changes = [];
+
+        foreach ($fieldsToAudit as $field) {
+            $oldValue = $before[$field] ?? null;
+            $newValue = $diaryEntry->getAttribute($field);
+
+            if ($oldValue != $newValue) {
+                // Avoid copying diary descriptions or attachment paths into audit logs.
+                if ($field === 'description' || $field === 'attachment') {
+                    $changes[$field] = ['changed' => true];
+                } else {
+                    $changes[$field] = [
+                        'old' => $oldValue,
+                        'new' => $newValue,
+                    ];
+                }
+            }
+        }
+
+        if (!empty($changes)) {
+            app(AuditLogger::class)->record(
+                'diary_entry.updated',
+                "Diary entry updated (ID: {$diaryEntry->id})",
+                $diaryEntry,
+                [
+                    'diary_entry_id' => $diaryEntry->id,
+                    'changes' => $changes,
+                ],
+                $request,
+                auth('api')->id()
+            );
+        }
 
         return response()->json([
             'message' => 'Diary entry updated successfully',
-            'diaryEntry' => $diaryEntry
-        ]);        
+            'diaryEntry' => $diaryEntry,
+        ]);
     }
 
-
     /**
-     * Remove the specified resource from storage.
+     * Delete a diary entry.
      */
     public function destroy(string $id)
     {
@@ -155,24 +182,35 @@ class DiaryEntryController extends Controller
 
         if (!$diaryEntry) {
             return response()->json([
-                'message' => 'Diary entry not found'
+                'message' => 'Diary entry not found',
             ], 404);
         }
 
+        $entryId = $diaryEntry->id;
+        $entryType = $diaryEntry->type;
+
+        app(AuditLogger::class)->record(
+            'diary_entry.deleted',
+            "Diary entry deleted (ID: {$entryId})",
+            $diaryEntry,
+            [
+                'diary_entry_id' => $entryId,
+                'type' => $entryType,
+            ],
+            request(),
+            auth('api')->id()
+        );
+
         $diaryEntry->delete();
 
-        //record system log
-        SystemLog::create([
-            'user_id' => auth('api')->user()->id,
-            'description' => auth('api')->user()->name.' deleted entry #'.$diaryEntry->id
-        ]);           
-
         return response()->json([
-            'message' => 'Diary entry deleted successfully'
+            'message' => 'Diary entry deleted successfully',
         ]);
     }
 
-
+    /**
+     * Get overdue, today's, and tomorrow's reminders.
+     */
     public function remindersOverview()
     {
         $now = now();
@@ -185,8 +223,14 @@ class DiaryEntryController extends Controller
             ->where('status', 'pending')
             ->whereNotNull('remind_at')
             ->get()
-            ->map(function ($r) use ($now, $todayStart, $todayEnd, $tomorrowStart, $tomorrowEnd) {
-                $rRemind = $r->remind_at; // now Carbon
+            ->map(function ($r) use (
+                $now,
+                $todayStart,
+                $todayEnd,
+                $tomorrowStart,
+                $tomorrowEnd
+            ) {
+                $rRemind = $r->remind_at;
                 $status = '';
 
                 if ($rRemind < $now) {
@@ -201,35 +245,61 @@ class DiaryEntryController extends Controller
                     'id' => $r->id,
                     'title' => $r->title,
                     'remind_at' => $rRemind,
-                    'date' => $rRemind->format('d/m/Y'), // <-- this shows the date
-                    'time' => $rRemind->format('H:i'),   // <-- optional, still keep time if needed
-                    'status' => $status
+                    'date' => $rRemind->format('d/m/Y'),
+                    'time' => $rRemind->format('H:i'),
+                    'status' => $status,
                 ];
             })
-            ->filter(fn($r) => $r['status'] !== '') // remove anything not in these 3 categories
-            ->sortBy(function($r) { // optional: overdue first, then today, then tomorrow
-                $order = ['overdue' => 0, 'today' => 1, 'tomorrow' => 2];
+            ->filter(fn ($r) => $r['status'] !== '')
+            ->sortBy(function ($r) {
+                $order = [
+                    'overdue' => 0,
+                    'today' => 1,
+                    'tomorrow' => 2,
+                ];
+
                 return $order[$r['status']];
             })
-            ->values(); // reset keys
+            ->values();
 
         return response()->json($reminders);
     }
 
-
+    /**
+     * Mark a diary entry as done.
+     */
     public function markDone($id)
     {
         $diaryEntry = DiaryEntry::find($id);
 
         if (!$diaryEntry) {
-            return response()->json(['message' => 'Diary entry not found'], 404);
+            return response()->json([
+                'message' => 'Diary entry not found',
+            ], 404);
         }
+
+        $oldStatus = $diaryEntry->status;
 
         $diaryEntry->status = 'done';
         $diaryEntry->save();
 
-        return response()->json(['message' => 'Marked as done']);
+        if ($oldStatus !== 'done') {
+            app(AuditLogger::class)->record(
+                'diary_entry.completed',
+                "Diary entry marked as done (ID: {$diaryEntry->id})",
+                $diaryEntry,
+                [
+                    'diary_entry_id' => $diaryEntry->id,
+                    'previous_status' => $oldStatus,
+                    'new_status' => 'done',
+                ],
+                request(),
+                auth('api')->id()
+            );
+        }
+
+        return response()->json([
+            'message' => 'Marked as done',
+        ]);
     }
-
-
 }

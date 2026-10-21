@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CyberRequestController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\EnrollmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,7 +31,9 @@ Route::get('/e-books', [MarketingController::class, 'eBooks'])->name('e.books');
 Route::get('/community-space', [MarketingController::class, 'communitySpace'])->name('community.space');
 Route::get('/library/books/{book}', [MarketingController::class, 'showBook'])
     ->name('library.books.show');
-    
+Route::get('/verify/{certificate_no}', [EnrollmentController::class, 'verify'])
+    ->name('certificates.verify');
+
 Route::prefix('e-books')->group(function () {
 
     Route::get('/{book}/download', [BookController::class, 'download'])

@@ -78,6 +78,7 @@ Route::get('/services/export-pdf', [ServiceController::class, 'exportPdf'])
 Route::get('/courses/pdf', [ServiceController::class, 'pdf']);
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
 /*
 |--------------------------------------------------------------------------
 | EMAIL VERIFICATION (CUSTOM JWT-FRIENDLY)
@@ -525,8 +526,7 @@ Route::middleware(['auth:api'])->group(function () {
     );
 
 
-    Route::get('/verify/{certificate_no}', [EnrollmentController::class, 'verify'])
-    ->name('certificate.verify');
+
 
     // customers list for enrollment
     Route::get(

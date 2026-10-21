@@ -250,7 +250,7 @@
                                 <img
                                 :src="selectedCustomer.image 
                                     ? `/storage/${selectedCustomer.image}` 
-                                    : '/images/avatar.png'"
+                                    : '/storage/images/avatar.png'"
                                 alt="Customer photo"
                                 class="rounded-circle"
                                 style="width:60px;height:60px;object-fit:cover"
@@ -521,54 +521,6 @@
                             </div>
                         </div>
 
-                        <!-- Invoice Preview Button -->
-                        <div class="mt-3" v-if="invoiceForm.items.length > 0">
-                        <button class="btn btn-info mb-2" @click="previewInvoice" :disabled="isGenerating">
-                            {{ isGenerating ? 'Generating...' : 'Preview Invoice' }} 
-                        </button>
-
-                        <!-- PDF Preview iframe -->
-                        <div v-if="previewPdf" class="mt-2">
-                            <iframe 
-                                :srcdoc="previewPdf" 
-                                style="width:100%; height:400px; border:1px solid #ccc; border-radius:5px;" 
-                                frameborder="0">
-                            </iframe>
-                        </div>
-
-                        </div>
-
-                        <!-- Invoice Sharing Options -->
-                        <div class="mt-4 border-top pt-3" v-if="invoiceForm.items.length > 0">
-                        <h6 class="fw-bold">Share Invoice</h6>
-
-                        <div class="btn-group w-100">
-                            <button 
-                                class="btn btn-success" 
-                                @click="shareWhatsApp"
-                                v-if="customerForm.phone && customerForm.phone.trim() !== '' && pdfFileUrl"
-                            >
-                                WhatsApp
-                            </button>
-                            <button 
-                                class="btn btn-primary" 
-                                @click="shareEmail" 
-                                :disabled="!customerForm.email || customerForm.email.trim() === ''"
-                                v-if="customerForm.email && customerForm.email.trim() !== ''"
-                            >
-                                Email
-                            </button>
-
-                            <button class="btn btn-secondary" @click="downloadInvoice">
-                            Download PDF
-                            </button>
-                            <button class="btn btn-outline-dark" @click="printInvoice">
-                            Print
-                            </button>
-                        </div>
-                        </div>
-
-
                         </div>
 
                         <!-- STEP 3: PAYMENT -->
@@ -599,7 +551,7 @@
                             </div>
 
                             <div class="col-md-12">
-                            <label class="form-label">Comment</label>
+                            <label class="form-label">Comment (Optional)</label>
                             <textarea class="form-control" v-model="paymentForm.comment" rows="2"></textarea>
                             </div>
                         </div>
@@ -989,7 +941,7 @@
             </div>
         </section>        
     </Master>
-    </template>
+</template>
     
 <script>
 import Master from "@/components/Master.vue";

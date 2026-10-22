@@ -39,6 +39,8 @@ import FarmSales from '../views/farm/FarmSales.vue';
 import FarmWorkers from '../views/farm/FarmWorkers.vue';
 import WorkerTasks from '../views/farm/WorkerTasks.vue';
 import FarmAssets from '../views/farm/FarmAssets.vue';
+import CropHarvest from "@/views/farm/CropHarvest.vue";
+
 import FootTraffic from '@/views/FootTraffic.vue';
 import BookRentals from '@/views/BookRentals.vue';
 import BooksCatalog from '@/views/BooksCatalog.vue';
@@ -119,6 +121,7 @@ const routes = [
   { path: '/farm-workers', name: 'farm-workers', component: FarmWorkers, meta: { requiresAuth: true } },
   { path: '/worker-tasks', name: 'worker-tasks', component: WorkerTasks, meta: { requiresAuth: true } },
   { path: '/farm-assets', name: 'farm-assets', component: FarmAssets, meta: { requiresAuth: true } },
+  { path: '/crop-harvests', name: 'crop-harvests', component: CropHarvest, meta: { requiresAuth: true } },
 
   //personal routes
   { path: '/personal-accounts', name: 'personal-accounts', component: PersonalAccounts, meta: { requiresAuth: true } },

@@ -176,12 +176,14 @@ class RestockController extends Controller
     /**
      * Delete a restock.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        DB::transaction(function () use ($id, $request = request()) {
+        DB::transaction(function () use ($id, $request) {
             $restock = Restock::whereKey($id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $userId = auth('api')->id();
 
             $this->auditLogger->record(
                 'restock.deleted',
@@ -196,14 +198,14 @@ class RestockController extends Controller
                     'status' => $restock->status,
                 ],
                 $request,
-                auth('api')->id()
+                $userId
             );
 
             $restock->delete();
         });
 
         return response()->json([
-            'message' => 'Deleted',
+            'message' => 'Restock deleted successfully',
         ]);
     }
 }

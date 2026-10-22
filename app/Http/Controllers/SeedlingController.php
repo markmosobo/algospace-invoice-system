@@ -156,33 +156,33 @@ class SeedlingController extends Controller
     /**
      * Delete a seedling.
      */
-    public function destroy(string $id)
-    {
-        DB::transaction(function () use ($id, $request = request()) {
-            $seedling = Seedling::whereKey($id)
-                ->lockForUpdate()
-                ->firstOrFail();
+public function destroy(Request $request, string $id)
+{
+    DB::transaction(function () use ($id, $request) {
+        $seedling = Seedling::whereKey($id)
+            ->lockForUpdate()
+            ->firstOrFail();
 
-            $this->auditLogger->record(
-                'seedling.deleted',
-                'Seedling record deleted',
-                $seedling,
-                [
-                    'seedling_id' => $seedling->id,
-                    'venture_id' => $seedling->venture_id,
-                    'seedling_type' => $seedling->seedling_type,
-                    'species_name' => $seedling->species_name,
-                    'quantity' => $seedling->quantity,
-                ],
-                $request,
-                auth('api')->id()
-            );
+        $this->auditLogger->record(
+            'seedling.deleted',
+            'Seedling record deleted',
+            $seedling,
+            [
+                'seedling_id' => $seedling->id,
+                'venture_id' => $seedling->venture_id,
+                'seedling_type' => $seedling->seedling_type,
+                'species_name' => $seedling->species_name,
+                'quantity' => $seedling->quantity,
+            ],
+            $request,
+            auth('api')->id()
+        );
 
-            $seedling->delete();
-        });
+        $seedling->delete();
+    });
 
-        return response()->json([
-            'message' => 'Deleted',
-        ]);
-    }
+    return response()->json([
+        'message' => 'Seedling record deleted successfully',
+    ]);
+}
 }

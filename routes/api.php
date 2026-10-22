@@ -63,6 +63,7 @@ use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\CourseHandbookController;
 use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Api\CropHarvestController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -335,6 +336,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/projects/{project}/toggle-board', [ProjectController::class, 'toggleBoardType']);
 
     Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote']);
+
+    Route::get('crop-harvests/summary', [CropHarvestController::class, 'summary']);
+
+    Route::apiResource('crop-harvests', CropHarvestController::class);
 
     //training
 

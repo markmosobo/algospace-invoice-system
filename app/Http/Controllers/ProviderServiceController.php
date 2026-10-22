@@ -138,36 +138,39 @@ class ProviderServiceController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified provider service.
-     */
-    public function destroy(string $id)
-    {
-        DB::transaction(function () use ($id, request) {
-            $providerService = ProviderService::whereKey($id)
-                ->lockForUpdate()
-                ->firstOrFail();
 
-            $serviceDetails = [
-                'provider_service_id' => $providerService->id,
-                'name' => $providerService->name,
-                'category' => $providerService->category,
-            ];
+/**
+ * Remove the specified provider service.
+ */
+public function destroy(Request $request, string $id)
+{
+    DB::transaction(function () use ($id, $request) {
+        $providerService = ProviderService::whereKey($id)
+            ->lockForUpdate()
+            ->firstOrFail();
 
-            $this->auditLogger->record(
-                'provider_service.deleted',
-                'Provider service deleted',
-                $providerService,
-                $serviceDetails,
-                request(),
-                auth('api')->id()
-            );
+        $serviceDetails = [
+            'provider_service_id' => $providerService->id,
+            'name' => $providerService->name,
+            'category' => $providerService->category,
+            'price' => $providerService->price,
+        ];
 
-            $providerService->delete();
-        });
+        $this->auditLogger->record(
+            'provider_service.deleted',
+            'Provider service deleted',
+            $providerService,
+            $serviceDetails,
+            $request,
+            auth('api')->id()
+        );
 
-        return response()->json([
-            'message' => 'Deleted',
-        ]);
-    }
+        $providerService->delete();
+    });
+
+    return response()->json([
+        'message' => 'Provider service deleted successfully',
+    ]);
+}
+
 }

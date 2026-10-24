@@ -243,25 +243,49 @@
                             </option>
                         </select>
 
-                            <div
-                                v-if="selectedCustomer"
-                                class="d-flex align-items-center gap-3 mt-3 p-2 border rounded"
-                            >
-                                <img
-                                :src="selectedCustomer.image 
-                                    ? `/storage/${selectedCustomer.image}` 
-                                    : '/storage/images/avatar.png'"
-                                alt="Customer photo"
-                                class="rounded-circle"
-                                style="width:60px;height:60px;object-fit:cover"
-                                />
 
-                                <div>
-                                <div class="fw-bold">{{ selectedCustomer.name }}</div>
-                                <small class="text-muted">{{ selectedCustomer.email || 'No email' }}</small><br>
-                                <small class="text-muted">{{ selectedCustomer.phone || 'No phone' }}</small>
-                                </div>
-                            </div>
+<div
+    v-if="selectedCustomer"
+    class="d-flex align-items-center gap-3 mt-3 p-2 border rounded"
+>
+    <!-- Customer photo, when available -->
+    <img
+        v-if="selectedCustomer.image
+            && selectedCustomer.image !== 'null'
+            && selectedCustomer.image !== ''"
+        :src="`/storage/${selectedCustomer.image}`"
+        alt="Customer photo"
+        class="rounded-circle border flex-shrink-0"
+        style="width:60px;height:60px;object-fit:cover"
+    />
+
+    <!-- Initials avatar, when no photo exists -->
+    <div
+        v-else
+        class="rounded-circle border d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+        :style="{
+            width: '60px',
+            height: '60px',
+            backgroundColor: getAvatarColor(selectedCustomer.name),
+            fontSize: '20px'
+        }"
+    >
+        {{ getInitials(selectedCustomer.name) }}
+    </div>
+
+    <!-- Customer details -->
+    <div>
+        <div class="fw-bold">{{ selectedCustomer.name }}</div>
+        <small class="text-muted">
+            {{ selectedCustomer.email || 'No email' }}
+        </small>
+        <br>
+        <small class="text-muted">
+            {{ selectedCustomer.phone || 'No phone' }}
+        </small>
+    </div>
+</div>
+
                         </div>
 
 
@@ -1037,6 +1061,37 @@ export default {
    },
 
   methods: {
+
+getAvatarColor(name) {
+    if (!name) return '#6c757d';
+
+    const colors = [
+        '#1abc9c', '#2ecc71', '#3498db', '#9b59b6',
+        '#f39c12', '#e74c3c', '#16a085', '#27ae60',
+        '#2980b9', '#8e44ad', '#d35400', '#c0392b'
+    ];
+
+    let hash = 0;
+
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
+},
+
+getInitials(name) {
+    if (!name || !name.trim()) return '?';
+
+    return name
+        .trim()
+        .split(/\s+/)
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+},
+
     checkDuplicateCustomer(){
 
         let name = this.customerForm.name

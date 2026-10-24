@@ -54,5 +54,13 @@ class UserSeeder extends Seeder
             'role'              => 'partner',
             'password'          => Hash::make('@Puvewt5n#!!!'),
         ]);
+
+        User::create([
+            'name'              => 'Staff Account',
+            'email'             => 'staff@algospace.co.ke',
+            'email_verified_at' => Carbon::now(),
+            'role'              => 'staff',
+            'password'          => Hash::make('@Puvewt5n#!!!'),
+        ]);        
     }
 }

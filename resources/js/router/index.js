@@ -88,18 +88,18 @@ const routes = [
       roles: ['office', 'personal', 'farm']
     }
   },
-  { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true } },
+  { path: '/dashboard', name: 'dashboard', component: Home, meta: { requiresAuth: true, staffAllowed: true } },
   { path: '/analytics', name: 'analytics', component: Analytics, meta: { requiresAuth: true } },
-  { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true } },
+  { path: '/supplies', name: 'supplies', component: Supplies, meta: { requiresAuth: true, staffAllowed: true } },
   { path: '/suppliers', name: 'suppliers', component: Suppliers, meta: { requiresAuth: true } },
-  { path: '/restocks', name: 'restocks', component: Restocks, meta: { requiresAuth: true } },
-  { path: '/quick-sale', name: 'quick-sale', component: QuickSale, meta: { requiresAuth: true } },
-  { path: '/cyber-requests', name: 'cyber-requests', component: CyberRequests, meta: { requiresAuth: true } },
+  { path: '/restocks', name: 'restocks', component: Restocks, meta: { requiresAuth: true, staffAllowed: true } },
+  { path: '/quick-sale', name: 'quick-sale', component: QuickSale, meta: { requiresAuth: true, staffAllowed: true } },
+  { path: '/cyber-requests', name: 'cyber-requests', component: CyberRequests, meta: { requiresAuth: true, staffAllowed: true } },
   { path: '/pending-invoices', name: 'pending-invoices', component: PendingInvoices, meta: { requiresAuth: true } },
   { path: '/invoices', name: 'invoices', component: Invoices, meta: { requiresAuth: true } },
   { path: '/payments', name: 'payments', component: Payments, meta: { requiresAuth: true } },
   { path: '/expenses', name: 'expenses', component: Expenses, meta: { requiresAuth: true } },
-  { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true } },
+  { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true, staffAllowed: true } },
   { path: '/service-providers', name: 'service-providers', component: ServiceProviders, meta: { requiresAuth: true } },
   { path: '/users', name: 'users', component: Users, meta: { requiresAuth: true } },
   { path: '/system-logs', name: 'system-logs', component: SystemLogs, meta: { requiresAuth: true } },
@@ -128,8 +128,8 @@ const routes = [
   { path: '/personal-categories', name: 'personal-categories', component: PersonalCategory, meta: { requiresAuth: true } },
   { path: '/personal-transactions', name: 'personal-transactions', component: PersonalTransactions, meta: { requiresAuth: true } },
 
-  { path: '/diary', name: 'diary', component: Diary, meta: { requiresAuth: true } },
-  { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
+  { path: '/diary', name: 'diary', component: Diary, meta: { requiresAuth: true, staffAllowed: true } },
+  { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true, staffAllowed: true } },
 
   { path: '/foot-traffic', name: 'FootTraffic', component: FootTraffic, meta: { requiresAuth: true } },
 
@@ -141,7 +141,7 @@ const routes = [
 
   { path: '/partners', name: 'Partners', component: Partners, meta: { requiresAuth: true } },
 
-  { path: '/projects', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
+  { path: '/projects', name: 'Projects', component: Projects, meta: { requiresAuth: true, staffAllowed: true } },
   {
     path: "/projects/create",
     name: "projects.create",
@@ -156,8 +156,8 @@ const routes = [
   },
   { path: '/notifications', name: 'Notifications', component: AdminNotifications, meta: { requiresAuth: true } },
 
-  { path: '/enrollments', name: 'Enrollments', component: Enrollments, meta: { requiresAuth: true } },
-  { path: '/courses', name: 'Courses', component: Courses, meta: { requiresAuth: true } },
+  { path: '/enrollments', name: 'Enrollments', component: Enrollments, meta: { requiresAuth: true, staffAllowed: true } },
+  { path: '/courses', name: 'Courses', component: Courses, meta: { requiresAuth: true, staffAllowed: true } },
   // TRAINING ROUTES
 
 
@@ -165,9 +165,7 @@ const routes = [
       path:'/courses/:id/outline',
       name:'CourseOutline',
       component:CourseOutline,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
   },
 
 
@@ -176,9 +174,8 @@ const routes = [
       path:'/courses/:id/sessions',
       name:'CourseSessions',
       component:CourseSessions,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
+
   },
 
 
@@ -188,9 +185,8 @@ const routes = [
       path:'/courses/:id/materials',
       name:'CourseMaterials',
       component:CourseMaterials,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
+
   },
 
 
@@ -200,9 +196,8 @@ const routes = [
       path:'/courses/:id/students',
       name:'CourseStudents',
       component:CourseStudents,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
+
   },
 
 
@@ -215,9 +210,8 @@ const routes = [
     path:'/courses/:id/assessments',
     name:'CourseAssessments',
     component:CourseAssessments,
-    meta:{
-        requiresAuth:true
-    }
+    meta: { requiresAuth: true, staffAllowed: true } 
+
 },
 
 
@@ -229,18 +223,16 @@ const routes = [
       path:'/student-assessments/:id',
       name:'AssessmentGradebook',
       component:AssessmentGradebook,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
+
   },
 
   {
       path:'/enrollments/:id',
       name:'EnrollmentProfile',
       component:EnrollmentProfile,
-      meta:{
-          requiresAuth:true
-      }
+      meta: { requiresAuth: true, staffAllowed: true } 
+
   }
 ];
 
@@ -249,15 +241,58 @@ const router = createRouter({
   routes,
 });
 
-// 🔐 Global Auth Guard
+// 🔐 Global Authentication & Role Guard
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
 
+  // Require authentication
   if (to.meta.requiresAuth && !token) {
-    next({ path: '/login', replace: true });
-  } else {
-    next();
+    return next({
+      path: '/login',
+      replace: true
+    });
   }
-});
 
+  // Read authenticated user safely
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    console.error('Could not read authenticated user:', error);
+  }
+
+  // If staff data is missing, fail closed
+  if (token && !user) {
+    return next({
+      path: '/login',
+      replace: true
+    });
+  }
+
+  // Staff may only access explicitly approved routes
+  if (
+    to.meta.requiresAuth &&
+    user?.role === 'staff' &&
+    to.meta.staffAllowed !== true
+  ) {
+    return next({
+      path: '/dashboard',
+      replace: true
+    });
+  }
+
+  // Respect existing role restrictions, such as /login2
+  if (
+    to.meta.roles &&
+    !to.meta.roles.includes(user?.role)
+  ) {
+    return next({
+      path: '/dashboard',
+      replace: true
+    });
+  }
+
+  return next();
+});
 export default router;

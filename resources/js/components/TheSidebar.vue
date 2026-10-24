@@ -12,7 +12,7 @@
         </router-link>
       </li>
 
-      <li v-show="userRole === 'office'" class="nav-item">
+<li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#operations-nav">
           <i class="bi bi-briefcase"></i>
           <span>Operations</span>
@@ -38,7 +38,7 @@
             </a>
           </li>
           
-          <li v-show="userRole === 'office'" class="nav-item">
+          <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
             <router-link to="/expenses" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
                 <i class="bi bi-cash-stack"></i>
@@ -47,7 +47,7 @@
             </router-link>
           </li> 
 
-          <li v-show="userRole === 'office' || userRole === 'personal'" class="nav-item">
+          <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
             <router-link to="/projects" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
                 <i class="bi bi-kanban"></i>
@@ -56,7 +56,7 @@
             </router-link>
           </li>
                     
-          <li v-show="userRole === 'office'" class="nav-item">
+          <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
             <router-link to="/cyber-requests" custom v-slot="{ href, navigate, isActive }">
               <a :href="href"
                 :class="{ active: isActive }"
@@ -71,7 +71,7 @@
         </ul>
       </li>      
       
-      <li v-show="userRole === 'office'" class="nav-item">
+      <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#training-nav">
           <i class="bi bi-briefcase"></i>
           <span>Training</span>
@@ -114,7 +114,7 @@
       </li>  
       
       <!-- Inventory -->
-      <li v-show="userRole === 'office'" class="nav-item">
+          <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#supplies-nav">
           <i class="bi bi-boxes"></i>
           <span>Inventory</span>
@@ -139,18 +139,18 @@
       </li>   
       
       <!-- People & Partners -->
-      <li v-show="userRole === 'office'" class="nav-item">
+      <li v-show="['office', 'staff'].includes(userRole)" class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav">
           <i class="bi bi-people"></i>
           <span>People & Partners</span>
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="users-nav" class="nav-content collapse">
-          <li><RouterLink to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
-          <li><RouterLink to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
-          <li><RouterLink to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
-          <li><RouterLink to="/partners" class="nav-link"><i class="bi bi-circle"></i> Partners</RouterLink></li>
-          <li><RouterLink to="/borrowers" class="nav-link"><i class="bi bi-circle"></i> Book Borrowers</RouterLink></li>
+          <li><RouterLink v-show="['office', 'staff'].includes(userRole)" to="/customers" class="nav-link"><i class="bi bi-circle"></i> Customers</RouterLink></li>
+          <li><RouterLink  v-show="userRole === 'office'" to="/suppliers" class="nav-link"><i class="bi bi-circle"></i> Suppliers</RouterLink></li>
+          <li><RouterLink  v-show="userRole === 'office'" to="/service-providers" class="nav-link"><i class="bi bi-circle"></i> Service Providers</RouterLink></li>
+          <li><RouterLink  v-show="userRole === 'office'" to="/partners" class="nav-link"><i class="bi bi-circle"></i> Partners</RouterLink></li>
+          <li><RouterLink  v-show="userRole === 'office'" to="/borrowers" class="nav-link"><i class="bi bi-circle"></i> Book Borrowers</RouterLink></li>
         </ul>
       </li> 
       

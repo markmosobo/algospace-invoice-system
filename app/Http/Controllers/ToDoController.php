@@ -25,8 +25,16 @@ class ToDoController extends Controller
             ->orderBy('priority', 'desc')
             ->orderBy('created_at')
             ->get();
+        
+        $statusCounts = Todo::query()
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');    
 
-        return response()->json($todos);
+        return response()->json([
+            'todos' => $todos,
+            'statusCounts' => $statusCounts,
+        ]);
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\Crop;
 use App\Models\CropHarvest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class CropHarvestController extends Controller
 {
@@ -19,6 +20,7 @@ class CropHarvestController extends Controller
     {
         $filters = $request->validate([
             'crop_id' => ['nullable', 'integer', 'exists:crops,id'],
+            'season' => ['nullable', 'string', 'max:100'],
             'date_from' => ['nullable', 'date'],
             'date_to' => [
                 'nullable',
@@ -32,6 +34,10 @@ class CropHarvestController extends Controller
 
         if (!empty($filters['crop_id'])) {
             $query->where('crop_id', $filters['crop_id']);
+        }
+
+        if (!empty($filters['season'])) {
+            $query->where('season', $filters['season']);
         }
 
         if (!empty($filters['date_from'])) {
@@ -76,6 +82,7 @@ class CropHarvestController extends Controller
         $validated = $request->validate([
             'crop_id' => ['required', 'integer', 'exists:crops,id'],
             'harvest_date' => ['required', 'date'],
+            'season' => ['nullable', 'string', 'max:100'],
             'quantity_kg' => ['required', 'numeric', 'min:0.01'],
             'labour_cost' => ['required', 'numeric', 'min:0'],
             'transport_cost' => ['required', 'numeric', 'min:0'],
@@ -123,6 +130,7 @@ class CropHarvestController extends Controller
         $validated = $request->validate([
             'crop_id' => ['sometimes', 'required', 'integer', 'exists:crops,id'],
             'harvest_date' => ['sometimes', 'required', 'date'],
+            'season' => ['sometimes', 'nullable', 'string', 'max:100'],
             'quantity_kg' => ['sometimes', 'required', 'numeric', 'min:0.01'],
             'labour_cost' => ['sometimes', 'required', 'numeric', 'min:0'],
             'transport_cost' => ['sometimes', 'required', 'numeric', 'min:0'],
@@ -164,6 +172,7 @@ class CropHarvestController extends Controller
     {
         $filters = $request->validate([
             'crop_id' => ['nullable', 'integer', 'exists:crops,id'],
+            'season' => ['nullable', 'string', 'max:100'],
             'date_from' => ['nullable', 'date'],
             'date_to' => [
                 'nullable',
@@ -241,6 +250,7 @@ class CropHarvestController extends Controller
             'crop_id' => $harvest->crop_id,
             'crop' => $harvest->crop,
             'harvest_date' => $harvest->harvest_date?->format('Y-m-d'),
+            'season' => $harvest->season,
             'quantity_kg' => (float) $harvest->quantity_kg,
             'labour_cost' => (float) $harvest->labour_cost,
             'transport_cost' => (float) $harvest->transport_cost,

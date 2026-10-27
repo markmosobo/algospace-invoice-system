@@ -320,7 +320,7 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/harvests" custom v-slot="{ href, navigate, isActive }">
+            <router-link to="/crop-harvests" custom v-slot="{ href, navigate, isActive }">
               <a :href="href" :class="{ active: isActive }" class="nav-link" @click="navigate">
                 <i class="bi bi-basket"></i> Harvests
               </a>

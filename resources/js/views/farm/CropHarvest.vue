@@ -5,17 +5,16 @@
       <!-- Page heading -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-          <h4 class="mb-1">Coffee Harvest</h4>
+          <h4 class="mb-1">Crop Harvests</h4>
           <p class="text-muted mb-0">
-            Weekly harvest records, expenses and production trends.
+            Harvest records, expenses and production trends.
           </p>
         </div>
 
         <button class="btn btn-success rounded-pill"
                 style="background: darkgreen; border-color: darkgreen"
                 @click="openAddModal">
-          <i class="bi bi-plus-circle me-1"></i>
-          Record Harvest
+          <i class="bi bi-plus-circle me-1"></i> Record Harvest
         </button>
       </div>
 
@@ -27,8 +26,7 @@
           <div class="row g-3 align-items-end">
             <div class="col-md-3">
               <label class="form-label">Crop</label>
-              <select v-model="filters.crop_id" class="form-select"
-                      @change="loadLists">
+              <select v-model="filters.crop_id" class="form-select">
                 <option value="">All crops</option>
                 <option v-for="crop in crops" :key="crop.id"
                         :value="String(crop.id)">
@@ -39,6 +37,17 @@
             </div>
 
             <div class="col-md-3">
+              <label class="form-label">Season</label>
+              <select v-model="filters.season" class="form-select">
+                <option value="">All seasons</option>
+                <option v-for="season in availableSeasons"
+                        :key="season" :value="season">
+                  {{ season }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-2">
               <label class="form-label">Period</label>
               <select v-model="filters.period" class="form-select"
                       @change="applyPeriod">
@@ -65,15 +74,15 @@
                      :disabled="filters.period !== 'custom'">
             </div>
 
-            <div class="col-md-2 d-flex gap-2">
-              <button class="btn btn-success flex-fill"
+            <div class="col-12 d-flex justify-content-end gap-2">
+              <button class="btn btn-success"
                       style="background: darkgreen; border-color: darkgreen"
-                      @click="loadLists">
-                Apply
+                      @click="applyFilters">
+                Apply Filters
               </button>
               <button class="btn btn-outline-secondary"
                       @click="resetFilters" title="Reset filters">
-                <i class="bi bi-arrow-counterclockwise"></i>
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
               </button>
             </div>
           </div>
@@ -92,7 +101,7 @@
                 </div>
                 <div class="ps-3">
                   <h6>{{ number(summary.total_quantity_kg) }} kg</h6>
-                  <span class="text-muted small">Coffee harvested</span>
+                  <span class="text-muted small">Quantity harvested</span>
                 </div>
               </div>
             </div>
@@ -109,7 +118,7 @@
                 </div>
                 <div class="ps-3">
                   <h6>KSh {{ money(summary.total_labour_cost) }}</h6>
-                  <span class="text-muted small">Picking and labour</span>
+                  <span class="text-muted small">Labour</span>
                 </div>
               </div>
             </div>
@@ -126,7 +135,7 @@
                 </div>
                 <div class="ps-3">
                   <h6>KSh {{ money(summary.total_transport_cost) }}</h6>
-                  <span class="text-muted small">Coffee transportation</span>
+                  <span class="text-muted small">Transportation</span>
                 </div>
               </div>
             </div>
@@ -160,11 +169,11 @@
             <div>
               <h5 class="card-title mb-1">Harvest Trend</h5>
               <p class="text-muted small">
-                Kilograms recorded per harvest date.
+                Kilograms recorded per harvest date for the selected filters.
               </p>
             </div>
             <span class="badge bg-light text-dark">
-              {{ chartRecords.length }} harvest dates
+              {{ chartRecords.length }} harvest records
             </span>
           </div>
 
@@ -174,14 +183,14 @@
 
           <div v-else-if="!chartRecords.length"
                class="text-center text-muted py-5">
-            No harvest data available for the selected period.
+            No harvest data available for the selected filters.
           </div>
 
           <div v-else class="harvest-chart">
             <svg viewBox="0 0 760 270"
                  preserveAspectRatio="xMidYMid meet"
                  role="img"
-                 aria-label="Coffee harvest quantities by date">
+                 aria-label="Crop harvest quantities by date">
               <g v-for="tick in chartTicks" :key="tick">
                 <line x1="65" :y1="chartY(tick)"
                       x2="745" :y2="chartY(tick)"
@@ -202,7 +211,8 @@
                   rx="3"
                   fill="#176b38">
                   <title>
-                    {{ item.harvest_date }}: {{ item.quantity_kg }} kg
+                    {{ item.harvest_date }} — {{ item.season || 'No season' }}:
+                    {{ item.quantity_kg }} kg
                   </title>
                 </rect>
 
@@ -234,13 +244,13 @@
         </div>
       </div>
 
-      <!-- Harvest records -->
+      <!-- Harvest register -->
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="card-title">
               Harvest Register
-              <span class="text-muted">| Weekly coffee records</span>
+              <span class="text-muted">| Crop production records</span>
             </h5>
             <button class="btn btn-sm btn-outline-success"
                     @click="exportCsv"
@@ -271,6 +281,7 @@
                 <tr>
                   <th>Harvest Date</th>
                   <th>Crop / Variety</th>
+                  <th>Season</th>
                   <th>Quantity (kg)</th>
                   <th>Labour</th>
                   <th>Transport</th>
@@ -284,14 +295,19 @@
                 <tr v-for="item in harvests" :key="item.id">
                   <td class="text-nowrap">{{ item.harvest_date }}</td>
                   <td>
-                    <div>{{ item.crop?.crop_name || 'Coffee' }}</div>
+                    <div>{{ item.crop?.crop_name || 'Crop' }}</div>
                     <small class="text-muted">
                       {{ item.crop?.variety || '—' }}
                     </small>
                   </td>
-                  <td class="fw-semibold">
-                    {{ number(item.quantity_kg) }}
+                  <td class="text-nowrap">
+                    <span v-if="item.season"
+                          class="badge bg-light text-dark border">
+                      {{ item.season }}
+                    </span>
+                    <span v-else class="text-muted">—</span>
                   </td>
+                  <td class="fw-semibold">{{ number(item.quantity_kg) }}</td>
                   <td>KSh {{ money(item.labour_cost) }}</td>
                   <td>KSh {{ money(item.transport_cost) }}</td>
                   <td class="fw-semibold">KSh {{ money(item.total_cost) }}</td>
@@ -335,7 +351,7 @@
               </tbody>
             </table>
 
-            <!-- Laravel pagination -->
+            <!-- Pagination -->
             <div v-if="pagination.last_page > 1"
                  class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
               <small class="text-muted">
@@ -369,99 +385,133 @@
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">
-                {{ editing ? 'Edit Harvest Record' : 'Record Coffee Harvest' }}
+                {{ editing ? 'Edit Harvest Record' : 'Record Crop Harvest' }}
               </h5>
               <button type="button" class="btn-close"
                       data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
-              <form @submit.prevent="saveHarvest" class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label">Crop *</label>
-                  <select class="form-select" v-model="form.crop_id" required>
-                    <option value="">Select crop</option>
-                    <option v-for="crop in crops" :key="crop.id"
-                            :value="String(crop.id)">
-                      {{ crop.crop_name }}
-                      {{ crop.variety ? ` - ${crop.variety}` : '' }}
-                    </option>
-                  </select>
-                </div>
+            <form @submit.prevent="saveHarvest">
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Crop *</label>
+                    <select class="form-select"
+                            v-model="form.crop_id"
+                            @change="onCropOrDateChanged"
+                            required>
+                      <option value="">Select crop</option>
+                      <option v-for="crop in crops" :key="crop.id"
+                              :value="String(crop.id)">
+                        {{ crop.crop_name }}
+                        {{ crop.variety ? ` - ${crop.variety}` : '' }}
+                      </option>
+                    </select>
+                  </div>
 
-                <div class="col-md-6">
-                  <label class="form-label">Harvest Date *</label>
-                  <input type="date" class="form-control"
-                         v-model="form.harvest_date" required>
-                </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Harvest Date *</label>
+                    <input type="date" class="form-control"
+                           v-model="form.harvest_date"
+                           @change="onCropOrDateChanged"
+                           required>
+                  </div>
 
-                <div class="col-md-6">
-                  <label class="form-label">Quantity Harvested (kg) *</label>
-                  <input type="number" class="form-control"
-                         v-model.number="form.quantity_kg"
-                         min="0.01" step="0.01" required>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">Labour Cost (KSh) *</label>
-                  <input type="number" class="form-control"
-                         v-model.number="form.labour_cost"
-                         min="0" step="0.01" required>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">Transport Cost (KSh) *</label>
-                  <input type="number" class="form-control"
-                         v-model.number="form.transport_cost"
-                         min="0" step="0.01" required>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">Other Expenses (KSh)</label>
-                  <input type="number" class="form-control"
-                         v-model.number="form.other_cost"
-                         min="0" step="0.01">
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label">Description / Notes</label>
-                  <textarea class="form-control" rows="3"
-                            v-model="form.description"
-                            placeholder="Harvest quality, weather, labour details, delivery notes..."></textarea>
-                </div>
-
-                <div class="col-12">
-                  <div class="rounded p-3 bg-light">
-                    <div class="d-flex justify-content-between">
-                      <span>Total harvesting expenses</span>
-                      <strong>KSh {{ money(formTotalCost) }}</strong>
+                  <div class="col-md-6">
+                    <label class="form-label">
+                      Season *
+                      <small class="text-muted">(Editable)</small>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           v-model="form.season"
+                           @input="onSeasonInput"
+                           maxlength="100"
+                           placeholder="e.g. 2026 Long Rains"
+                           required>
+                    <small class="text-muted">
+                      The suggested season can be changed to match this crop's
+                      actual growing season.
+                    </small>
+                    <div v-if="seasonSuggestion"
+                         class="mt-2 small">
+                      Suggested season: <strong>{{ seasonSuggestion }}</strong>
+                      <button type="button"
+                              class="btn btn-sm btn-link p-0 ms-2"
+                              @click="useSuggestedSeason">
+                        Use suggestion
+                      </button>
                     </div>
-                    <div class="d-flex justify-content-between mt-1">
-                      <span>Cost per kilogram</span>
-                      <strong>
-                        {{ form.quantity_kg > 0
-                          ? 'KSh ' + money(formTotalCost / Number(form.quantity_kg))
-                          : '—' }}
-                      </strong>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Quantity Harvested (kg) *</label>
+                    <input type="number" class="form-control"
+                           v-model.number="form.quantity_kg"
+                           min="0.01" step="0.01" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Labour Cost (KSh) *</label>
+                    <input type="number" class="form-control"
+                           v-model.number="form.labour_cost"
+                           min="0" step="0.01" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Transport Cost (KSh) *</label>
+                    <input type="number" class="form-control"
+                           v-model.number="form.transport_cost"
+                           min="0" step="0.01" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Other Expenses (KSh)</label>
+                    <input type="number" class="form-control"
+                           v-model.number="form.other_cost"
+                           min="0" step="0.01">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Description / Notes</label>
+                    <textarea class="form-control" rows="3"
+                              v-model="form.description"
+                              placeholder="Harvest quality, weather, labour details, delivery notes..."></textarea>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="rounded p-3 bg-light">
+                      <div class="d-flex justify-content-between">
+                        <span>Total harvesting expenses</span>
+                        <strong>KSh {{ money(formTotalCost) }}</strong>
+                      </div>
+                      <div class="d-flex justify-content-between mt-1">
+                        <span>Cost per kilogram</span>
+                        <strong>
+                          {{ Number(form.quantity_kg) > 0
+                            ? 'KSh ' + money(formTotalCost / Number(form.quantity_kg))
+                            : '—' }}
+                        </strong>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </form>
-            </div>
+              </div>
 
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">
-                Cancel
-              </button>
-              <button class="btn btn-success"
-                      style="background: darkgreen; border-color: darkgreen"
-                      :disabled="submitting"
-                      @click="saveHarvest">
-                <span v-if="submitting"
-                      class="spinner-border spinner-border-sm me-1"></span>
-                {{ submitting ? 'Saving...' : 'Save Harvest' }}
-              </button>
-            </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-success"
+                        style="background: darkgreen; border-color: darkgreen"
+                        :disabled="submitting">
+                  <span v-if="submitting"
+                        class="spinner-border spinner-border-sm me-1"></span>
+                  {{ submitting ? 'Saving...' : 'Save Harvest' }}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -476,11 +526,12 @@
               <button type="button" class="btn-close"
                       data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body" v-if="selectedHarvest">
               <div class="row g-3">
                 <div class="col-md-6">
                   <strong>Crop:</strong>
-                  <div>{{ selectedHarvest.crop?.crop_name || 'Coffee' }}</div>
+                  <div>{{ selectedHarvest.crop?.crop_name || 'Crop' }}</div>
                 </div>
                 <div class="col-md-6">
                   <strong>Variety:</strong>
@@ -489,6 +540,10 @@
                 <div class="col-md-6">
                   <strong>Harvest Date:</strong>
                   <div>{{ selectedHarvest.harvest_date }}</div>
+                </div>
+                <div class="col-md-6">
+                  <strong>Season:</strong>
+                  <div>{{ selectedHarvest.season || '—' }}</div>
                 </div>
                 <div class="col-md-6">
                   <strong>Quantity:</strong>
@@ -526,6 +581,7 @@
                 </div>
               </div>
             </div>
+
             <div class="modal-footer">
               <button class="btn btn-secondary" data-bs-dismiss="modal">
                 Close
@@ -534,7 +590,6 @@
           </div>
         </div>
       </div>
-
     </section>
   </Master>
 </template>
@@ -592,6 +647,7 @@ const toast = Swal.mixin({
 const emptyForm = () => ({
   crop_id: "",
   harvest_date: new Date().toISOString().slice(0, 10),
+  season: "",
   quantity_kg: "",
   labour_cost: 0,
   transport_cost: 0,
@@ -616,8 +672,13 @@ export default {
       submitting: false,
       editing: false,
 
+      // True when the user has deliberately edited the season.
+      seasonManuallySet: false,
+      seasonSuggestion: "",
+
       filters: {
         crop_id: "",
+        season: "",
         period: "all",
         date_from: "",
         date_to: "",
@@ -657,7 +718,22 @@ export default {
       );
     },
 
-    // Use the records actually returned by the API for the graph.
+    // Season options found in the currently loaded harvest records.
+    availableSeasons() {
+      const seasons = this.harvests
+        .map(item => String(item.season || "").trim())
+        .filter(Boolean);
+
+      // Preserve a currently selected season even if it isn't in this page.
+      if (this.filters.season) {
+        seasons.push(this.filters.season);
+      }
+
+      return [...new Set(seasons)].sort((a, b) =>
+        a.localeCompare(b)
+      );
+    },
+
     chartRecords() {
       return [...this.harvests].sort((a, b) =>
         String(a.harvest_date).localeCompare(String(b.harvest_date))
@@ -677,19 +753,28 @@ export default {
 
     chartTicks() {
       const maximum = this.chartMaximum;
-      return [maximum, maximum * 0.75, maximum * 0.5, maximum * 0.25, 0];
+      return [
+        maximum,
+        maximum * 0.75,
+        maximum * 0.5,
+        maximum * 0.25,
+        0,
+      ];
     },
 
     chartBarWidth() {
       const count = this.chartRecords.length;
       if (!count) return 0;
+
       return Math.min(32, (680 / count) * 0.62);
     },
   },
 
   methods: {
     money(value) {
-      if (value === null || value === undefined || value === "") return "0.00";
+      if (value === null || value === undefined || value === "") {
+        return "0.00";
+      }
 
       return (Number(value) || 0).toLocaleString("en-KE", {
         minimumFractionDigits: 2,
@@ -765,12 +850,16 @@ export default {
         );
         this.filters.date_to = todayString;
       } else if (this.filters.period === "year") {
-        this.filters.date_from =
-          `${today.getFullYear()}-01-01`;
+        this.filters.date_from = `${today.getFullYear()}-01-01`;
         this.filters.date_to = todayString;
       }
 
-      // Custom dates are entered manually.
+      // Custom dates remain manually entered.
+      this.pagination.current_page = 1;
+      this.loadLists();
+    },
+
+    applyFilters() {
       this.pagination.current_page = 1;
       this.loadLists();
     },
@@ -778,6 +867,7 @@ export default {
     resetFilters() {
       this.filters = {
         crop_id: "",
+        season: "",
         period: "all",
         date_from: "",
         date_to: "",
@@ -795,6 +885,10 @@ export default {
 
       if (this.filters.crop_id) {
         params.crop_id = this.filters.crop_id;
+      }
+
+      if (this.filters.season) {
+        params.season = this.filters.season;
       }
 
       if (this.filters.date_from) {
@@ -824,6 +918,7 @@ export default {
       } catch (error) {
         console.error("Failed to load crops:", error);
         this.crops = [];
+
         toast.fire({
           icon: "warning",
           title: "Could not load crops",
@@ -839,18 +934,20 @@ export default {
       try {
         const params = this.filterParams();
 
+        const summaryParams = {
+          crop_id: this.filters.crop_id || undefined,
+          season: this.filters.season || undefined,
+          date_from: this.filters.date_from || undefined,
+          date_to: this.filters.date_to || undefined,
+        };
+
         const [listResponse, summaryResponse] = await Promise.all([
           axios.get("/api/crop-harvests", { params }),
           axios.get("/api/crop-harvests/summary", {
-            params: {
-              crop_id: this.filters.crop_id || undefined,
-              date_from: this.filters.date_from || undefined,
-              date_to: this.filters.date_to || undefined,
-            },
+            params: summaryParams,
           }),
         ]);
 
-        // The controller returns a Laravel paginator in data.
         const result = listResponse.data.data;
 
         if (Array.isArray(result)) {
@@ -878,7 +975,8 @@ export default {
 
         this.summary = summaryResponse.data.data ?? this.summary;
       } catch (error) {
-        console.error("Failed to load coffee harvest records:", error);
+        console.error("Failed to load crop harvest records:", error);
+
         this.requestError = error.response?.data?.message ??
           "Unable to load harvest records. Check your API routes and server logs.";
 
@@ -899,24 +997,97 @@ export default {
       await this.loadLists();
     },
 
-    openAddModal() {
-      this.editing = false;
-      this.form = emptyForm();
-      this.showModal("cropHarvestModal");
+    /*
+     * Season suggestion:
+     * 1. Prefer the same crop and calendar year.
+     * 2. Otherwise use the most recent season recorded for that crop.
+     * 3. If no matching history exists, leave the season blank.
+     *
+     * This is a historical suggestion, not an agronomic calendar.
+     */
+findSeasonSuggestion(cropId, harvestDate) {
+  if (!harvestDate) return "";
+
+  const date = new Date(`${harvestDate}T00:00:00`);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  // January–June: previous year/current year
+  // July–December: current year/next year
+  const suggestedSeason = month <= 6
+    ? `${year - 1}/${year}`
+    : `${year}/${year + 1}`;
+
+  if (!cropId) return suggestedSeason;
+
+  const cropRecords = this.harvests
+    .filter(item =>
+      Number(item.crop_id) === Number(cropId) &&
+      String(item.season || "").trim() !== "" &&
+      item.harvest_date
+    )
+    .sort((a, b) =>
+      String(b.harvest_date).localeCompare(String(a.harvest_date))
+    );
+
+  const sameYear = cropRecords.find(item =>
+    String(item.harvest_date).slice(0, 4) === String(year)
+  );
+
+  return String(sameYear?.season || suggestedSeason).trim();
+},
+
+    onCropOrDateChanged() {
+      if (this.editing || this.seasonManuallySet) return;
+
+      const suggestion = this.findSeasonSuggestion(
+        this.form.crop_id,
+        this.form.harvest_date
+      );
+
+      this.seasonSuggestion = suggestion;
+      this.form.season = suggestion;
     },
+
+    onSeasonInput() {
+      this.seasonManuallySet = true;
+    },
+
+    useSuggestedSeason() {
+      this.form.season = this.seasonSuggestion;
+      this.seasonManuallySet = false;
+    },
+
+openAddModal() {
+  this.editing = false;
+  this.seasonManuallySet = false;
+  this.form = emptyForm();
+
+  this.seasonSuggestion = this.findSeasonSuggestion(
+    this.form.crop_id,
+    this.form.harvest_date
+  );
+
+  this.form.season = this.seasonSuggestion;
+
+  this.showModal("cropHarvestModal");
+},
 
     openEditModal(item) {
       this.editing = true;
+      this.seasonManuallySet = true;
+      this.seasonSuggestion = "";
 
       this.form = {
+        id: item.id,
         crop_id: String(item.crop_id),
         harvest_date: String(item.harvest_date).slice(0, 10),
+        season: item.season || "",
         quantity_kg: Number(item.quantity_kg),
         labour_cost: Number(item.labour_cost),
         transport_cost: Number(item.transport_cost),
         other_cost: Number(item.other_cost || 0),
         description: item.description || "",
-        id: item.id,
       };
 
       this.showModal("cropHarvestModal");
@@ -959,6 +1130,14 @@ export default {
         return;
       }
 
+      if (!String(this.form.season || "").trim()) {
+        toast.fire({
+          icon: "warning",
+          title: "Enter the harvest season",
+        });
+        return;
+      }
+
       if (
         !Number.isFinite(Number(this.form.quantity_kg)) ||
         Number(this.form.quantity_kg) <= 0
@@ -973,6 +1152,7 @@ export default {
       const payload = {
         crop_id: Number(this.form.crop_id),
         harvest_date: this.form.harvest_date,
+        season: String(this.form.season).trim(),
         quantity_kg: Number(this.form.quantity_kg),
         labour_cost: Number(this.form.labour_cost || 0),
         transport_cost: Number(this.form.transport_cost || 0),
@@ -1072,6 +1252,7 @@ export default {
         ["Harvest Date", "harvest_date"],
         ["Crop", "crop_name"],
         ["Variety", "variety"],
+        ["Season", "season"],
         ["Quantity (kg)", "quantity_kg"],
         ["Labour Cost", "labour_cost"],
         ["Transport Cost", "transport_cost"],
@@ -1097,8 +1278,9 @@ export default {
         ...this.harvests.map(item => {
           const row = {
             ...item,
-            crop_name: item.crop?.crop_name || "Coffee",
+            crop_name: item.crop?.crop_name || "Crop",
             variety: item.crop?.variety || "",
+            season: item.season || "",
           };
 
           return columns
@@ -1116,7 +1298,7 @@ export default {
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = `coffee-harvest-${this.dateString(new Date())}.csv`;
+      link.download = `crop-harvest-${this.dateString(new Date())}.csv`;
       link.click();
 
       URL.revokeObjectURL(url);

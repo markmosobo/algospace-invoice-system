@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Crop;
+use Carbon\Carbon;
 
 class CropHarvest extends Model
 {
     protected $fillable = [
         'crop_id',
         'harvest_date',
+        'season',
         'quantity_kg',
         'labour_cost',
         'transport_cost',
@@ -28,6 +30,27 @@ class CropHarvest extends Model
             'transport_cost' => 'decimal:2',
             'other_cost' => 'decimal:2',
         ];
+    }
+
+
+    /**
+     * Automatically determine season from harvest_date.
+     * Season runs from July to June.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (CropHarvest $harvest) {
+            if ($harvest->harvest_date) {
+                $date = Carbon::parse($harvest->harvest_date);
+
+                $startYear = $date->month >= 7
+                    ? $date->year
+                    : $date->year - 1;
+
+                $harvest->season = $startYear . '/' .
+                    substr((string) ($startYear + 1), -2);
+            }
+        });
     }
 
     public function crop(): BelongsTo

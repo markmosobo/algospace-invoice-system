@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Crop;
+use App\Models\CropHarvestFunding;
 use Carbon\Carbon;
 
 class CropHarvest extends Model
@@ -77,5 +78,13 @@ class CropHarvest extends Model
         }
 
         return round($this->total_cost / $quantity, 2);
+    }
+
+    public function fundings(): HasMany
+    {
+        return $this->hasMany(
+            CropHarvestFunding::class,
+            'harvest_id'
+        );
     }
 }

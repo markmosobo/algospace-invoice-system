@@ -64,6 +64,7 @@ use App\Http\Controllers\CourseHandbookController;
 use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Api\CropHarvestController;
+use App\Http\Controllers\CropHarvestFundingController;
 use App\Models\ProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -636,5 +637,32 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get(
         '/enrollments/{enrollment}/certificate',
         [EnrollmentController::class, 'certificate']
+    );
+
+    Route::prefix('crop-harvests/{harvest}/fundings')->group(function () {
+        Route::get('/', [
+            CropHarvestFundingController::class,
+            'index',
+        ]);
+
+        Route::post('/', [
+            CropHarvestFundingController::class,
+            'store',
+        ]);
+
+        Route::post('/repay', [
+            CropHarvestFundingController::class,
+            'repay',
+        ]);
+    }); 
+    
+    Route::put(
+        '/crop-harvest-fundings/{funding}',
+        [CropHarvestFundingController::class, 'update']
+    );
+
+    Route::delete(
+        '/crop-harvest-fundings/{funding}',
+        [CropHarvestFundingController::class, 'destroy']
     );
 });

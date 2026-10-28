@@ -339,6 +339,15 @@
                           </button>
                         </li>
                         <li>
+                          <button
+                            class="dropdown-item"
+                            @click="openFundingModal(item)"
+                          >
+                            <i class="bi bi-wallet2 me-2"></i>
+                            Funding & Reimbursements
+                          </button>
+                        </li>
+                        <li>
                           <button class="dropdown-item text-danger"
                                   @click="deleteHarvest(item)">
                             <i class="bi bi-trash me-2"></i>Delete
@@ -590,6 +599,346 @@
           </div>
         </div>
       </div>
+
+      <!-- Funding & Reimbursements Modal -->
+      <div
+        class="modal fade"
+        id="cropHarvestFundingModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <div>
+                <h5 class="modal-title">Funding & Reimbursements</h5>
+                <small class="text-muted" v-if="fundingHarvest">
+                  {{ fundingHarvest.crop?.crop_name || 'Crop' }}
+                  · {{ fundingHarvest.harvest_date }}
+                  · Season {{ fundingHarvest.season || '—' }}
+                </small>
+              </div>
+
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div class="modal-body">
+              <div v-if="fundingLoading" class="text-center py-5">
+                <div class="spinner-border text-success"></div>
+                <p class="text-muted mt-2">Loading funding ledger...</p>
+              </div>
+
+              <template v-else-if="fundingHarvest">
+                <!-- Summary -->
+                <div class="row g-3 mb-4">
+                  <div class="col-6 col-lg-3">
+                    <div class="card h-100 border">
+                      <div class="card-body">
+                        <small class="text-muted">Harvest expenses</small>
+                        <h5 class="mt-2 mb-0">
+                          KSh {{ money(fundingLedger.total_expenses) }}
+                        </h5>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-lg-3">
+                    <div class="card h-100 border">
+                      <div class="card-body">
+                        <small class="text-muted">Total funded</small>
+                        <h5 class="mt-2 mb-0 text-success">
+                          KSh {{ money(fundingLedger.total_funded) }}
+                        </h5>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-lg-3">
+                    <div class="card h-100 border">
+                      <div class="card-body">
+                        <small class="text-muted">Reimbursed</small>
+                        <h5 class="mt-2 mb-0">
+                          KSh {{ money(fundingLedger.total_repaid) }}
+                        </h5>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-lg-3">
+                    <div class="card h-100 border">
+                      <div class="card-body">
+                        <small class="text-muted">Outstanding</small>
+                        <h5 class="mt-2 mb-0 text-danger">
+                          KSh {{ money(fundingLedger.total_outstanding) }}
+                        </h5>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  v-if="Number(fundingLedger.unfunded_expenses) > 0"
+                  class="alert alert-warning"
+                >
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  KSh {{ money(fundingLedger.unfunded_expenses) }}
+                  of this harvest's expenses have not yet been assigned a funding source.
+                </div>
+
+                <!-- Funding source balances -->
+                <h6 class="fw-bold mb-3">Balances by Funding Source</h6>
+
+                <div
+                  v-if="!fundingLedger.balances?.length"
+                  class="text-muted border rounded p-3 mb-4"
+                >
+                  No funding transactions recorded yet.
+                </div>
+
+                <div v-else class="table-responsive mb-4">
+                  <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Source</th>
+                        <th class="text-end">Advanced</th>
+                        <th class="text-end">Repaid</th>
+                        <th class="text-end">Outstanding</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="balance in fundingLedger.balances"
+                        :key="balance.funding_source"
+                      >
+                        <td class="text-capitalize">
+                          {{ fundingSourceLabel(balance.funding_source) }}
+                        </td>
+                        <td class="text-end">
+                          KSh {{ money(balance.total_funded) }}
+                        </td>
+                        <td class="text-end">
+                          KSh {{ money(balance.total_repaid) }}
+                        </td>
+                        <td class="text-end fw-semibold">
+                          KSh {{ money(balance.outstanding) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Add / edit transaction -->
+                <div class="card border mb-4">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      {{ editingFunding
+                        ? 'Edit Transaction'
+                        : 'Record a Transaction' }}
+                    </h6>
+
+                    <form @submit.prevent="saveFundingTransaction">
+                      <div class="row g-3">
+                        <div class="col-md-4">
+                          <label class="form-label">Transaction Type *</label>
+                          <select
+                            class="form-select"
+                            v-model="fundingForm.transaction_type"
+                            :disabled="editingFunding"
+                            required
+                          >
+                            <option value="funded">Funding / Advance</option>
+                            <option value="repaid">Reimbursement / Repayment</option>
+                          </select>
+                        </div>
+
+                        <div class="col-md-4">
+                          <label class="form-label">Funding Source *</label>
+                          <input
+                            class="form-control"
+                            list="harvestFundingSources"
+                            v-model.trim="fundingForm.funding_source"
+                            maxlength="30"
+                            placeholder="e.g. shop, mum, personal"
+                            required
+                          >
+
+                          <datalist id="harvestFundingSources">
+                            <option value="shop">Cyber / Shop</option>
+                            <option value="mum">Mum</option>
+                            <option value="personal">Personal</option>
+                            <option value="other">Other</option>
+                          </datalist>
+                        </div>
+
+                        <div class="col-md-4">
+                          <label class="form-label">Amount (KSh) *</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            v-model.number="fundingForm.amount"
+                            min="0.01"
+                            step="0.01"
+                            required
+                          >
+                        </div>
+
+                        <div class="col-md-4">
+                          <label class="form-label">Transaction Date *</label>
+                          <input
+                            type="date"
+                            class="form-control"
+                            v-model="fundingForm.transaction_date"
+                            required
+                          >
+                        </div>
+
+                        <div class="col-md-8">
+                          <label class="form-label">Notes</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            v-model.trim="fundingForm.notes"
+                            maxlength="5000"
+                            placeholder="What was this transaction for?"
+                          >
+                        </div>
+
+                        <div class="col-12 d-flex flex-wrap gap-2">
+                          <button
+                            type="submit"
+                            class="btn btn-success"
+                            style="background: darkgreen; border-color: darkgreen"
+                            :disabled="fundingSubmitting"
+                          >
+                            <span
+                              v-if="fundingSubmitting"
+                              class="spinner-border spinner-border-sm me-1"
+                            ></span>
+
+                            {{
+                              fundingSubmitting
+                                ? 'Saving...'
+                                : editingFunding
+                                  ? 'Update Transaction'
+                                  : 'Save Transaction'
+                            }}
+                          </button>
+
+                          <button
+                            v-if="editingFunding"
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            @click="resetFundingForm"
+                          >
+                            Cancel Edit
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Transaction history -->
+                <h6 class="fw-bold mb-3">Transaction History</h6>
+
+                <div
+                  v-if="!fundingLedger.transactions?.length"
+                  class="text-center text-muted py-4 border rounded"
+                >
+                  No funding or reimbursement transactions recorded.
+                </div>
+
+                <div v-else class="table-responsive">
+                  <table class="table table-hover align-middle">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Source</th>
+                        <th>Type</th>
+                        <th class="text-end">Amount</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr
+                        v-for="transaction in fundingLedger.transactions"
+                        :key="transaction.id"
+                      >
+                        <td class="text-nowrap">
+                          {{ transaction.transaction_date }}
+                        </td>
+
+                        <td class="text-capitalize">
+                          {{ fundingSourceLabel(transaction.funding_source) }}
+                        </td>
+
+                        <td>
+                          <span
+                            :class="transaction.transaction_type === 'funded'
+                              ? 'badge bg-success'
+                              : 'badge bg-primary'"
+                          >
+                            {{ transaction.transaction_type === 'funded'
+                              ? 'Funding'
+                              : 'Reimbursement' }}
+                          </span>
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                          KSh {{ money(transaction.amount) }}
+                        </td>
+
+                        <td class="text-break">
+                          {{ transaction.notes || '—' }}
+                        </td>
+
+                        <td>
+                          <div class="btn-group btn-group-sm">
+                            <button
+                              type="button"
+                              class="btn btn-outline-success"
+                              title="Edit transaction"
+                              @click="editFundingTransaction(transaction)"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger"
+                              title="Delete transaction"
+                              @click="deleteFundingTransaction(transaction)"
+                            >
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+            </div>
+
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>      
+
     </section>
   </Master>
 </template>
@@ -693,6 +1042,30 @@ export default {
         total_cost: 0,
         cost_per_kg: null,
       },
+
+      fundingHarvest: null,
+      fundingLoading: false,
+      fundingSubmitting: false,
+      editingFunding: false,
+
+      fundingForm: {
+        id: null,
+        funding_source: "",
+        transaction_type: "funded",
+        amount: "",
+        transaction_date: new Date().toISOString().slice(0, 10),
+        notes: "",
+      },
+
+      fundingLedger: {
+        total_expenses: 0,
+        total_funded: 0,
+        total_repaid: 0,
+        total_outstanding: 0,
+        unfunded_expenses: 0,
+        balances: [],
+        transactions: [],
+      },      
 
       form: emptyForm(),
 
@@ -1244,6 +1617,261 @@ openAddModal() {
         });
       }
     },
+
+    fundingSourceLabel(source) {
+      const labels = {
+        shop: "Cyber / Shop",
+        mum: "Mum",
+        personal: "Personal",
+        other: "Other",
+      };
+
+      const key = String(source || "").trim().toLowerCase();
+
+      return labels[key] || String(source || "Unknown");
+    },
+
+    emptyFundingLedger() {
+      return {
+        total_expenses: 0,
+        total_funded: 0,
+        total_repaid: 0,
+        total_outstanding: 0,
+        unfunded_expenses: 0,
+        balances: [],
+        transactions: [],
+      };
+    },
+
+    resetFundingForm() {
+      this.editingFunding = false;
+
+      this.fundingForm = {
+        id: null,
+        funding_source: "",
+        transaction_type: "funded",
+        amount: "",
+        transaction_date: new Date().toISOString().slice(0, 10),
+        notes: "",
+      };
+    },
+
+    async openFundingModal(item) {
+      this.fundingHarvest = item;
+      this.fundingLedger = this.emptyFundingLedger();
+      this.resetFundingForm();
+
+      this.showModal("cropHarvestFundingModal");
+
+      await this.loadFundingLedger();
+    },
+
+    async loadFundingLedger() {
+      if (!this.fundingHarvest?.id) return;
+
+      this.fundingLoading = true;
+
+      try {
+        const response = await axios.get(
+          `/api/crop-harvests/${this.fundingHarvest.id}/fundings`
+        );
+
+        const result = response.data?.data;
+
+        if (!result) {
+          throw new Error("The funding API returned an invalid response.");
+        }
+
+        this.fundingLedger = {
+          ...this.emptyFundingLedger(),
+          ...result,
+          balances: Array.isArray(result.balances)
+            ? result.balances
+            : [],
+          transactions: Array.isArray(result.transactions)
+            ? result.transactions
+            : [],
+        };
+      } catch (error) {
+        console.error("Failed to load harvest funding:", error);
+
+        toast.fire({
+          icon: "error",
+          title: "Could not load funding ledger",
+          text: error.response?.data?.message ||
+            error.message ||
+            "Please check the funding API.",
+        });
+      } finally {
+        this.fundingLoading = false;
+      }
+    },
+
+    editFundingTransaction(transaction) {
+      this.editingFunding = true;
+
+      this.fundingForm = {
+        id: transaction.id,
+        funding_source: transaction.funding_source || "",
+        transaction_type: transaction.transaction_type,
+        amount: Number(transaction.amount),
+        transaction_date: String(
+          transaction.transaction_date
+        ).slice(0, 10),
+        notes: transaction.notes || "",
+      };
+
+      // Keep the transaction form visible when editing.
+      document
+        .getElementById("cropHarvestFundingModal")
+        ?.querySelector(".modal-body")
+        ?.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+    },
+
+    async saveFundingTransaction() {
+      if (this.fundingSubmitting || !this.fundingHarvest?.id) return;
+
+      const source = String(
+        this.fundingForm.funding_source || ""
+      ).trim().toLowerCase();
+
+      const amount = Number(this.fundingForm.amount);
+
+      if (!source) {
+        toast.fire({
+          icon: "warning",
+          title: "Enter a funding source",
+        });
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        toast.fire({
+          icon: "warning",
+          title: "Enter an amount greater than zero",
+        });
+        return;
+      }
+
+      if (!this.fundingForm.transaction_date) {
+        toast.fire({
+          icon: "warning",
+          title: "Select a transaction date",
+        });
+        return;
+      }
+
+      const payload = {
+        funding_source: source,
+        amount,
+        transaction_date: this.fundingForm.transaction_date,
+        notes: this.fundingForm.notes || null,
+      };
+
+      this.fundingSubmitting = true;
+
+      try {
+        if (this.editingFunding) {
+          // Requires PUT /api/crop-harvest-fundings/{id}
+          await axios.put(
+            `/api/crop-harvest-fundings/${this.fundingForm.id}`,
+            payload
+          );
+
+          toast.fire({
+            icon: "success",
+            title: "Transaction updated",
+          });
+        } else if (this.fundingForm.transaction_type === "repaid") {
+          await axios.post(
+            `/api/crop-harvests/${this.fundingHarvest.id}/fundings/repay`,
+            payload
+          );
+
+          toast.fire({
+            icon: "success",
+            title: "Reimbursement recorded",
+          });
+        } else {
+          await axios.post(
+            `/api/crop-harvests/${this.fundingHarvest.id}/fundings`,
+            payload
+          );
+
+          toast.fire({
+            icon: "success",
+            title: "Funding recorded",
+          });
+        }
+
+        this.resetFundingForm();
+
+        await this.loadFundingLedger();
+      } catch (error) {
+        console.error("Failed to save funding transaction:", error);
+
+        const errors = error.response?.data?.errors;
+        const firstValidationError = errors
+          ? Object.values(errors).flat()[0]
+          : null;
+
+        toast.fire({
+          icon: "error",
+          title: "Transaction could not be saved",
+          text: firstValidationError ||
+            error.response?.data?.message ||
+            "Check the API route and try again.",
+        });
+      } finally {
+        this.fundingSubmitting = false;
+      }
+    },
+
+    async deleteFundingTransaction(transaction) {
+      const result = await Swal.fire({
+        title: "Delete this transaction?",
+        text: `This will remove the ${transaction.transaction_type === "funded"
+          ? "funding entry"
+          : "reimbursement entry"} of KSh ${this.money(transaction.amount)}.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Yes, delete it",
+      });
+
+      if (!result.isConfirmed) return;
+
+      try {
+        // Requires DELETE /api/crop-harvest-fundings/{id}
+        await axios.delete(
+          `/api/crop-harvest-fundings/${transaction.id}`
+        );
+
+        if (this.fundingForm.id === transaction.id) {
+          this.resetFundingForm();
+        }
+
+        toast.fire({
+          icon: "success",
+          title: "Transaction deleted",
+        });
+
+        await this.loadFundingLedger();
+      } catch (error) {
+        console.error("Failed to delete funding transaction:", error);
+
+        toast.fire({
+          icon: "error",
+          title: "Delete failed",
+          text: error.response?.data?.message ||
+            "Could not delete the transaction.",
+        });
+      }
+    },    
 
     exportCsv() {
       if (!this.harvests.length) return;

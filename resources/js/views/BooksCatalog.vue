@@ -43,7 +43,7 @@
                         <th>Cover</th>
                         <th>Title</th>
                         <th>Author</th>
-                        <th>Status</th>
+                        <th>Copy Inventory</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -76,18 +76,12 @@
                         <td>{{ book.title }}</td>
                         <td>{{ book.author }}</td>
                         <td>
-                          <span
-                            v-if="book.status === 'available'"
-                            class="badge bg-success"
-                          >
-                            Available
+                          <span v-if="Number(book.available_copies ?? 0) > 0" class="badge bg-success">
+                            {{ book.available_copies }} Available
                           </span>
-                          <span
-                            v-else
-                            class="badge bg-secondary"
-                          >
-                            Rented
-                          </span>
+                          <span v-else class="badge bg-secondary">Out of Stock</span>
+                          <div class="small text-muted mt-1">Total: {{ book.total_copies ?? 1 }}</div>
+                          <div class="small text-muted">Borrowed: {{ book.borrowed_copies ?? 0 }}</div>
                         </td>
 
                         <td>
@@ -152,21 +146,10 @@
 
                                     <div class="mt-3">
 
-                                        <span
-                                            class="badge bg-success"
-                                            v-if="selectedBook.status=='available'">
-
-                                            Available
-
+                                        <span class="badge bg-success" v-if="Number(selectedBook.available_copies ?? 0) > 0">
+                                            {{ selectedBook.available_copies }} Available
                                         </span>
-
-                                        <span
-                                            class="badge bg-secondary"
-                                            v-else>
-
-                                            Borrowed
-
-                                        </span>
+                                        <span class="badge bg-secondary" v-else>Out of Stock</span>
 
                                         <span
                                             class="badge bg-primary ms-2"
@@ -252,6 +235,27 @@
 
                                     </div>
 
+
+                                    <!-- Copy Inventory -->
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light"><strong>Copy Inventory</strong></div>
+                                        <div class="card-body">
+                                            <div class="row text-center">
+                                                <div class="col-md-4 mb-2">
+                                                    <h4>{{ selectedBook.total_copies ?? 1 }}</h4>
+                                                    <small class="text-muted">Total Copies</small>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <h4 class="text-success">{{ selectedBook.available_copies ?? 0 }}</h4>
+                                                    <small class="text-muted">Available</small>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <h4 class="text-warning">{{ selectedBook.borrowed_copies ?? 0 }}</h4>
+                                                    <small class="text-muted">Borrowed</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <!-- Ownership -->
 
@@ -504,6 +508,18 @@
                                         min="1"
                                         class="form-control"
                                         v-model="bookData.pages">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Total Copies *</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        v-model.number="bookData.total_copies"
+                                        min="1"
+                                        max="100000"
+                                        step="1"
+                                        required>
+                                    <small class="text-muted">Total physical copies owned for this title.</small>
                                 </div>
 
                                 <div class="col-md-4">
@@ -835,6 +851,18 @@
                                         v-model="bookData.pages">
 
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Total Copies *</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        v-model.number="bookData.total_copies"
+                                        min="1"
+                                        max="100000"
+                                        step="1"
+                                        required>
+                                    <small class="text-muted">Cannot be less than copies currently borrowed.</small>
+                                </div>
 
                                 <div class="col-md-4">
 
@@ -1080,11 +1108,11 @@ import "jquery/dist/jquery.min.js";
 import "datatables.net-dt/js/dataTables.dataTables";
 import "datatables.net-dt/css/jquery.dataTables.min.css";
 import $ from "jquery";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const toast = Swal.mixin({
     toast: true,
-    position: 'top-end',
+    position: "top-end",
     showConfirmButton: false,
     timer: 3000
 });
@@ -1092,198 +1120,308 @@ const toast = Swal.mixin({
 window.toast = toast;
 
 export default {
-  components: { Master },
+    components: { Master },
 
-  data() {
-    return {
-      books: [],
-      partners: [],
-      initializing: true,
-      coverPreview: null,
-      ebookName: '',
-      bookData: this.emptyBook(),
-      selectedBook: {},     // 👈 ADD THIS
-      defaultCover: 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg'    };
-  },
-
-  methods: {
-    emptyBook() {
-      return {
-        title: '',
-        author: '',
-        genre: '',
-        book_type: 'physical',
-        pages: '',
-        language: 'English',
-        barcode: '',
-        shelf_location: '',
-        condition: '',
-        description: '',
-        partner_id: '',
-        cover_image: null,
-        ebook_file: null
-      };
-    },
-    formatDate(date) {
-        if (!date) return 'N/A';
-
-        return new Date(date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-    },    
-    handleEbookUpload(event) {
-        const file = event.target.files[0];
-
-        if (file) {
-            this.bookData.ebook_file = file;
-            this.ebookName = file.name;
-        }
-    },
-    viewBook(book) {
-      // Defensive copy (prevents reactive side-effects)
-      this.selectedBook = { ...book };
-
-      // Open modal
-      const modalEl = document.getElementById("ViewBookModal");
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    },
-    loadBooks() {
-      this.initializing = true;
-      axios.get("/api/books")
-        .then(res => {
-          this.books = res.data;
-          setTimeout(() => {
-            $("#BooksTable").DataTable();
-          }, 10);
-        })
-        .finally(() => (this.initializing = false));
+    data() {
+        return {
+            books: [],
+            partners: [],
+            initializing: true,
+            coverPreview: null,
+            ebookName: "",
+            bookData: this.emptyBook(),
+            selectedBook: {},
+            defaultCover: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg"
+        };
     },
 
-    loadPartners() {
-      axios.get("/api/partners")
-        .then(res => (this.partners = res.data));
-    },
+    methods: {
+        emptyBook() {
+            return {
+                id: null,
+                title: "",
+                author: "",
+                genre: "",
+                book_type: "physical",
+                pages: "",
+                language: "English",
+                barcode: "",
+                shelf_location: "",
+                condition: "",
+                description: "",
+                partner_id: "",
+                total_copies: 1,
+                cover_image: null,
+                ebook_file: null
+            };
+        },
 
-    openAddBookModal() {
-    this.bookData = this.emptyBook();
-    this.coverPreview = null;
-    this.coverPreview = null; // reset preview
-    new bootstrap.Modal(document.getElementById("AddBookModal")).show();
-    },
+        formatDate(date) {
+            if (!date) return "N/A";
+            return new Date(date).toLocaleDateString("en-KE", {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            });
+        },
 
-    editBook(book) {
-    // Fill form fields
-    this.bookData = {
-        id: book.id,
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        shelf_location: book.shelf_location,
-        condition: book.condition,
-        isbn: book.barcode,
-        partner_id: book.partner_id,
-    };
+        getErrorMessage(error, fallback) {
+            const errors = error?.response?.data?.errors;
+            return errors
+                ? Object.values(errors).flat().join("\n")
+                : (error?.response?.data?.message || fallback);
+        },
 
-    // Show existing cover if available
-    this.coverPreview = book.cover_image
-        ? `/storage/book_covers/${book.cover_image}` // match your backend storage
-        : null;
-
-    new bootstrap.Modal(document.getElementById("EditBookModal")).show();
-    },
-
-    submitBook() {
-    axios.post("/api/books", this.buildFormData(), {
-        headers: { "Content-Type": "multipart/form-data" }
-    }).then(() => {
-        this.loadBooks();
-        bootstrap.Modal.getInstance(
-        document.getElementById("AddBookModal")
-        ).hide();
-    });
-    },
-
-    updateBook() {
-    axios.post(
-        `/api/books/${this.bookData.id}?_method=PUT`,
-        this.buildFormData(),
-        { headers: { "Content-Type": "multipart/form-data" } }
-    ).then(() => {
-        this.loadBooks();
-        bootstrap.Modal.getInstance(
-        document.getElementById("EditBookModal")
-        ).hide();
-    });
-    },
-
-    deleteBook(id){
+        showApiError(error, fallback) {
             Swal.fire({
-              title: 'Are you sure?',
-              text: "You won't be able to revert this!",
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonColor: '#006400',
-              cancelButtonColor: '#FFA500',
-              confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-              if (result.isConfirmed) { 
-              //send request to the server
-              axios.delete('/api/book/'+id).then(() => {
-              toast.fire(
-                'Deleted!',
-                'Book has been deleted.',
-                'success'
-              )
-              this.loadLists();
-              }).catch(() => {
-                Swal.fire(
-                'Failed!',
-                'There was something wrong.',
-                'warning'
-              )
-              }); 
-              }else if(result.isDenied) {
-                console.log('cancelled')
-              }
-                                
-            })
-    },
+                title: "Unable to complete request",
+                text: this.getErrorMessage(error, fallback),
+                icon: "error"
+            });
+        },
 
-    handleCoverUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+        handleEbookUpload(event) {
+            const file = event.target.files?.[0];
+            if (file) {
+                this.bookData.ebook_file = file;
+                this.ebookName = file.name;
+            }
+        },
 
-    // Set file for form submission
-    this.bookData.cover_image = file;
+        handleCoverUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
 
-    // Create preview for Add & Edit modals
-    this.coverPreview = URL.createObjectURL(file);
-    },
+            this.bookData.cover_image = file;
+            if (this.coverPreview?.startsWith("blob:")) {
+                URL.revokeObjectURL(this.coverPreview);
+            }
+            this.coverPreview = URL.createObjectURL(file);
+        },
 
-    buildFormData() {
-    const fd = new FormData();
+        viewBook(book) {
+            this.selectedBook = {
+                total_copies: 1,
+                available_copies: book.status === "borrowed" ? 0 : 1,
+                borrowed_copies: book.status === "borrowed" ? 1 : 0,
+                ...book
+            };
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById("ViewBookModal")
+            ).show();
+        },
 
-    Object.keys(this.bookData).forEach(key => {
-        const value = this.bookData[key];
-        if (value !== "" && value !== null && value !== undefined) {
-        fd.append(key, value);
+        async loadBooks() {
+            this.initializing = true;
+
+            try {
+                if ($.fn.DataTable.isDataTable("#BooksTable")) {
+                    $("#BooksTable").DataTable().destroy();
+                }
+
+                const response = await axios.get("/api/books");
+                this.books = (Array.isArray(response.data) ? response.data : []).map(book => ({
+                    total_copies: 1,
+                    available_copies: book.status === "borrowed" ? 0 : 1,
+                    borrowed_copies: book.status === "borrowed" ? 1 : 0,
+                    ...book
+                }));
+
+                // Render the real rows before initializing DataTables.
+                this.initializing = false;
+                await this.$nextTick();
+
+                if (this.books.length && document.querySelector("#BooksTable")) {
+                    $("#BooksTable").DataTable({
+                        destroy: true,
+                        pageLength: 10,
+                        order: []
+                    });
+                }
+            } catch (error) {
+                this.showApiError(error, "Failed to load books.");
+            } finally {
+                this.initializing = false;
+            }
+        },
+
+        async loadPartners() {
+            try {
+                const response = await axios.get("/api/partners");
+                this.partners = response.data;
+            } catch (error) {
+                console.error("Failed to load partners:", error);
+            }
+        },
+
+        resetBookForm() {
+            if (this.coverPreview?.startsWith("blob:")) {
+                URL.revokeObjectURL(this.coverPreview);
+            }
+            this.bookData = this.emptyBook();
+            this.coverPreview = null;
+            this.ebookName = "";
+        },
+
+        openAddBookModal() {
+            this.resetBookForm();
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById("AddBookModal")
+            ).show();
+        },
+
+        editBook(book) {
+            if (this.coverPreview?.startsWith("blob:")) {
+                URL.revokeObjectURL(this.coverPreview);
+            }
+
+            this.bookData = {
+                id: book.id,
+                title: book.title ?? "",
+                author: book.author ?? "",
+                genre: book.genre ?? "",
+                book_type: book.book_type ?? "physical",
+                pages: book.pages ?? "",
+                language: book.language ?? "English",
+                description: book.description ?? "",
+                shelf_location: book.shelf_location ?? "",
+                condition: book.condition ?? "",
+                barcode: book.barcode ?? "",
+                partner_id: book.partner_id ?? "",
+                total_copies: Number(book.total_copies ?? 1),
+                cover_image: null,
+                ebook_file: null,
+                cover_url: book.cover_url ?? (book.cover_image ? `/storage/${book.cover_image}` : null),
+                ebook_url: book.ebook_url ?? null
+            };
+
+            this.coverPreview = this.bookData.cover_url;
+            this.ebookName = "";
+
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById("EditBookModal")
+            ).show();
+        },
+
+        buildFormData() {
+            const formData = new FormData();
+
+            Object.keys(this.bookData).forEach(key => {
+                if (["cover_url", "ebook_url"].includes(key)) return;
+                if (key === "id" && !this.bookData[key]) return;
+
+                const value = this.bookData[key];
+                if (value !== "" && value !== null && value !== undefined) {
+                    formData.append(key, value);
+                }
+            });
+
+            return formData;
+        },
+
+        async submitBook() {
+            if (!this.bookData.title?.trim()) {
+                Swal.fire("Title required", "Please enter a book title.", "warning");
+                return;
+            }
+
+            if (!Number.isInteger(Number(this.bookData.total_copies)) ||
+                Number(this.bookData.total_copies) < 1) {
+                Swal.fire("Invalid quantity", "Total copies must be a whole number of at least 1.", "warning");
+                return;
+            }
+
+            try {
+                await axios.post("/api/books", this.buildFormData(), {
+                    headers: { "Content-Type": "multipart/form-data" }
+                });
+
+                await this.loadBooks();
+                bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById("AddBookModal")
+                ).hide();
+
+                toast.fire("Success", "Book added successfully.", "success");
+                this.resetBookForm();
+            } catch (error) {
+                this.showApiError(error, "Failed to add book.");
+            }
+        },
+
+        async updateBook() {
+            if (!this.bookData.id) {
+                Swal.fire("Missing book", "The book ID is missing.", "error");
+                return;
+            }
+
+            if (!this.bookData.title?.trim()) {
+                Swal.fire("Title required", "Please enter a book title.", "warning");
+                return;
+            }
+
+            if (!Number.isInteger(Number(this.bookData.total_copies)) ||
+                Number(this.bookData.total_copies) < 1) {
+                Swal.fire("Invalid quantity", "Total copies must be a whole number of at least 1.", "warning");
+                return;
+            }
+
+            try {
+                await axios.post(
+                    `/api/books/${this.bookData.id}?_method=PUT`,
+                    this.buildFormData(),
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+
+                await this.loadBooks();
+                bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById("EditBookModal")
+                ).hide();
+
+                toast.fire("Success", "Book updated successfully.", "success");
+            } catch (error) {
+                this.showApiError(error, "Failed to update book.");
+            }
+        },
+
+        async deleteBook(id) {
+            const result = await Swal.fire({
+                title: "Delete this book?",
+                text: "This action cannot be undone.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#006400",
+                cancelButtonColor: "#FFA500",
+                confirmButtonText: "Yes, delete it!"
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                await axios.delete(`/api/books/${id}`);
+                toast.fire("Deleted", "Book deleted successfully.", "success");
+                await this.loadBooks();
+            } catch (error) {
+                this.showApiError(error, "Unable to delete this book.");
+            }
+        },
+
+        navigateTo(path) {
+            this.$router.push(path);
         }
-    });
-
-    return fd;
     },
 
-    navigateTo(path) {
-      this.$router.push(path);
-    }
-  },
+    mounted() {
+        this.loadBooks();
+        this.loadPartners();
+    },
 
-  mounted() {
-    this.loadBooks();
-    this.loadPartners();
-  }
+    beforeUnmount() {
+        if (this.coverPreview?.startsWith("blob:")) {
+            URL.revokeObjectURL(this.coverPreview);
+        }
+        if ($.fn.DataTable.isDataTable("#BooksTable")) {
+            $("#BooksTable").DataTable().destroy();
+        }
+    }
 };
 </script>

@@ -6,6 +6,7 @@ use App\Models\Book;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class BookController extends Controller
 {
@@ -46,7 +47,7 @@ class BookController extends Controller
             'genre' => 'nullable|string|max:255',
 
             'book_type' => 'required|in:physical,ebook',
-
+            'total_copies' => 'required_if:book_type,physical|nullable|integer|min:1|max:100000',
             'pages' => 'nullable|integer|min:1',
             'language' => 'nullable|string|max:100',
 
@@ -101,6 +102,15 @@ class BookController extends Controller
             'file_size' => $fileSize,
             'status' => 'available',
             'download_count' => 0,
+            'total_copies' => $request->book_type === 'physical'
+                ? (int) $request->input('total_copies', 1)
+                : 0,
+
+            'available_copies' => $request->book_type === 'physical'
+                ? (int) $request->input('total_copies', 1)
+                : 0,
+
+            'borrowed_copies' => 0,
         ]);
 
         // Audit: book created.
@@ -147,6 +157,7 @@ class BookController extends Controller
             'partner_id' => 'nullable|exists:users,id',
 
             'status' => 'sometimes|in:available,borrowed',
+            'total_copies' => 'sometimes|required|integer|min:1|max:100000',
 
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
@@ -212,6 +223,29 @@ class BookController extends Controller
         }
 
         try {
+            // Keep physical copy quantities consistent.
+            if (array_key_exists('total_copies', $data)) {
+                if ($book->book_type !== 'physical') {
+                    throw ValidationException::withMessages([
+                        'total_copies' => [
+                            'Copy quantities apply only to physical books.',
+                        ],
+                    ]);
+                }
+
+                $totalCopies = (int) $data['total_copies'];
+                $borrowedCopies = (int) $book->borrowed_copies;
+
+                if ($totalCopies < $borrowedCopies) {
+                    throw ValidationException::withMessages([
+                        'total_copies' => [
+                            "Total copies cannot be less than the {$borrowedCopies} copies currently borrowed.",
+                        ],
+                    ]);
+                }
+
+                $data['available_copies'] = $totalCopies - $borrowedCopies;
+            }            
             $book->update($data);
             $book->refresh();
         } catch (\Throwable $e) {

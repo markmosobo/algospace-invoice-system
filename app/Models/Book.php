@@ -20,6 +20,10 @@ class Book extends Model
         'partner_id',
         'status',
         'cover_image',
+        // Copy quantities
+        'total_copies',
+        'available_copies',
+        'borrowed_copies',
         // E-Book fields
         'book_type',
         'ebook_file',
@@ -28,6 +32,18 @@ class Book extends Model
         'download_count',
         'file_size',
         'description',
+    ];
+
+    protected $casts = [
+        // Copy quantities
+        'total_copies' => 'integer',
+        'available_copies' => 'integer',
+        'borrowed_copies' => 'integer',
+
+        // E-Book fields
+        'pages' => 'integer',
+        'download_count' => 'integer',
+        'file_size' => 'integer',
     ];
 
     public function borrowRecords()

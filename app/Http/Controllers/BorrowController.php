@@ -28,7 +28,7 @@ class BorrowController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($book->status === 'borrowed') {
+            if ($book->available_copies <= 0) {
                 return null;
             }
 
@@ -40,9 +40,14 @@ class BorrowController extends Controller
                 'status' => 'borrowed',
             ]);
 
-            $book->update([
-                'status' => 'borrowed',
-            ]);
+            $book->available_copies -= 1;
+            $book->borrowed_copies += 1;
+
+            $book->status = $book->available_copies > 0
+                ? 'available'
+                : 'borrowed';
+
+            $book->save();
 
             // Audit successful borrowing.
             app(AuditLogger::class)->record(
@@ -118,9 +123,22 @@ class BorrowController extends Controller
                 'late_fee' => $lateFee,
             ]);
 
-            $book->update([
-                'status' => 'available',
-            ]);
+        // Restore one copy without exceeding the total inventory.
+        $book->available_copies = min(
+            $book->total_copies,
+            $book->available_copies + 1
+        );
+
+        $book->borrowed_copies = max(
+            0,
+            $book->borrowed_copies - 1
+        );
+
+        $book->status = $book->available_copies > 0
+            ? 'available'
+            : 'borrowed';
+
+        $book->save();
 
             // Audit successful return.
             app(AuditLogger::class)->record(

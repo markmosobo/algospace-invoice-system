@@ -1032,7 +1032,7 @@ export default {
         payment_date: new Date().toISOString().slice(0, 10), 
         method: 'cash',
         mpesa_code: '',
-        comment: ''
+        comment: 'Sale payment'
       },
       editForm: {
         id: null,
@@ -1336,7 +1336,8 @@ getInitials(name) {
             payment_date: new Date().toISOString().slice(0, 10),
             due_date: new Date().toISOString().slice(0, 10),
             method: 'cash',
-            mpesa_code: ''
+            mpesa_code: '',
+            comment: 'Sale payment'
         };        
 
         // Show the modal after fetching data
@@ -1475,7 +1476,8 @@ getInitials(name) {
             amount: '',
             payment_date: new Date().toISOString().slice(0, 10),
             method: 'cash',
-            mpesa_code: ''
+            mpesa_code: '',
+            comment: 'Sale payment'
         };
     },
 

@@ -1001,7 +1001,7 @@ const emptyForm = () => ({
   labour_cost: 0,
   transport_cost: 0,
   other_cost: 0,
-  description: "",
+  description: "Routine crop harvesting and collection.",
 });
 
 export default {

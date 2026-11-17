@@ -124,6 +124,15 @@
                                   <a @click="viewInvoice(item)" class="dropdown-item" href="#">
                                     <i class="ri-eye-fill mr-2"></i>View
                                   </a>
+<a
+  v-if="item.invoice_type === 'sales' && Number(item.amount_paid) > 0"
+  @click="shareReceipt(item)"
+  class="dropdown-item text-success"
+  href="#"
+>
+  <i class="ri-receipt-line me-2"></i>
+  Share Receipt
+</a>
                                   <a @click="editInvoice(item)" class="dropdown-item" href="#">
                                     <i class="ri-pencil-fill mr-2"></i>Edit
                                   </a>
@@ -441,7 +450,248 @@
                   </div>
                 </div>
 
-                    
+                <!-- SHARE RECEIPT MODAL -->
+                <div class="modal fade" id="shareReceiptModal" tabindex="-1">
+                  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+
+                      <!-- HEADER -->
+                      <div class="modal-header">
+                        <div>
+                          <h5 class="modal-title">Payment Receipt</h5>
+                          <small class="text-muted">Preview / Download / Share</small>
+                        </div>
+
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+
+                      <!-- BODY -->
+                      <div class="modal-body bg-light" v-if="receiptData">
+
+                        <div ref="receiptArea" class="bg-white p-4 rounded shadow-sm">
+
+                          <!-- BRAND -->
+                          <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+
+                            <div class="d-flex align-items-center gap-3">
+                              <img
+                                src="@/assets/algospacelogo.png"
+                                style="height:55px;"
+                              />
+
+                              <div>
+                                <div class="fw-bold">AlgoSpace Cyber</div>
+                                <div class="text-muted small">
+                                  Professional Digital Services
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="text-end">
+                              <div class="text-muted small">PAYMENT RECEIPT</div>
+
+                              <div class="fw-bold text-success">
+                                #{{ receiptData.receipt_number }}
+                              </div>
+
+                              <span class="badge bg-success mt-1">PAID</span>
+                            </div>
+
+                          </div>
+
+                          <!-- CUSTOMER DETAILS -->
+                          <div class="row mb-4">
+
+                            <div class="col-md-6">
+                              <h6 class="text-muted">Received From</h6>
+
+                              <div class="fw-semibold">
+                                {{ receiptData.invoice.customer?.name || 'Customer' }}
+                              </div>
+
+                              <div class="small text-muted">
+                                {{ receiptData.invoice.customer?.email }}
+                              </div>
+
+                              <div class="small text-muted">
+                                {{ receiptData.invoice.customer?.phone }}
+                              </div>
+                            </div>
+
+                            <div class="col-md-6 text-md-end">
+                              <h6 class="text-muted">Payment Information</h6>
+
+                              <div>
+                                <strong>Payment Date:</strong>
+                                {{ formatDate(receiptData.payment.payment_date) }}
+                              </div>
+
+                              <div>
+                                <strong>Invoice:</strong>
+                                {{ receiptData.invoice.invoice_number }}
+                              </div>
+
+                              <div>
+                                <strong>Method:</strong>
+                                {{ receiptData.payment.method?.toUpperCase() || 'N/A' }}
+                              </div>
+
+                              <div v-if="receiptData.payment.mpesa_code">
+                                <strong>M-Pesa Code:</strong>
+                                {{ receiptData.payment.mpesa_code }}
+                              </div>
+
+                            </div>
+
+                          </div>
+
+                          <!-- PAYMENT SUMMARY -->
+                          <h6 class="mb-3">Payment Summary</h6>
+
+                          <table class="table table-bordered">
+
+                            <thead>
+                              <tr class="table-light">
+                                <th>Description</th>
+                                <th class="text-end">Amount (KES)</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              <tr>
+                                <td>
+                                  Payment received for Invoice
+                                  {{ receiptData.invoice.invoice_number }}
+                                </td>
+
+                                <td class="text-end fw-bold">
+                                  {{ Number(receiptData.payment.amount).toLocaleString('en-KE', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  }) }}
+                                </td>
+                              </tr>
+                            </tbody>
+
+                          </table>
+
+                          <!-- TOTALS -->
+                          <div class="row justify-content-end mt-4">
+
+                            <div class="col-md-6">
+
+                              <div class="d-flex justify-content-between mb-2">
+                                <span>Invoice Total</span>
+                                <strong>
+                                  KES {{ Number(receiptData.invoice.total_amount).toLocaleString('en-KE') }}
+                                </strong>
+                              </div>
+
+                              <div class="d-flex justify-content-between mb-2">
+                                <span>Previously Paid</span>
+                                <strong>
+                                  KES {{ Number(receiptData.invoice.amount_paid - receiptData.payment.amount).toLocaleString('en-KE') }}
+                                </strong>
+                              </div>
+
+                              <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>This Payment</span>
+                                <strong>
+                                  KES {{ Number(receiptData.payment.amount).toLocaleString('en-KE') }}
+                                </strong>
+                              </div>
+
+                              <div class="d-flex justify-content-between border-top pt-2 text-danger">
+                                <span>Outstanding Balance</span>
+                                <strong>
+                                  KES {{ Number(receiptData.invoice.total_amount - receiptData.invoice.amount_paid).toLocaleString('en-KE') }}
+                                </strong>
+                              </div>
+
+                            </div>
+
+                          </div>
+
+                          <!-- PAYMENT DETAILS -->
+                          <div class="mt-4 p-3 border rounded bg-light">
+
+                            <div class="fw-bold mb-2">PAYMENT DETAILS</div>
+
+                            <div class="d-flex justify-content-between">
+                              <span>Paybill</span>
+                              <strong>542542</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                              <span>Account</span>
+                              <strong>608755</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                              <span>Payment Method</span>
+                              <strong>
+                                {{ receiptData.payment.method?.toUpperCase() || 'N/A' }}
+                              </strong>
+                            </div>
+
+                          </div>
+
+                          <!-- FOOTER -->
+                          <div class="text-center mt-4 pt-3 border-top">
+
+                            <h6 class="text-success fw-bold">
+                              Thank You for Choosing AlgoSpace Cyber!
+                            </h6>
+
+                            <small class="text-muted">
+                              This receipt confirms payment received by AlgoSpace Cyber.
+                            </small>
+
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- ACTIONS -->
+                      <div class="modal-footer d-flex justify-content-between">
+
+                        <div class="d-flex gap-2 flex-wrap">
+
+                          <button
+                            class="btn btn-primary"
+                            @click="downloadReceiptImage"
+                          >
+                            <i class="ri-image-line me-1"></i>
+                            Image
+                          </button>
+
+                          <button
+                            class="btn btn-dark"
+                            @click="downloadReceiptPDF"
+                          >
+                            <i class="ri-file-pdf-line me-1"></i>
+                            PDF
+                          </button>
+
+                          <button
+                            class="btn btn-success"
+                            @click="shareReceiptWhatsApp"
+                          >
+                            <i class="ri-whatsapp-line me-1"></i>
+                            WhatsApp
+                          </button>
+
+                        </div>
+
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                          Close
+                        </button>
+
+                      </div>
+
+                    </div>
+                  </div>
+                </div>                    
 
             </div>
         </section>
@@ -457,7 +707,9 @@
     import "datatables.net-dt/css/jquery.dataTables.min.css";
     import DefaultProfile from '@/assets/img/default-profile.png'
     import $ from "jquery";
-    
+    import html2canvas from "html2canvas";
+    import jsPDF from "jspdf";
+
     const toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -495,7 +747,8 @@
               due_date: "",
               total_amount: "",
               status: "pending"
-            }
+            },
+            receiptData: null,
 
         }
       },
@@ -506,7 +759,170 @@
                 Number(this.selectedInvoice.amount_paid);
         }
       },      
-      methods: {  
+      methods: { 
+async shareReceipt(invoice) {
+  try {
+    const res = await axios.get(`/api/invoices/${invoice.id}`);
+
+    console.log('SINGLE INVOICE RESPONSE:', res.data);
+
+    // Supports either { invoice: {...} } or a direct invoice object.
+    const invoiceData = res.data?.invoice ?? res.data;
+
+    if (!invoiceData || !invoiceData.id) {
+      toast.fire('Error', 'Invoice details were not returned correctly.', 'error');
+      return;
+    }
+
+    // These records must come from the backend.
+    const payments = invoiceData.payments ?? res.data?.payments ?? [];
+
+    if (!Array.isArray(payments) || payments.length === 0) {
+      toast.fire(
+        'No Payment Records',
+        'The invoice has an amount paid, but the API has not returned individual payment records.',
+        'warning'
+      );
+      return;
+    }
+
+    // Sort payments and select the most recent.
+    const payment = [...payments].sort((a, b) => {
+      const dateA = new Date(a.payment_date || a.created_at || 0);
+      const dateB = new Date(b.payment_date || b.created_at || 0);
+      return dateB - dateA;
+    })[0];
+
+    if (!payment || Number(payment.amount) <= 0) {
+      toast.fire('Error', 'Invalid payment record.', 'error');
+      return;
+    }
+
+    this.receiptData = {
+      invoice: invoiceData,
+      payment: payment,
+      receipt_number: payment.receipt_number ||
+        (payment.id ? `RCPT-${payment.id}` : `RCPT-INV-${invoiceData.id}`)
+    };
+
+    await this.$nextTick();
+
+    const modalElement = document.getElementById('shareReceiptModal');
+
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+
+  } catch (error) {
+    console.error('SHARE RECEIPT ERROR:', error.response?.data || error);
+
+    toast.fire(
+      'Error',
+      'Failed to load payment receipt.',
+      'error'
+    );
+  }
+},
+
+async downloadReceiptImage() {
+  if (!this.receiptData) return;
+
+  const canvas = await html2canvas(this.$refs.receiptArea, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff"
+  });
+
+  const a = document.createElement("a");
+
+  a.href = canvas.toDataURL("image/png");
+
+  a.download = `${this.receiptData.receipt_number}.png`;
+
+  a.click();
+},
+
+async downloadReceiptPDF() {
+  if (!this.receiptData) return;
+
+  const canvas = await html2canvas(this.$refs.receiptArea, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff"
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  // Keep the receipt within the A4 page.
+  const finalWidth = imgHeight > pageHeight
+    ? imgWidth * (pageHeight / imgHeight)
+    : imgWidth;
+
+  const finalHeight = imgHeight > pageHeight
+    ? pageHeight
+    : imgHeight;
+
+  pdf.addImage(
+    imgData,
+    "PNG",
+    (pageWidth - finalWidth) / 2,
+    5,
+    finalWidth,
+    finalHeight
+  );
+
+  pdf.save(`${this.receiptData.receipt_number}.pdf`);
+},
+
+shareReceiptWhatsApp() {
+  if (!this.receiptData) return;
+
+  let phone = this.receiptData.invoice.customer?.phone || '';
+
+  // Normalize Kenyan phone numbers.
+  phone = phone.replace(/\D/g, '');
+
+  if (phone.startsWith('0')) {
+    phone = '254' + phone.slice(1);
+  } else if (phone.startsWith('7') || phone.startsWith('1')) {
+    phone = '254' + phone;
+  }
+
+  const payment = this.receiptData.payment;
+  const invoice = this.receiptData.invoice;
+
+  const balance = Number(invoice.total_amount) -
+                  Number(invoice.amount_paid);
+
+  const message =
+`Hello ${invoice.customer?.name || 'Customer'},
+
+Thank you for your payment!
+
+ALGOSPACE CYBER - PAYMENT RECEIPT
+
+Receipt: ${this.receiptData.receipt_number}
+Invoice: ${invoice.invoice_number}
+
+Amount Received: KES ${Number(payment.amount).toLocaleString('en-KE')}
+Payment Date: ${this.formatDate(payment.payment_date)}
+Payment Method: ${payment.method?.toUpperCase() || 'N/A'}
+
+Outstanding Balance: KES ${balance.toLocaleString('en-KE')}
+
+Thank you for choosing AlgoSpace Cyber!`;
+
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+    '_blank'
+  );
+},         
         // Format date as dd/mm/yyyy
         formatDate(date) {
           if (!date) return "N/A";
@@ -666,6 +1082,7 @@
           this.initializing = true; // Start spinner
           axios.get('/api/invoices')
             .then((response) => {
+              console.log('INVOICE API RESPONSE:', response.data);
               this.invoices = response.data.invoices;
               this.customers = response.data.customers;
               console.log(response)

@@ -104,15 +104,18 @@ class InvoiceController extends Controller
     /**
      * Display the specified invoice.
      */
-    public function show(string $id)
-    {
-        $invoice = Invoice::with(['customer', 'items'])
-            ->findOrFail($id);
+public function show(string $id)
+{
+    $invoice = Invoice::with([
+        'customer',
+        'items',
+        'payments'
+    ])->findOrFail($id);
 
-        return response()->json([
-            'invoice' => $invoice,
-        ]);
-    }
+    return response()->json([
+        'invoice' => $invoice,
+    ]);
+}
 
     /**
      * Update an invoice.

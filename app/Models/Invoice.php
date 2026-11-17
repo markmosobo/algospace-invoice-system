@@ -40,7 +40,7 @@ class Invoice extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class, 'invoice_id', 'id');
     }
 
     public function cyberRequest()
